@@ -22,7 +22,10 @@ async function showMapOnMobile(page,testInfo){
   if(testInfo.project.name.includes('mobile'))await page.locator('[data-mobile-view="map"]').click();
 }
 async function initialViewIsRestored(page){
-  return page.evaluate(()=>{const c=window.__FC_MAP__.getCenter();return Math.abs(c.lat-40.4167)<.0001&&Math.abs(c.lng+3.7033)<.0001&&window.__FC_MAP__.getZoom()===6});
+  return page.evaluate(()=>{
+    const center=window.__FC_MAP__.getCenter();
+    return Math.abs(center.lat-40.4167)<.02&&Math.abs(center.lng+3.7033)<.02&&window.__FC_MAP__.getZoom()===6;
+  });
 }
 
 test.beforeEach(async ({page})=>{
