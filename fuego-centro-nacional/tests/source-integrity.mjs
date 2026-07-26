@@ -11,11 +11,12 @@ const required = [
 ];
 for (const file of required) await access(join(root, file), constants.R_OK);
 
-const [html, v46css, v46, danger] = await Promise.all([
-  readFile(join(root, 'index.html'), 'utf8'),
-  readFile(join(root, 'v46.css'), 'utf8'),
-  readFile(join(root, 'v46.js'), 'utf8'),
-  readFile(join(root, 'api/fire-danger.js'), 'utf8'),
+const [html,v46css,v46,health,danger] = await Promise.all([
+  readFile(join(root,'index.html'),'utf8'),
+  readFile(join(root,'v46.css'),'utf8'),
+  readFile(join(root,'v46.js'),'utf8'),
+  readFile(join(root,'api/health.js'),'utf8'),
+  readFile(join(root,'api/fire-danger.js'),'utf8')
 ]);
 
 for (const id of ['preventionPanel','shareReportBtn','recentPlaces','offlineSnapshotNotice']) assert.match(html,new RegExp(`id="${id}"`));
@@ -29,6 +30,8 @@ assert.match(v46,/fc_last_snapshot_v46/);
 assert.match(v46,/navigator\.share/);
 assert.match(v46,/api\/fire-danger/);
 assert.match(v46,/No confirma un incendio/);
+assert.match(health,/fireDangerEndpoint:true/);
+assert.match(health,/version:'4\.6\.0'/);
 assert.match(danger,/AEMET/);
 assert.match(danger,/configured:false/);
 assert.match(danger,/api_key/);
