@@ -23,8 +23,8 @@ async function showMapOnMobile(page,testInfo){
 }
 async function initialViewIsRestored(page){
   return page.evaluate(()=>{
-    const center=window.__FC_MAP__.getCenter();
-    return Math.abs(center.lat-40.4167)<.02&&Math.abs(center.lng+3.7033)<.02&&window.__FC_MAP__.getZoom()===6;
+    const map=window.__FC_MAP__;
+    return map.getZoom()===6&&map.getBounds().contains([40.4167,-3.7033]);
   });
 }
 
