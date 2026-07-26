@@ -6,57 +6,68 @@
   <meta name="theme-color" content="#101419">
   <title>Fuego Centro</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
-  <link rel="stylesheet" href="/styles.css?v=450">
+  <link rel="stylesheet" href="/styles.css?v=451">
+  <link rel="stylesheet" href="/v45.css?v=451">
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin="" defer></script>
   <script src="/analytics-config.js"></script>
-  <script src="/app.js?v=450" defer></script>
-  <script src="/map-reset.js?v=450" defer></script>
+  <script src="/v45.js?v=451" defer></script>
+  <script src="/app.js?v=451" defer></script>
 </head>
 <body>
 <header class="top">
   <div class="brand"><span class="logo">FC</span><div><b>Fuego Centro</b><small>buscador nacional · cobertura explicada · beta</small></div></div>
-  <div id="sourceChips" class="chips"><span class="chip stale">Conectando…</span></div>
-  <button id="refreshBtn" class="iconBtn" aria-label="Actualizar datos">↻</button>
+  <div id="sourceChips" class="chips" aria-label="Estado de las fuentes"><span class="chip stale">Conectando…</span></div>
+  <button id="refreshBtn" class="iconBtn" aria-label="Actualizar datos" title="Actualizar datos">↻</button>
 </header>
-<div id="degraded" class="degraded" role="status"></div>
+<div id="degraded" class="degraded" role="status" aria-live="assertive"></div>
+<div class="mobileModeSwitch" role="group" aria-label="Vista en móvil">
+  <button type="button" data-mobile-view="map" aria-pressed="false">Mapa</button>
+  <button type="button" data-mobile-view="report" aria-pressed="true">Informe</button>
+</div>
 <main class="shell">
-  <section class="mapWrap">
+  <section class="mapWrap" aria-labelledby="mapHeading">
+    <h1 id="mapHeading" class="srOnly">Mapa de incendios, señales preliminares y actividad térmica</h1>
+    <p id="mapDescription" class="srOnly">Los marcadores oficiales, preliminares y térmicos son puntos de referencia y no representan perímetros de incendio.</p>
     <div class="mapTools">
-      <select id="riskFilter" aria-label="Filtrar por riesgo"><option value="all">Todos los riesgos</option><option value="critical">Crítico</option><option value="high">Alto</option><option value="medium">Medio</option><option value="watch">Vigilancia</option></select>
+      <select id="riskFilter" aria-label="Filtrar por prioridad del panel"><option value="all">Todas las prioridades</option><option value="critical">Crítica</option><option value="high">Alta</option><option value="medium">Media</option><option value="watch">Vigilancia</option></select>
       <select id="statusFilter" aria-label="Filtrar por estado"><option value="all">Todos los estados</option><option value="active">Activos</option><option value="stabilized">Estabilizados</option><option value="unconfirmed">Sin confirmar</option></select>
       <label class="toggle"><input id="thermalToggle" type="checkbox" checked> Térmicas</label>
-      <button id="fitBtn">Ver todo</button>
+      <button id="homeBtn" type="button" title="Volver a la vista inicial">⌂ Vista inicial</button>
+      <button id="locateBtn" type="button" title="Consultar lo que ocurre cerca de tu ubicación">◎ Mi ubicación</button>
+      <button id="fitBtn" type="button">Ver todo</button>
     </div>
-    <div id="map" aria-label="Mapa de incendios y señales térmicas"></div>
-    <div class="mapLegend"><span><i class="dot criticalBg"></i>Crítico</span><span><i class="dot highBg"></i>Alto</span><span><i class="dot mediumBg"></i>Medio</span><span><i class="dot watchBg"></i>Vigilancia</span><span><i class="dot thermalBg"></i>Térmica</span></div>
+    <div id="map" aria-describedby="mapDescription"></div>
+    <div class="mapLegend" aria-label="Leyenda del mapa"><span><i class="dot criticalBg"></i>Crítica</span><span><i class="dot highBg"></i>Alta</span><span><i class="dot mediumBg"></i>Media</span><span><i class="dot watchBg"></i>Vigilancia</span><span><i class="dot thermalBg"></i>Térmica</span></div>
   </section>
-  <aside class="panel">
+  <aside class="panel" aria-label="Información y consultas">
     <div class="warning"><b>En una emergencia prevalecen ES-Alert, 112 y las autoridades.</b></div>
-    <div id="updateNotice" class="updateNotice" role="status"></div>
+    <div id="locationNotice" class="updateNotice" role="status" aria-live="polite"></div>
+    <div id="updateNotice" class="updateNotice" role="status" aria-live="polite"></div>
     <nav class="tabs" role="tablist" aria-label="Secciones">
-      <button class="tab on" role="tab" aria-selected="true" data-tab="places">Localidades</button>
-      <button class="tab" role="tab" aria-selected="false" data-tab="incidents">Incidentes</button>
-      <button class="tab" role="tab" aria-selected="false" data-tab="alerts">Alertas</button>
-      <button class="tab" role="tab" aria-selected="false" data-tab="news">Noticias</button>
-      <button class="tab" role="tab" aria-selected="false" data-tab="sources">Fuentes</button>
+      <button id="tab-places" class="tab on" role="tab" aria-selected="true" aria-controls="places" tabindex="0" data-tab="places">Localidades</button>
+      <button id="tab-incidents" class="tab" role="tab" aria-selected="false" aria-controls="incidents" tabindex="-1" data-tab="incidents">Incidentes</button>
+      <button id="tab-alerts" class="tab" role="tab" aria-selected="false" aria-controls="alerts" tabindex="-1" data-tab="alerts">Alertas</button>
+      <button id="tab-news" class="tab" role="tab" aria-selected="false" aria-controls="news" tabindex="-1" data-tab="news">Noticias</button>
+      <button id="tab-sources" class="tab" role="tab" aria-selected="false" aria-controls="sources" tabindex="-1" data-tab="sources">Fuentes</button>
     </nav>
-    <section id="places" class="pane on" role="tabpanel">
+    <section id="places" class="pane on" role="tabpanel" aria-labelledby="tab-places" tabindex="0">
       <div class="sectionTitle"><h2>Consultar cualquier localidad de España</h2><small>riesgo, distancia y cobertura</small></div>
       <form id="placeSearchForm" class="search persistentSearch" autocomplete="off">
         <label class="srOnly" for="placeQuery">Municipio, localidad o núcleo de población</label>
-        <input id="placeQuery" name="localidad" type="search" placeholder="Municipio, localidad o núcleo de población" autocomplete="off" autocapitalize="words" spellcheck="false">
+        <input id="placeQuery" name="localidad" type="search" placeholder="Municipio, localidad o núcleo de población" autocomplete="off" autocapitalize="words" spellcheck="false" aria-describedby="searchHelp">
         <button id="placeSearch" class="primary" type="submit">Consultar</button>
       </form>
-      <div id="placeResults"></div>
-      <div id="localReport"></div>
+      <p id="searchHelp" class="searchHelp">Busca una localidad o utiliza «Mi ubicación». Las coordenadas no se envían a servicios de analítica.</p>
+      <div id="placeResults" aria-live="polite" aria-busy="false"></div>
+      <div id="localReport" aria-live="polite"></div>
       <div id="placesSaved"></div>
     </section>
-    <section id="incidents" class="pane" role="tabpanel"></section>
-    <section id="alerts" class="pane" role="tabpanel"></section>
-    <section id="news" class="pane" role="tabpanel"></section>
-    <section id="sources" class="pane" role="tabpanel"></section>
+    <section id="incidents" class="pane" role="tabpanel" aria-labelledby="tab-incidents" tabindex="0"></section>
+    <section id="alerts" class="pane" role="tabpanel" aria-labelledby="tab-alerts" tabindex="0"></section>
+    <section id="news" class="pane" role="tabpanel" aria-labelledby="tab-news" tabindex="0"></section>
+    <section id="sources" class="pane" role="tabpanel" aria-labelledby="tab-sources" tabindex="0"></section>
   </aside>
 </main>
-<dialog id="incidentDialog"><button class="dialogClose" id="dialogClose" aria-label="Cerrar ficha">✕</button><div id="incidentDetail"></div></dialog>
+<dialog id="incidentDialog" aria-modal="true" aria-labelledby="incidentDetailTitle"><button class="dialogClose" id="dialogClose" aria-label="Cerrar ficha">✕</button><div id="incidentDetail"></div></dialog>
 </body>
 </html>
