@@ -37,16 +37,11 @@ export default async function handler(request){
     if(!response.ok)throw Error(`Upstream HTTP ${response.status}`);
     const data=await response.json();
     const upstreamCoverage=new Map((data.regionalCoverage||[]).map(x=>[x.region,x]));
-    data.version='4.4.9';
+    data.version='4.5.0';
     data.dataEngineVersion='4.3.1';
     data.regionalCoverage=DIRECTORY.map(item=>{
       const old=upstreamCoverage.get(item.region);
-      return {
-        ...item,
-        ok:item.mode==='integrated'&&Boolean(old?.ok),
-        publishedAt:old?.publishedAt||null,
-        lastSuccessAt:old?.lastSuccessAt||null
-      };
+      return {...item,ok:item.mode==='integrated'&&Boolean(old?.ok),publishedAt:old?.publishedAt||null,lastSuccessAt:old?.lastSuccessAt||null};
     });
     data.coverageSummary={
       integrated:data.regionalCoverage.filter(x=>x.mode==='integrated').length,
@@ -57,17 +52,6 @@ export default async function handler(request){
     };
     return new Response(JSON.stringify(data),{status:200,headers});
   }catch(error){
-    return new Response(JSON.stringify({
-      version:'4.4.9',
-      degraded:true,
-      error:String(error.message||error),
-      regionalCoverage:DIRECTORY,
-      incidents:[],
-      archive:[],
-      alerts:[],
-      thermalSignals:[],
-      news:[],
-      coverage:[]
-    }),{status:503,headers});
+    return new Response(JSON.stringify({version:'4.5.0',degraded:true,error:String(error.message||error),regionalCoverage:DIRECTORY,incidents:[],archive:[],alerts:[],thermalSignals:[],news:[],coverage:[]}),{status:503,headers});
   }
 }
