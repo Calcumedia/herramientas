@@ -1,0 +1,48 @@
+name: Snapshot Fuego Centro production
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/fuego-centro-snapshot.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fuego-centro-snapshot
+  cancel-in-progress: true
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Download exact production assets
+        run: |
+          set -euo pipefail
+          root='fuego-centro-nacional'
+          origin='https://fuego-centro-nacional.vercel.app'
+          mkdir -p "$root"
+          curl --fail --silent --show-error --location "$origin/" -o "$root/index.html"
+          curl --fail --silent --show-error --location "$origin/styles.css" -o "$root/styles.css"
+          curl --fail --silent --show-error --location "$origin/app.js" -o "$root/app.js"
+          curl --fail --silent --show-error --location "$origin/analytics-config.js" -o "$root/analytics-config.js"
+          curl --fail --silent --show-error --location "$origin/sw.js" -o "$root/sw.js"
+          grep -q 'id="placeSearchForm"' "$root/index.html"
+          grep -q 'setView(\[40.4167,-3.7033\],6)' "$root/app.js"
+          grep -q 'persistentSearch' "$root/styles.css"
+      - name: Commit snapshot when changed
+        run: |
+          if git diff --quiet -- fuego-centro-nacional/index.html fuego-centro-nacional/styles.css fuego-centro-nacional/app.js fuego-centro-nacional/analytics-config.js fuego-centro-nacional/sw.js; then
+            echo 'Production snapshot is already current.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add fuego-centro-nacional/index.html fuego-centro-nacional/styles.css fuego-centro-nacional/app.js fuego-centro-nacional/analytics-config.js fuego-centro-nacional/sw.js
+          git commit -m 'chore(fuego-centro): sync production snapshot'
+          git push
