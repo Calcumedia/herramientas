@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#101419">
+  <title>Fuego Centro</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+  <link rel="stylesheet" href="/styles.css?v=449">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin="" defer></script>
+  <script src="/analytics-config.js"></script>
+  <script src="/app.js?v=449" defer></script>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span class="logo">FC</span><div><b>Fuego Centro</b><small>buscador nacional · cobertura explicada · beta</small></div></div>
+  <div id="sourceChips" class="chips"><span class="chip stale">Conectando…</span></div>
+  <button id="refreshBtn" class="iconBtn" aria-label="Actualizar datos">↻</button>
+</header>
+<div id="degraded" class="degraded" role="status"></div>
+<main class="shell">
+  <section class="mapWrap">
+    <div class="mapTools">
+      <select id="riskFilter" aria-label="Filtrar por riesgo"><option value="all">Todos los riesgos</option><option value="critical">Crítico</option><option value="high">Alto</option><option value="medium">Medio</option><option value="watch">Vigilancia</option></select>
+      <select id="statusFilter" aria-label="Filtrar por estado"><option value="all">Todos los estados</option><option value="active">Activos</option><option value="stabilized">Estabilizados</option><option value="unconfirmed">Sin confirmar</option></select>
+      <label class="toggle"><input id="thermalToggle" type="checkbox" checked> Térmicas</label>
+      <button id="fitBtn">Ver todo</button>
+    </div>
+    <div id="map" aria-label="Mapa de incendios y señales térmicas"></div>
+    <div class="mapLegend"><span><i class="dot criticalBg"></i>Crítico</span><span><i class="dot highBg"></i>Alto</span><span><i class="dot mediumBg"></i>Medio</span><span><i class="dot watchBg"></i>Vigilancia</span><span><i class="dot thermalBg"></i>Térmica</span></div>
+  </section>
+  <aside class="panel">
+    <div class="warning"><b>En una emergencia prevalecen ES-Alert, 112 y las autoridades.</b></div>
+    <div id="updateNotice" class="updateNotice" role="status"></div>
+    <nav class="tabs" role="tablist" aria-label="Secciones">
+      <button class="tab on" role="tab" aria-selected="true" data-tab="places">Localidades</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="incidents">Incidentes</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="alerts">Alertas</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="news">Noticias</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="sources">Fuentes</button>
+    </nav>
+    <section id="places" class="pane on" role="tabpanel">
+      <div class="sectionTitle"><h2>Consultar cualquier localidad de España</h2><small>riesgo, distancia y cobertura</small></div>
+      <form id="placeSearchForm" class="search persistentSearch" autocomplete="off">
+        <label class="srOnly" for="placeQuery">Municipio, localidad o núcleo de población</label>
+        <input id="placeQuery" name="localidad" type="search" placeholder="Municipio, localidad o núcleo de población" autocomplete="off" autocapitalize="words" spellcheck="false">
+        <button id="placeSearch" class="primary" type="submit">Consultar</button>
+      </form>
+      <div id="placeResults"></div>
+      <div id="localReport"></div>
+      <div id="placesSaved"></div>
+    </section>
+    <section id="incidents" class="pane" role="tabpanel"></section>
+    <section id="alerts" class="pane" role="tabpanel"></section>
+    <section id="news" class="pane" role="tabpanel"></section>
+    <section id="sources" class="pane" role="tabpanel"></section>
+  </aside>
+</main>
+<dialog id="incidentDialog"><button class="dialogClose" id="dialogClose" aria-label="Cerrar ficha">✕</button><div id="incidentDetail"></div></dialog>
+</body>
+</html>
