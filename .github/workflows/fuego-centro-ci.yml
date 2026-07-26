@@ -2,7 +2,7 @@ name: Fuego Centro CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, fuego-centro-v4.5]
     paths:
       - 'fuego-centro-nacional/**'
       - '.github/workflows/fuego-centro-ci.yml'
@@ -38,8 +38,38 @@ jobs:
       - run: npm install --ignore-scripts
       - run: npm run test:source
 
+  browser-e2e:
+    name: Browser E2E
+    runs-on: ubuntu-latest
+    needs: source-integrity
+    defaults:
+      run:
+        working-directory: fuego-centro-nacional
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: fuego-centro-nacional/package-lock.json
+      - run: npm install --ignore-scripts
+      - run: npx playwright install --with-deps chromium
+      - name: Start local app
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/fuego-centro-http.log 2>&1 &
+          echo $! > /tmp/fuego-centro-http.pid
+      - run: npm run test:e2e
+      - name: Upload browser report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fuego-centro-playwright-report
+          path: fuego-centro-nacional/test-results
+          if-no-files-found: ignore
+
   production-smoke:
     name: Production smoke
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
     defaults:
       run:
