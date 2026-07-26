@@ -1,12 +1,16 @@
 {
   "name": "fuego-centro-nacional",
-  "version": "4.4.9",
+  "version": "4.5.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "npm run test:source && npm run test:production",
+    "test": "npm run test:source && npm run test:e2e && npm run test:production",
     "test:source": "node tests/source-integrity.mjs",
+    "test:e2e": "playwright test",
     "test:production": "node tests/production-smoke.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.54.1"
   },
   "engines": {
     "node": ">=20"
