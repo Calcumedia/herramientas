@@ -1,0 +1,2 @@
+Fuego Centro deployment verification.
+This file is intentionally harmless and confirms that commits inside the configured Root Directory trigger Vercel from the main branch.
