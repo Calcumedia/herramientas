@@ -1,0 +1,14 @@
+{
+  "name": "fuego-centro-nacional",
+  "version": "4.4.9",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "npm run test:source && npm run test:production",
+    "test:source": "node tests/source-integrity.mjs",
+    "test:production": "node tests/production-smoke.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
