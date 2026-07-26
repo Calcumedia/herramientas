@@ -38,6 +38,8 @@ assert.match(app,/window\.FC_APP=/);
 assert.match(app,/getLocalAssessment/);
 assert.match(v45,/report\.querySelector\('#smartLocalInsights'\)\)return/);
 assert.match(v46css,/\.preventionStatus/);
+assert.match(v46css,/\.v46Tools\{display:grid;grid-template-columns:minmax\(0,1fr\)/);
+assert.match(v46css,/\.v46Card\{width:100%;min-width:0/);
 assert.match(v46css,/\.historyList/);
 assert.match(v46css,/\.shareFeedback/);
 assert.match(v46css,/\.smartLocalPanel/);
