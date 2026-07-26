@@ -7,7 +7,7 @@ const root = new URL('../', import.meta.url).pathname;
 const required = [
   'index.html','styles.css','v45.css','v46.css','app.js','v45.js','v46.js','analytics-config.js','sw.js',
   'api/situation.js','api/geocode.js','api/reverse-geocode.js','api/health.js','api/fire-danger.js',
-  'playwright.config.mjs','tests/e2e.spec.mjs','vercel.json'
+  'playwright.config.mjs','tests/e2e.spec.mjs','tests/fire-danger-contract.mjs','vercel.json'
 ];
 for (const file of required) await access(join(root, file), constants.R_OK);
 
