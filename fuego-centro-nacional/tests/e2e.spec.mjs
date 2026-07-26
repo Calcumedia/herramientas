@@ -19,7 +19,13 @@ async function mockApis(page){
   await page.route('**/api/health**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({status:'ok'})}));
 }
 async function showMapOnMobile(page,testInfo){
-  if(testInfo.project.name.includes('mobile'))await page.locator('[data-mobile-view="map"]').click();
+  if(testInfo.project.name.includes('mobile')){
+    await page.locator('[data-mobile-view="map"]').click();
+    await page.waitForTimeout(100);
+  }
+}
+async function showReportOnMobile(page,testInfo){
+  if(testInfo.project.name.includes('mobile'))await page.locator('[data-mobile-view="report"]').click();
 }
 async function initialViewIsRestored(page){
   return page.evaluate(()=>{
@@ -35,19 +41,25 @@ test.beforeEach(async ({page})=>{
   await page.waitForFunction(()=>Boolean(window.__FC_MAP__));
 });
 
-test('busca una localidad y vuelve al centro al borrar',async({page})=>{
+test('busca una localidad y vuelve al centro al borrar',async({page},testInfo)=>{
   const input=page.locator('#placeQuery');
   await input.fill('Jerez');
   await page.locator('#placeSearch').click();
   await expect(page.locator('[data-pick]')).toContainText('Jerez de la Frontera');
   await page.locator('[data-pick]').click();
   await expect(page.locator('#localReport')).toContainText('Jerez de la Frontera');
+
+  await showMapOnMobile(page,testInfo);
   const searched=await page.evaluate(()=>{const c=window.__FC_MAP__.getCenter();return {lat:c.lat,zoom:window.__FC_MAP__.getZoom()}});
   expect(Math.abs(searched.lat-36.6817)).toBeLessThan(.1);
   expect(searched.zoom).toBe(10);
+
+  await showReportOnMobile(page,testInfo);
   await input.fill('');
-  await expect.poll(()=>initialViewIsRestored(page)).toBe(true);
   await expect(page.locator('#placeResults')).toBeEmpty();
+
+  await showMapOnMobile(page,testInfo);
+  await expect.poll(()=>initialViewIsRestored(page)).toBe(true);
 });
 
 test('el botón de vista inicial restaura el mapa',async({page},testInfo)=>{
