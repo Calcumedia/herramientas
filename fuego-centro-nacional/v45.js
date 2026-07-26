@@ -1,7 +1,7 @@
 (()=>{
   const INITIAL_CENTER=[40.4167,-3.7033];
   const INITIAL_ZOOM=6;
-  const state={lastDialogTrigger:null,locationMarker:null,situation:null};
+  const state={lastDialogTrigger:null,locationMarker:null};
   const $=s=>document.querySelector(s);
   const $$=s=>[...document.querySelectorAll(s)];
   const normalize=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
@@ -41,6 +41,11 @@
     try{localStorage.setItem('fc_mobile_view_v45',view)}catch{}
   }
 
+  function restoreLocationButton(){
+    const button=$('#locateBtn');
+    if(button){button.disabled=false;button.textContent='◎ Mi ubicación'}
+  }
+
   async function useLocation(){
     if(!navigator.geolocation){notice('Este navegador no permite consultar la ubicación.',true);return}
     const button=$('#locateBtn');
@@ -66,15 +71,15 @@
         let attempts=0;
         const selectFirst=setInterval(()=>{
           const first=$('#placeResults [data-pick]');
-          if(first){clearInterval(selectFirst);first.click();notice(`Mostrando el informe de ${place.name}.`)}
-          else if(++attempts>30){clearInterval(selectFirst);notice(`Ubicación próxima: ${place.name}. Selecciona el resultado para abrir el informe.`)}
+          if(first){clearInterval(selectFirst);first.click();notice(`Mostrando el informe de ${place.name}.`);restoreLocationButton()}
+          else if(++attempts>30){clearInterval(selectFirst);notice(`Ubicación próxima: ${place.name}. Selecciona el resultado para abrir el informe.`);restoreLocationButton()}
         },150);
-      }catch{notice('Se ha localizado tu posición en el mapa, pero no se pudo identificar automáticamente la localidad.',true)}
+      }catch{notice('Se ha localizado tu posición en el mapa, pero no se pudo identificar automáticamente la localidad.',true);restoreLocationButton()}
     },error=>{
       const messages={1:'No has concedido permiso para usar tu ubicación.',2:'No se ha podido determinar tu ubicación.',3:'La consulta de ubicación ha tardado demasiado.'};
       notice(messages[error.code]||'No se ha podido consultar tu ubicación.',true);
+      restoreLocationButton();
     },{enableHighAccuracy:false,timeout:10000,maximumAge:300000});
-    setTimeout(()=>{if(button){button.disabled=false;button.textContent='◎ Mi ubicación'}},11000);
   }
 
   function enhanceReport(){
@@ -114,11 +119,13 @@
   }
   function enhanceNews(){
     const pane=$('#news');
-    if(!pane||pane.dataset.v45==='1'||!pane.querySelector('article'))return;
-    pane.dataset.v45='1';
-    const cards=$$(' #news article.card');
+    if(!pane||pane.dataset.enhancing==='1')return;
+    const cards=$$('#news article.card');
+    if(!cards.length||cards.every(card=>card.dataset.v45==='1'))return;
+    pane.dataset.enhancing='1';
     const seen=new Set();
     cards.forEach(card=>{
+      card.dataset.v45='1';
       const title=card.querySelector('h3')?.textContent||'';
       const sourceLine=card.querySelector('p')?.textContent||'';
       const key=normalize(title).replace(/\b(hoy|directo|ultima hora|mapa|incendios|espana)\b/g,'').trim().slice(0,90);
@@ -136,6 +143,7 @@
     const visible=cards.filter(c=>!c.classList.contains('newsHidden')).length;
     const count=pane.querySelector('.sectionTitle small');
     if(count)count.textContent=`${visible} depuradas`;
+    queueMicrotask(()=>delete pane.dataset.enhancing);
   }
 
   function enhanceIncidentLabels(){
@@ -165,20 +173,23 @@
       if(next===null)return;
       event.preventDefault();tabs[next].focus();tabs[next].click();
     }));
-    document.addEventListener('click',e=>{
-      const tab=e.target.closest?.('.tab[role="tab"]');
+    document.addEventListener('click',event=>{
+      const tab=event.target.closest?.('.tab[role="tab"]');
       if(!tab)return;
-      tabs.forEach(t=>t.tabIndex=t===tab?0:-1);
+      tabs.forEach(item=>item.tabIndex=item===tab?0:-1);
     });
   }
 
   function bindDialogFocus(){
-    document.addEventListener('click',e=>{if(e.target.closest?.('[data-incident]'))state.lastDialogTrigger=e.target.closest('[data-incident]')},true);
+    document.addEventListener('click',event=>{if(event.target.closest?.('[data-incident]'))state.lastDialogTrigger=event.target.closest('[data-incident]')},true);
     $('#incidentDialog')?.addEventListener('close',()=>state.lastDialogTrigger?.focus());
   }
 
   function setupOffline(){
-    const banner=document.createElement('div');banner.className='offlineBanner';banner.setAttribute('role','status');banner.textContent='Sin conexión. Se muestran los últimos datos guardados y pueden estar desactualizados.';
+    const banner=document.createElement('div');
+    banner.className='offlineBanner';
+    banner.setAttribute('role','status');
+    banner.textContent='Sin conexión. Se muestran los últimos datos guardados y pueden estar desactualizados.';
     document.querySelector('.top')?.insertAdjacentElement('afterend',banner);
     const update=()=>banner.classList.toggle('on',!navigator.onLine);
     addEventListener('online',update);addEventListener('offline',update);update();
@@ -192,12 +203,13 @@
   function init(){
     $('#homeBtn')?.addEventListener('click',()=>resetMap());
     $('#locateBtn')?.addEventListener('click',useLocation);
-    $$('[data-mobile-view]').forEach(b=>b.addEventListener('click',()=>setMobileView(b.dataset.mobileView)));
+    $$('[data-mobile-view]').forEach(button=>button.addEventListener('click',()=>setMobileView(button.dataset.mobileView)));
     const saved=localStorage.getItem('fc_mobile_view_v45')||'report';setMobileView(saved);
-    const form=$('#placeSearchForm'),results=$('#placeResults');
+    const form=$('#placeSearchForm'),results=$('#placeResults'),input=$('#placeQuery');
     form?.addEventListener('submit',()=>results?.setAttribute('aria-busy','true'));
-    new MutationObserver(()=>results?.setAttribute('aria-busy','false')).observe(results,{childList:true,subtree:true});
-    $('#placeQuery')?.addEventListener('input',e=>{if(!e.target.value.trim())resetMap()});
+    if(results)new MutationObserver(()=>results.setAttribute('aria-busy','false')).observe(results,{childList:true,subtree:true});
+    input?.addEventListener('input',event=>{if(!event.target.value.trim())resetMap({clear:true})});
+    input?.addEventListener('keydown',event=>{if(event.key==='Escape')setTimeout(()=>resetMap({clear:true}),0)},true);
     bindTabs();bindDialogFocus();setupOffline();observeDynamicContent();
     setTimeout(()=>{enhanceReport();enhanceNews();enhanceIncidentLabels()},800);
   }
