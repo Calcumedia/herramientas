@@ -1,7 +1,7 @@
 {
-  "name": "Incendios España",
-  "short_name": "Incendios España",
-  "description": "Mapa de incendios forestales, alertas y situación por localidad en España.",
+  "name": "FuegoCerca",
+  "short_name": "FuegoCerca",
+  "description": "Consulta incendios, alertas oficiales, viento y situación cerca de cualquier localidad de España.",
   "lang": "es-ES",
   "start_url": "/",
   "display": "standalone",
