@@ -1,0 +1,55 @@
+name: Fuego Centro CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'fuego-centro-nacional/**'
+      - '.github/workflows/fuego-centro-ci.yml'
+  pull_request:
+    paths:
+      - 'fuego-centro-nacional/**'
+      - '.github/workflows/fuego-centro-ci.yml'
+  schedule:
+    - cron: '17 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fuego-centro-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  source-integrity:
+    name: Source integrity
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: fuego-centro-nacional
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: fuego-centro-nacional/package-lock.json
+      - run: npm install --ignore-scripts
+      - run: npm run test:source
+
+  production-smoke:
+    name: Production smoke
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: fuego-centro-nacional
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm install --ignore-scripts
+      - run: npm run test:production
+        env:
+          FUEGO_CENTRO_URL: https://fuego-centro-nacional.vercel.app
