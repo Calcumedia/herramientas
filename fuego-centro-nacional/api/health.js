@@ -6,7 +6,7 @@ export default async function handler(){
   const response=await fetch(`${UPSTREAM}/api/health`,{cache:'no-store'});
   if(!response.ok)throw Error(`Motor de datos HTTP ${response.status}`);
   const data=await response.json();
-  return new Response(JSON.stringify({...data,status:data.status==='ok'?'ok':'degraded',version:'4.7.0',dataEngineVersion:data.dataEngineVersion||data.version||'4.3.1',brand:'FuegoCerca',mapCenter:[40.4167,-3.7033],mapZoom:6,weatherEndpoint:true,fireDangerEndpoint:true,recentPlaceHistory:true,shareableLocalReport:true,offlineLocalSnapshot:true,smartLocalReport:true,localAttentionIsUnofficial:true,combinedIncidentTimeline:true}),{status:200,headers});
+  return new Response(JSON.stringify({...data,status:data.status==='ok'?'ok':'degraded',version:'4.7.0',dataEngineVersion:data.dataEngineVersion||data.version||'4.3.1',brand:'FuegoCerca',mapCenter:[40.4167,-3.7033],mapZoom:6,staticLocalitySearch:true,initialAutoFit:false,nationalCoverageDirectory:19,failedSources:Array.isArray(data.failedSources)?data.failedSources:[],weatherEndpoint:true,fireDangerEndpoint:true,recentPlaceHistory:true,shareableLocalReport:true,offlineLocalSnapshot:true,smartLocalReport:true,localAttentionIsUnofficial:true,combinedIncidentTimeline:true}),{status:200,headers});
  }catch(error){
   return new Response(JSON.stringify({status:'down',version:'4.7.0',brand:'FuegoCerca',error:String(error.message||error)}),{status:503,headers});
  }
