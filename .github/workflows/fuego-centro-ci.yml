@@ -2,7 +2,7 @@ name: Fuego Centro CI
 
 on:
   push:
-    branches: [main, fuego-centro-v4.5]
+    branches: [main, fuego-centro-v4.5, fuego-centro-v4.6]
     paths:
       - 'fuego-centro-nacional/**'
       - '.github/workflows/fuego-centro-ci.yml'
@@ -37,6 +37,7 @@ jobs:
           cache-dependency-path: fuego-centro-nacional/package-lock.json
       - run: npm install --ignore-scripts
       - run: npm run test:source
+      - run: npm run test:contract
 
   browser-e2e:
     name: Browser E2E
