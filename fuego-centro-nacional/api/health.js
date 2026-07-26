@@ -9,7 +9,7 @@ export default async function handler(){
     return new Response(JSON.stringify({
       ...data,
       status:data.status==='ok'?'ok':'degraded',
-      version:'4.5.0',
+      version:'4.6.0',
       dataEngineVersion:data.version||'4.3.1',
       nationalCoverageDirectory:19,
       mapCenter:[40.4167,-3.7033],
@@ -20,9 +20,14 @@ export default async function handler(){
       sameOriginGeolocation:true,
       mobileMapReportMode:true,
       accessibleTabs:true,
-      browserE2E:true
+      browserE2E:true,
+      fireDangerEndpoint:true,
+      recentPlaceHistory:true,
+      shareableLocalReport:true,
+      offlineLocalSnapshot:true,
+      exactAemetLocalLevel:false
     }),{status:200,headers});
   }catch(error){
-    return new Response(JSON.stringify({status:'down',version:'4.5.0',error:String(error.message||error)}),{status:503,headers});
+    return new Response(JSON.stringify({status:'down',version:'4.6.0',error:String(error.message||error)}),{status:503,headers});
   }
 }
