@@ -1,0 +1,10 @@
+{
+  "name": "Incendios España",
+  "short_name": "Incendios España",
+  "description": "Mapa de incendios forestales, alertas y situación por localidad en España.",
+  "lang": "es-ES",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#101419",
+  "theme_color": "#101419"
+}
