@@ -18,6 +18,12 @@ async function mockApis(page){
   await page.route('**/api/reverse-geocode**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({result:jerez})}));
   await page.route('**/api/health**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({status:'ok'})}));
 }
+async function showMapOnMobile(page,testInfo){
+  if(testInfo.project.name.includes('mobile'))await page.locator('[data-mobile-view="map"]').click();
+}
+async function initialViewIsRestored(page){
+  return page.evaluate(()=>{const c=window.__FC_MAP__.getCenter();return Math.abs(c.lat-40.4167)<.0001&&Math.abs(c.lng+3.7033)<.0001&&window.__FC_MAP__.getZoom()===6});
+}
 
 test.beforeEach(async ({page})=>{
   await mockApis(page);
@@ -33,20 +39,23 @@ test('busca una localidad y vuelve al centro al borrar',async({page})=>{
   await expect(page.locator('[data-pick]')).toContainText('Jerez de la Frontera');
   await page.locator('[data-pick]').click();
   await expect(page.locator('#localReport')).toContainText('Jerez de la Frontera');
-  const searched=await page.evaluate(()=>{const c=window.__FC_MAP__.getCenter();return {lat:c.lat,lon:c.lng,zoom:window.__FC_MAP__.getZoom()}});
+  const searched=await page.evaluate(()=>{const c=window.__FC_MAP__.getCenter();return {lat:c.lat,zoom:window.__FC_MAP__.getZoom()}});
   expect(Math.abs(searched.lat-36.6817)).toBeLessThan(.1);
   expect(searched.zoom).toBe(10);
   await input.fill('');
-  await expect.poll(()=>page.evaluate(()=>{const c=window.__FC_MAP__.getCenter();return [c.lat,c.lng,window.__FC_MAP__.getZoom()]})).toEqual([40.4167,-3.7033,6]);
+  await expect.poll(()=>initialViewIsRestored(page)).toBe(true);
+  await expect(page.locator('#placeResults')).toBeEmpty();
 });
 
-test('el botón de vista inicial restaura el mapa',async({page})=>{
+test('el botón de vista inicial restaura el mapa',async({page},testInfo)=>{
+  await showMapOnMobile(page,testInfo);
   await page.evaluate(()=>window.__FC_MAP__.setView([36.7,-6.1],12));
   await page.locator('#homeBtn').click();
-  await expect.poll(()=>page.evaluate(()=>{const c=window.__FC_MAP__.getCenter();return [c.lat,c.lng,window.__FC_MAP__.getZoom()]})).toEqual([40.4167,-3.7033,6]);
+  await expect.poll(()=>initialViewIsRestored(page)).toBe(true);
 });
 
-test('mi ubicación genera una consulta local sin enviar coordenadas a analítica',async({context,page})=>{
+test('mi ubicación genera una consulta local sin enviar coordenadas a analítica',async({context,page},testInfo)=>{
+  await showMapOnMobile(page,testInfo);
   await context.grantPermissions(['geolocation']);
   await context.setGeolocation({latitude:36.6817,longitude:-6.1372});
   await page.locator('#locateBtn').click();
