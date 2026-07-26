@@ -1,11 +1,12 @@
 {
-  "name": "fuego-centro-nacional",
-  "version": "4.5.0",
+  "name": "fuegocerca",
+  "version": "4.7.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "npm run test:source && npm run test:e2e && npm run test:production",
+    "test": "npm run test:source && npm run test:contract && npm run test:e2e && npm run test:production",
     "test:source": "node tests/source-integrity.mjs",
+    "test:contract": "node tests/fire-danger-contract.mjs",
     "test:e2e": "playwright test",
     "test:production": "node tests/production-smoke.mjs"
   },

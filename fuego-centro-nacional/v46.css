@@ -1,0 +1,81 @@
+.v46Tools{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}.v46Card{border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:14px;background:#161c23}.v46Card h3{margin:0 0 6px;font-size:15px}.v46Card p{margin:6px 0;color:#c8d0d8;font-size:13px;line-height:1.45}.v46Card .actions{margin-top:10px}.preventionStatus{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.preventionStatus>div{border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:10px;background:#10151b}.preventionStatus small{display:block;color:#98a4af;margin-bottom:4px}.preventionStatus strong{font-size:13px}.preventionDisclaimer{border-left:4px solid #f3c548;padding:9px 10px;background:rgba(243,197,72,.08);border-radius:8px;margin-top:10px}.historyList{display:grid;gap:8px;margin-top:10px}.historyItem{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:9px;background:#10151b}.historyItem button{flex:0 0 auto}.historyItem small{display:block;color:#98a4af;margin-top:2px}.shareFeedback{min-height:1.3em;color:#9fd4ff;font-size:12px;margin-top:6px}.offlineSnapshot{display:none;border:1px solid rgba(243,197,72,.35);background:rgba(243,197,72,.08);padding:10px 14px;font-size:13px}.offlineSnapshot.on{display:block}.aemetLevels{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}.aemetLevels span{font-size:10px;padding:4px 6px;border-radius:999px;border:1px solid rgba(255,255,255,.12)}.historyEmpty{color:#98a4af;font-size:13px}@media(max-width:760px){.v46Tools{grid-template-columns:1fr}.preventionStatus{grid-template-columns:1fr}.historyItem{align-items:flex-start}}
+
+.smartLocalLoading{padding:12px;color:#98a4af;font-size:13px}
+.smartLocalPanel{display:grid;gap:12px;margin:14px 0}
+.attentionPanel{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:14px;border:1px solid rgba(121,189,255,.34);border-radius:14px;background:linear-gradient(135deg,rgba(121,189,255,.13),rgba(16,21,27,.78))}
+.attentionPanel>div{min-width:0}
+.attentionPanel small{display:block;margin-bottom:5px;color:#b5c0ca;font-size:10px;font-weight:800;letter-spacing:.08em}
+.attentionPanel h4{margin:0 0 5px;font-size:20px}
+.attentionPanel p{margin:0;color:#e2e8ee;font-size:13px;line-height:1.45}
+.attentionPanel>span{flex:0 0 auto;border:1px solid currentColor;border-radius:999px;padding:5px 8px;color:#9fd4ff;font-size:9px;font-weight:900;letter-spacing:.08em}
+.attentionPanel.critical{border-color:rgba(255,112,112,.55);background:linear-gradient(135deg,rgba(255,112,112,.15),rgba(16,21,27,.82))}
+.attentionPanel.critical>span{color:#ff9999}
+.attentionPanel.high{border-color:rgba(255,173,102,.5);background:linear-gradient(135deg,rgba(255,173,102,.14),rgba(16,21,27,.82))}
+.attentionPanel.high>span{color:#ffc08a}
+.attentionPanel.medium{border-color:rgba(243,197,72,.45);background:linear-gradient(135deg,rgba(243,197,72,.13),rgba(16,21,27,.82))}
+.attentionPanel.medium>span{color:#f3d979}
+.attentionPanel.clear{border-color:rgba(94,207,151,.4);background:linear-gradient(135deg,rgba(94,207,151,.11),rgba(16,21,27,.82))}
+.attentionPanel.clear>span{color:#8be0b5}
+.attentionPanel.limited{border-color:rgba(174,184,194,.38)}
+.attentionDisclaimer,.distanceDisclaimer{margin:0;color:#b8c2cc;font-size:12px;line-height:1.5}
+.attentionDisclaimer{padding:9px 11px;border-left:3px solid #79bdff;background:rgba(121,189,255,.06);border-radius:7px}
+.smartDistances{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.smartDistance{display:flex;min-width:0;min-height:150px;flex-direction:column;padding:11px;border:1px solid rgba(255,255,255,.11);border-radius:12px;background:#10151b}
+.smartDistance.official{border-top:3px solid #79bdff}
+.smartDistance.preliminary{border-top:3px dashed #f3c548}
+.smartDistance.thermal{border-top:3px dotted #c9a9ff}
+.smartDistanceHead{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.smartDistanceHead span{color:#aeb9c4;font-size:10px;font-weight:800;line-height:1.25;text-transform:uppercase}
+.smartDistanceHead b{flex:0 0 auto;color:#fff;font-size:14px}
+.smartDistance h5{margin:12px 0 4px;font-size:14px;line-height:1.3}
+.smartDistance p{margin:0 0 6px;color:#c2ccd5;font-size:11px;line-height:1.4}
+.smartDistance small{display:block;margin-top:auto;color:#8e9aa6;font-size:10px}
+.smartDistance a{margin-top:8px;font-size:11px}
+.smartTimelineSection{padding:13px;border:1px solid rgba(255,255,255,.11);border-radius:14px;background:#121820}
+.smartTimelineHead{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.smartTimelineHead small{display:block;margin-bottom:4px;color:#9aa7b3;font-size:9px;font-weight:800;letter-spacing:.08em}
+.smartTimelineHead h4{margin:0;font-size:16px}
+.smartTimelineIntro{margin:7px 0 12px;color:#aeb9c4;font-size:11px}
+.smartTimeline{display:grid;gap:0;margin:0;padding:0;list-style:none}
+.smartTimeline li{position:relative;display:grid;grid-template-columns:16px 1fr;gap:10px;padding-bottom:13px}
+.smartTimeline li:not(:last-child)::before{position:absolute;top:12px;bottom:0;left:5px;width:1px;background:rgba(255,255,255,.15);content:""}
+.timelineDot{position:relative;z-index:1;width:11px;height:11px;margin-top:4px;border:2px solid #79bdff;border-radius:50%;background:#121820}
+.timelineDot.alert{border-color:#ffad66;background:#ffad66}
+.timelineDot.evidence{border-color:#f3c548}
+.timelineDot.publication{border-color:#9fd4ff}
+.smartTimeline time,.smartTimeline b,.smartTimeline small{display:block}
+.smartTimeline time{color:#9aa7b3;font-size:10px}
+.smartTimeline b{margin:2px 0;color:#e9eef3;font-size:12px}
+.smartTimeline small{color:#aeb9c4;font-size:10px}
+.smartTimelineEmpty{padding:10px;color:#98a4af;font-size:12px}
+.localContextPanel{display:grid;gap:10px;margin:14px 0;padding:13px;border:1px solid rgba(255,255,255,.11);border-radius:14px;background:#121820}
+.localContextHead{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.localContextHead small{display:block;margin-bottom:4px;color:#9aa7b3;font-size:9px;font-weight:800;letter-spacing:.08em}
+.localContextHead h4{margin:0;font-size:16px}
+.modelTag{flex:0 0 auto;border:1px solid rgba(121,189,255,.4);border-radius:999px;padding:5px 8px;color:#9fd4ff;font-size:9px;font-weight:800;text-transform:uppercase}
+.weatherGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.weatherGrid>div{display:flex;min-width:0;flex-direction:column;padding:10px;border:1px solid rgba(255,255,255,.1);border-radius:10px;background:#0e141a}
+.weatherGrid small{color:#97a4b0;font-size:10px}
+.weatherGrid strong{margin:3px 0;color:#fff;font-size:17px}
+.weatherGrid span{color:#b6c0ca;font-size:10px;line-height:1.35}
+.weatherInterpretation{padding:9px 10px;border-left:3px solid #79bdff;border-radius:7px;background:rgba(121,189,255,.06);color:#c7d0d9;font-size:11px;line-height:1.45}
+.weatherSource{color:#99a6b1;font-size:10px;line-height:1.4}
+.weatherUnavailable{padding:10px;border:1px solid rgba(243,197,72,.3);border-radius:10px;background:rgba(243,197,72,.07)}
+.weatherUnavailable p{margin:5px 0 0;color:#c7d0d9;font-size:11px}
+.operationalLinks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.operationalLinks>div{padding:10px;border:1px solid rgba(255,255,255,.1);border-radius:10px;background:#0e141a}
+.operationalLinks b{display:block;font-size:12px}
+.operationalLinks p{margin:5px 0;color:#aeb8c2;font-size:10px;line-height:1.45}
+.operationalLinks a{font-size:11px}
+.reportShare{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px}
+.reportShare .shareFeedback{flex:1 1 180px;margin:0}
+
+@media(max-width:980px){.smartDistances{grid-template-columns:1fr}.smartDistance{min-height:0}}
+@media(max-width:760px){
+  .attentionPanel,.smartTimelineHead{align-items:stretch;flex-direction:column}
+  .attentionPanel>span{align-self:flex-start}
+  .smartTimelineHead button{align-self:flex-start}
+  .localContextHead{align-items:stretch;flex-direction:column}
+  .modelTag{align-self:flex-start}
+  .weatherGrid,.operationalLinks{grid-template-columns:1fr}
+}

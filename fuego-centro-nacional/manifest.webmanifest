@@ -1,0 +1,10 @@
+{
+  "name": "FuegoCerca",
+  "short_name": "FuegoCerca",
+  "description": "Consulta incendios, alertas oficiales, viento y situación cerca de cualquier localidad de España.",
+  "lang": "es-ES",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#101419",
+  "theme_color": "#101419"
+}

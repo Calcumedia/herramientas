@@ -1,10 +1,10 @@
 import { strict as assert } from 'node:assert';
 
-const origin = process.env.FUEGO_CENTRO_URL || 'https://fuego-centro-nacional.vercel.app';
+const origin = process.env.FUEGOCERCA_URL || 'https://fuego-centro-nacional.vercel.app';
 
 async function get(path, expectedType) {
   const response = await fetch(`${origin}${path}`, {
-    headers: { 'user-agent': 'FuegoCentro-CI/1.0' },
+    headers: { 'user-agent': 'FuegoCerca-CI/1.0' },
     redirect: 'follow',
   });
   assert.equal(response.status, 200, `${path} returned ${response.status}`);
