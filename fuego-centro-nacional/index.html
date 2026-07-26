@@ -55,7 +55,7 @@
       <div class="sectionTitle"><h2>Consultar cualquier localidad de España</h2><small>riesgo, distancia y cobertura</small></div>
       <form id="placeSearchForm" class="search persistentSearch" autocomplete="off">
         <label class="srOnly" for="placeQuery">Municipio, localidad o núcleo de población</label>
-        <input id="placeQuery" name="localidad" type="search" placeholder="Municipio, localidad o núcleo de población" autocomplete="off" autocapitalize="words" spellcheck="false" aria-describedby="searchHelp">
+        <input id="placeQuery" name="localidad" type="search" placeholder="Municipio, localidad o núcleo de población" autocomplete="off" autocapitalize="words" spellcheck="false" aria-describedby="searchHelp" oninput="if(!this.value.trim()){document.getElementById('placeResults').innerHTML='';document.getElementById('localReport').innerHTML='';document.getElementById('homeBtn').click()}" onsearch="if(!this.value.trim())document.getElementById('homeBtn').click()" onkeydown="if(event.key==='Escape')setTimeout(()=>document.getElementById('homeBtn').click(),0)">
         <button id="placeSearch" class="primary" type="submit">Consultar</button>
       </form>
       <p id="searchHelp" class="searchHelp">Busca una localidad o utiliza «Mi ubicación». Las coordenadas no se envían a servicios de analítica.</p>
