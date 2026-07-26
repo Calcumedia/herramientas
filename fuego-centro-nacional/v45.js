@@ -9,7 +9,7 @@
   function map(){return window.__FC_MAP__||null}
   function resetMap({clear=false}={}){
     const m=map();
-    if(m)m.setView(INITIAL_CENTER,INITIAL_ZOOM,{animate:false});
+    if(m){m.stop();m.setView(INITIAL_CENTER,INITIAL_ZOOM,{animate:false})}
     if(clear){
       const input=$('#placeQuery');
       if(input)input.value='';
