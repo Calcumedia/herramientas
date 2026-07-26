@@ -119,6 +119,13 @@ test('mi ubicación genera una consulta local',async({context,page},testInfo)=>{
 
 test('AEMET se muestra como prevención y no como incendio confirmado',async({page})=>{
   await consultJerez(page);
+  const [toolsBox,preventionBox]=await Promise.all([
+    page.locator('.v46Tools').boundingBox(),
+    page.locator('#preventionPanel').boundingBox()
+  ]);
+  expect(toolsBox).not.toBeNull();
+  expect(preventionBox).not.toBeNull();
+  expect(Math.abs(preventionBox.width-toolsBox.width)).toBeLessThanOrEqual(1);
   await expect(page.locator('#preventionStatus')).toContainText('AEMET');
   await expect(page.locator('#preventionStatus')).toContainText('Jerez de la Frontera');
   await expect(page.locator('#preventionStatus')).toContainText('Integración automática pendiente de credencial');
