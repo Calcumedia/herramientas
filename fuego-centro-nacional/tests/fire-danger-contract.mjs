@@ -9,7 +9,7 @@ try{
   assert.equal(valid.status,200);
   assert.match(valid.headers.get('content-type')||'',/application\/json/);
   const data=await valid.json();
-  assert.equal(data.version,'4.6.0');
+  assert.equal(data.version,'4.7.0');
   assert.equal(data.source,'AEMET');
   assert.equal(data.configured,false);
   assert.equal(data.exactLocalLevel,false);

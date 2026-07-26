@@ -34,10 +34,20 @@
     if(!report)return null;
     const name=report.querySelector('h3')?.textContent?.trim();
     if(!name)return null;
-    const badge=report.querySelector('.reportMeta .badge')?.textContent?.trim()||'Sin prioridad calculada';
-    const lead=report.querySelector(':scope > p b')?.textContent?.trim()||'';
+    const place=window.FC_APP?.getSelectedPlace?.();
+    const assessment=window.FC_APP?.getLocalAssessment?.(place,50)||null;
+    const attention=attentionInfo(assessment);
     const center=window.__FC_MAP__?.getCenter?.();
-    return {name,badge,lead,lat:finite(center?.lat)?center.lat:null,lon:finite(center?.lng)?center.lng:null,time:new Date().toISOString(),html:report.outerHTML};
+    return {
+      name,
+      badge:`Atención del panel: ${attention.label}`,
+      lead:assessment?.lead||'Consulta informativa de FuegoCerca.',
+      lat:finite(place?.lat)?place.lat:finite(center?.lat)?center.lat:null,
+      lon:finite(place?.lon)?place.lon:finite(center?.lng)?center.lng:null,
+      time:new Date().toISOString(),
+      assessment,
+      html:report.outerHTML
+    };
   }
 
   function saveSnapshot(report){if(report)try{localStorage.setItem(SNAPSHOT_KEY,JSON.stringify(report))}catch{}}
@@ -57,6 +67,70 @@
     if(!finite(degrees))return 'Dirección no disponible';
     const points=['N','NE','E','SE','S','SO','O','NO'];
     return `${points[Math.round(((degrees%360)+360)%360/45)%8]} · ${Math.round(degrees)}°`;
+  }
+
+  function attentionInfo(assessment){
+    const options={
+      critical:{label:'inmediata',title:'Atención inmediata',summary:'Existe una alerta oficial aplicable a la localidad en los datos recuperados.'},
+      high:{label:'alta',title:'Atención alta',summary:'Hay una alerta o un incidente oficial prioritario en el entorno.'},
+      medium:{label:'elevada',title:'Atención elevada',summary:'Hay información oficial relevante o una señal cercana que conviene comprobar.'},
+      watch:{label:'de seguimiento',title:'Seguimiento',summary:'Hay actividad en el entorno ampliado que conviene vigilar.'},
+      clear:{label:'normal',title:'Sin señales prioritarias',summary:'Las fuentes integradas no muestran una señal prioritaria cercana.'},
+      limited:{label:'limitada por cobertura',title:'Cobertura limitada',summary:'No hay suficiente cobertura oficial directa para una conclusión firme.'}
+    };
+    return {...(options[assessment?.level]||options.limited),tone:assessment?.level||'limited'};
+  }
+
+  function localTime(value){
+    const date=new Date(value);
+    return Number.isNaN(date.getTime())?'Hora no disponible':date.toLocaleString('es-ES',{dateStyle:'short',timeStyle:'short'});
+  }
+
+  function distanceCard(item,{kind,label,empty}){
+    if(!item)return`<article class="smartDistance ${kind}"><div class="smartDistanceHead"><span>${escapeHtml(label)}</span><b>Sin registro</b></div><p>${escapeHtml(empty)}</p></article>`;
+    const distance=finite(item._km)?`${item._km.toFixed(1)} km`:'Distancia no disponible';
+    const status=item.status?` · ${escapeHtml(item.status)}`:'';
+    const count=kind==='thermal'&&item.count?` · ${escapeHtml(item.count)} puntos agregados`:'';
+    const url=item.primaryUrl||item.url;
+    return`<article class="smartDistance ${kind}"><div class="smartDistanceHead"><span>${escapeHtml(label)}</span><b>${distance}</b></div><h5>${escapeHtml(item.name||'Registro sin nombre')}</h5><p>${escapeHtml(item.area||'')}${status}${count}</p><small>Publicado: ${escapeHtml(localTime(item.publishedAt))}</small>${url?`<a href="${escapeHtml(url)}" target="_blank" rel="noopener">Comprobar fuente ↗</a>`:''}</article>`;
+  }
+
+  function combinedTimeline(incident){
+    if(!incident)return[];
+    const events=[];
+    const add=(at,label,source,kind)=>{
+      const timestamp=Date.parse(at);
+      if(!Number.isFinite(timestamp)||!label)return;
+      events.push({at:new Date(timestamp).toISOString(),timestamp,label:String(label),source:String(source||'Fuente oficial'),kind});
+    };
+    for(const event of incident.timeline||[])add(event.at,event.status||event.label,event.source,'state');
+    for(const evidence of incident.evidence||[])add(evidence.publishedAt||evidence.observedAt,evidence.status||evidence.summary||'Evidencia publicada',evidence.source,'evidence');
+    for(const alert of incident.alerts||[])add(alert.publishedAt,alert.type||alert.text||'Aviso operativo',alert.source||'Aviso oficial asociado','alert');
+    add(incident.publishedAt,incident.status?`Estado publicado: ${incident.status}`:'Última publicación del incidente',incident.primarySource||incident.source||'Fuente oficial','publication');
+    const unique=new Map();
+    for(const event of events){
+      const key=`${event.at}|${event.label.toLocaleLowerCase('es')}|${event.source.toLocaleLowerCase('es')}`;
+      if(!unique.has(key))unique.set(key,event);
+    }
+    return [...unique.values()].sort((a,b)=>b.timestamp-a.timestamp).slice(0,8);
+  }
+
+  function timelineHtml(incident){
+    if(!incident)return'<div class="smartTimelineEmpty">No hay un incidente oficial georreferenciado para construir una cronología local.</div>';
+    const events=combinedTimeline(incident);
+    const rows=events.map(event=>`<li data-timeline-at="${escapeHtml(event.at)}"><span class="timelineDot ${escapeHtml(event.kind)}" aria-hidden="true"></span><div><time datetime="${escapeHtml(event.at)}">${escapeHtml(localTime(event.at))}</time><b>${escapeHtml(event.label)}</b><small>${escapeHtml(event.source)}</small></div></li>`).join('');
+    return`<div class="smartTimelineHead"><div><small>CRONOLOGÍA DEL INCIDENTE OFICIAL</small><h4>${escapeHtml(incident.name)}</h4></div>${incident.id?`<button type="button" class="secondary" data-smart-incident="${escapeHtml(incident.id)}">Ver ficha completa</button>`:''}</div><p class="smartTimelineIntro">Cronología combinada de estados, evidencias y avisos disponibles. Más reciente primero.</p>${rows?`<ol class="smartTimeline">${rows}</ol>`:'<div class="smartTimelineEmpty">La fuente no aporta todavía cambios fechados para este incidente.</div>'}`;
+  }
+
+  function ensureSmartLocalInsights(report){
+    const host=$('#smartLocalInsights');
+    const assessment=report?.assessment;
+    if(!host||!assessment)return;
+    const attention=attentionInfo(assessment);
+    const key=[report.name,assessment.level,assessment.official?.id,assessment.official?.publishedAt,assessment.prelim?.id,assessment.th?.id].join('|');
+    if(host.dataset.renderedFor===key)return;
+    host.dataset.renderedFor=key;
+    host.innerHTML=`<section id="smartLocalPanel" class="smartLocalPanel" aria-labelledby="smartLocalTitle"><div class="attentionPanel ${escapeHtml(attention.tone)}"><div><small>ORIENTACIÓN CALCULADA POR FUEGOCERCA</small><h4 id="smartLocalTitle">${escapeHtml(attention.title)}</h4><p>${escapeHtml(assessment.lead||attention.summary)}</p></div><span>NO OFICIAL</span></div><p class="attentionDisclaimer"><b>Nivel de atención local:</b> ayuda a ordenar la información disponible. No es un nivel oficial, no equivale al riesgo de incendio y no sustituye instrucciones de emergencia.</p><div class="smartDistances">${distanceCard(assessment.official,{kind:'official',label:'Incidente oficial más próximo',empty:'Sin incidente oficial georreferenciado en las fuentes integradas.'})}${distanceCard(assessment.prelim,{kind:'preliminary',label:'Señal preliminar más próxima',empty:'Sin señal preliminar georreferenciada.'})}${distanceCard(assessment.th,{kind:'thermal',label:'Señal térmica más próxima',empty:'Sin señal térmica georreferenciada.'})}</div><div class="distanceDisclaimer">Distancias en línea recta desde la localidad hasta el punto de referencia publicado; no son distancias al perímetro del incendio.</div><section class="smartTimelineSection" aria-label="Línea temporal del incidente oficial más próximo">${timelineHtml(assessment.official)}</section></section>`;
   }
 
   function coordsForContext(){
@@ -169,7 +243,7 @@
     clearTimeout(reportTimer);
     reportTimer=setTimeout(()=>{
       let report=currentReport();if(!report)return;
-      ensureLocalContext();ensureShareControls();
+      ensureSmartLocalInsights(report);ensureLocalContext();ensureShareControls();
       report=currentReport();
       saveHistory({name:report.name,time:report.time,lat:report.lat,lon:report.lon});
       loadWeather(report);loadDanger();saveSnapshot(report);
@@ -180,11 +254,15 @@
     renderHistory();setOfflineState();loadDanger();
     $('#refreshDangerBtn')?.addEventListener('click',loadDanger);
     $('#recentPlaces')?.addEventListener('click',event=>{const button=event.target.closest('[data-history]');if(button)openHistory(Number(button.dataset.history))});
-    $('#localReport')?.addEventListener('click',event=>{if(event.target.closest('#shareReportBtn'))shareCurrentReport()});
+    $('#localReport')?.addEventListener('click',event=>{
+      if(event.target.closest('#shareReportBtn'))shareCurrentReport();
+      const incidentButton=event.target.closest('[data-smart-incident]');
+      if(incidentButton)window.openIncident?.(incidentButton.dataset.smartIncident);
+    });
     const localReport=$('#localReport');if(localReport)new MutationObserver(syncReport).observe(localReport,{childList:true,subtree:true});
     addEventListener('offline',setOfflineState);addEventListener('online',setOfflineState);openDeepLink();
   }
 
-  window.FC46={getHistory,loadDanger,loadWeather,currentReport,setOfflineState,shareCurrentReport,openPlace};
+  window.FC46={getHistory,loadDanger,loadWeather,currentReport,setOfflineState,shareCurrentReport,openPlace,combinedTimeline,ensureSmartLocalInsights};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();
 })();

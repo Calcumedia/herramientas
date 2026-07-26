@@ -38,7 +38,7 @@ export default async function handler(request){
   const area=areaFor(lat,lon);
   const apiKey=typeof process!=='undefined'&&process.env?String(process.env.AEMET_API_KEY||'').trim():'';
   const base={
-    version:'4.6.0',
+    version:'4.7.0',
     source:'AEMET',
     attribution:'© AEMET',
     area,

@@ -86,6 +86,7 @@
     const report=$('#localReport .report');
     if(!report||report.dataset.v45==='1')return;
     report.dataset.v45='1';
+    if(report.querySelector('#smartLocalInsights'))return;
     const badge=report.querySelector('.reportMeta .badge');
     if(badge)badge.dataset.panelPriority='true';
     const text=report.textContent||'';

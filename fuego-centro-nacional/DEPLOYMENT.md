@@ -31,7 +31,7 @@ npm run test:source
 npm run test:production
 ```
 
-El workflow `Fuego Centro CI` ejecuta estas comprobaciones automáticamente.
+El workflow `FuegoCerca CI` ejecuta estas comprobaciones automáticamente.
 
 ## Contratos críticos
 

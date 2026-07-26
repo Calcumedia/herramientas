@@ -1,6 +1,6 @@
-# Fuego Centro Nacional
+# FuegoCerca
 
-Panel nacional de seguimiento de incendios forestales con búsqueda por localidades, fuentes oficiales, señales preliminares y actividad térmica.
+Herramienta nacional para consultar la situación de incendios forestales cerca de una localidad, con fuentes oficiales, señales preliminares, actividad térmica y contexto meteorológico.
 
 ## Producción
 
@@ -16,7 +16,9 @@ Panel nacional de seguimiento de incendios forestales con búsqueda por localida
 - La carga inicial no ejecuta `fitBounds`; el encuadre completo solo se activa con **Ver todo**.
 - Las actualizaciones conservan pestaña, filtros, búsqueda y posición del mapa.
 - Se mantienen separados los incidentes oficiales, las señales preliminares y los grupos térmicos.
-- Las API `/api/situation`, `/api/geocode` y `/api/health` deben responder correctamente.
+- Las API `/api/situation`, `/api/geocode`, `/api/weather`, `/api/fire-danger` y `/api/health` deben responder correctamente.
+- El nivel de atención local debe presentarse siempre como orientación calculada por FuegoCerca, nunca como nivel oficial ni como estimación de riesgo.
+- Las distancias deben distinguir incidente oficial, señal preliminar y señal térmica, y aclarar que se miden hasta puntos de referencia.
 
 ## Desarrollo y pruebas
 
