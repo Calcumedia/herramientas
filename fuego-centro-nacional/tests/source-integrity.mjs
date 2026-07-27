@@ -12,7 +12,7 @@ const required = [
 ];
 for (const file of required) await access(join(root, file), constants.R_OK);
 
-const [html,app,v45,v46css,v46,health,danger,dangerMap,perimeters,roads,situation,weather,pkg,lock,manifest,readme,deployment] = await Promise.all([
+const [html,app,v45,v46css,v46,health,danger,dangerMap,perimeters,roads,situation,weather,pkg,lock,manifest,readme,deployment,vercelConfig] = await Promise.all([
   readFile(join(root,'index.html'),'utf8'),
   readFile(join(root,'app.js'),'utf8'),
   readFile(join(root,'v45.js'),'utf8'),
@@ -29,7 +29,8 @@ const [html,app,v45,v46css,v46,health,danger,dangerMap,perimeters,roads,situatio
   readFile(join(root,'package-lock.json'),'utf8'),
   readFile(join(root,'manifest.webmanifest'),'utf8'),
   readFile(join(root,'README.md'),'utf8'),
-  readFile(join(root,'DEPLOYMENT.md'),'utf8')
+  readFile(join(root,'DEPLOYMENT.md'),'utf8'),
+  readFile(join(root,'vercel.json'),'utf8')
 ]);
 
 for (const id of ['preventionPanel','recentPlaces','offlineSnapshotNotice']) assert.match(html,new RegExp(`id="${id}"`));
@@ -103,9 +104,9 @@ assert.match(health,/effisAutomaticPrewarm:true/);
 assert.match(health,/effisServerTiming:true/);
 assert.match(health,/effisStaleFallbackHours:24/);
 assert.match(health,/effisAutoAssociation:false/);
-assert.match(health,/version:'4\.9\.2'/);
+assert.match(health,/version:'4\.9\.3'/);
 assert.match(danger,/AEMET/);
-assert.match(danger,/version:'4\.9\.2'/);
+assert.match(danger,/version:'4\.9\.3'/);
 assert.match(danger,/exactLocalLevel:true/);
 assert.match(danger,/timeline\/riesgo/);
 assert.match(dangerMap,/imagen\/RIESGO/);
@@ -118,18 +119,21 @@ assert.match(perimeters,/FETCH_TIMEOUT_MS/);
 assert.match(perimeters,/getCache/);
 assert.match(perimeters,/waitUntil/);
 assert.match(perimeters,/maxDuration:60/);
+assert.equal(JSON.parse(vercelConfig).functions['api/fire-perimeters.js'].maxDuration,60);
+assert.match(perimeters,/response\.statusCode=webResponse\.status/);
+assert.match(perimeters,/response\.end\(await webResponse\.text\(\)\)/);
 assert.match(perimeters,/RUNTIME_CACHE_KEY/);
 assert.match(perimeters,/runtime-stale/);
 assert.match(perimeters,/server-timing/);
 assert.match(perimeters,/ageCategory/);
 assert.match(perimeters,/associationStatus:'not-linked'/);
 assert.match(perimeters,/No representa el frente de llama/);
-assert.match(situation,/data\.version='4\.9\.2'/);
-assert.match(weather,/version:'4\.9\.2'/);
-assert.equal(JSON.parse(pkg).version,'4.9.2');
+assert.match(situation,/data\.version='4\.9\.3'/);
+assert.match(weather,/version:'4\.9\.3'/);
+assert.equal(JSON.parse(pkg).version,'4.9.3');
 assert.equal(JSON.parse(pkg).name,'fuegocerca');
 assert.equal(JSON.parse(pkg).dependencies['@vercel/functions'],'^3.7.6');
-assert.equal(JSON.parse(lock).version,'4.9.2');
+assert.equal(JSON.parse(lock).version,'4.9.3');
 assert.equal(JSON.parse(lock).name,'fuegocerca');
 assert.equal(JSON.parse(manifest).name,'FuegoCerca');
 
@@ -138,4 +142,5 @@ for(const [name,content] of Object.entries({html,v46,health,manifest,readme,depl
   assert.doesNotMatch(content,oldBrand,`${name} no debe reintroducir una marca anterior`);
 }
 
-console.log('Source integrity checks passed for FuegoCerca 4.9.2.');
+assert.match(health,/effisNodeRelativeUrlCompatible:true/);
+console.log('Source integrity checks passed for FuegoCerca 4.9.3.');

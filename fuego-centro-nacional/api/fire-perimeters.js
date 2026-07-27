@@ -325,9 +325,11 @@ async function fetchEffisRecords(){
   }
 }
 
-export default async function handler(request){
+async function createResponse(request){
   const startedAt=Date.now();
-  const url=new URL(request.url);
+  // Node functions receive a relative URL on Vercel, while Edge and local
+  // Request objects normally expose an absolute one.
+  const url=new URL(request.url,'https://fuegocerca.local');
   const lat=Number(url.searchParams.get('lat'));
   const lon=Number(url.searchParams.get('lon'));
   const radius=Math.min(200,Math.max(10,Number(url.searchParams.get('radius'))||100));
@@ -346,7 +348,7 @@ export default async function handler(request){
       ?{...HEADERS,'cache-control':'public, s-maxage=30, stale-while-revalidate=60'}
       :HEADERS;
     return new Response(JSON.stringify({
-      version:'4.9.2',
+      version:'4.9.3',
       source:'EFFIS · Copernicus EMS',
       official:false,
       product:'Rapid Damage Assessment · Burnt Areas',
@@ -372,7 +374,7 @@ export default async function handler(request){
     }),{status:200,headers:{...responseHeaders,'server-timing':`fuegocerca;dur=${Date.now()-startedAt}`}});
   }catch(error){
     return new Response(JSON.stringify({
-      version:'4.9.2',
+      version:'4.9.3',
       source:'EFFIS · Copernicus EMS',
       degraded:true,
       radiusKm:radius,
@@ -385,4 +387,12 @@ export default async function handler(request){
       coverageNote:'No se ha podido consultar EFFIS. La ausencia de perímetros no significa que no exista un incendio.'
     }),{status:503,headers:HEADERS});
   }
+}
+
+export default async function handler(request,response){
+  const webResponse=await createResponse(request);
+  if(!response)return webResponse;
+  response.statusCode=webResponse.status;
+  webResponse.headers.forEach((value,key)=>response.setHeader(key,value));
+  response.end(await webResponse.text());
 }
