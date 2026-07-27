@@ -325,7 +325,7 @@ async function fetchEffisRecords(){
   }
 }
 
-export default async function handler(request){
+async function createResponse(request){
   const startedAt=Date.now();
   // Node functions receive a relative URL on Vercel, while Edge and local
   // Request objects normally expose an absolute one.
@@ -387,4 +387,12 @@ export default async function handler(request){
       coverageNote:'No se ha podido consultar EFFIS. La ausencia de perímetros no significa que no exista un incendio.'
     }),{status:503,headers:HEADERS});
   }
+}
+
+export default async function handler(request,response){
+  const webResponse=await createResponse(request);
+  if(!response)return webResponse;
+  response.statusCode=webResponse.status;
+  webResponse.headers.forEach((value,key)=>response.setHeader(key,value));
+  response.end(await webResponse.text());
 }

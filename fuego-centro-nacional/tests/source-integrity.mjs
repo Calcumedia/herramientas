@@ -120,6 +120,8 @@ assert.match(perimeters,/getCache/);
 assert.match(perimeters,/waitUntil/);
 assert.match(perimeters,/maxDuration:60/);
 assert.equal(JSON.parse(vercelConfig).functions['api/fire-perimeters.js'].maxDuration,60);
+assert.match(perimeters,/response\.statusCode=webResponse\.status/);
+assert.match(perimeters,/response\.end\(await webResponse\.text\(\)\)/);
 assert.match(perimeters,/RUNTIME_CACHE_KEY/);
 assert.match(perimeters,/runtime-stale/);
 assert.match(perimeters,/server-timing/);

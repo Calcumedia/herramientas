@@ -91,6 +91,19 @@ try{
   assert.equal(relativeData.version,'4.9.3');
   assert.equal(relativeData.nearbyCount,2);
 
+  const nodeHeaders=new Map();
+  let nodeBody='';
+  const nodeResponse={
+    statusCode:0,
+    setHeader(key,value){nodeHeaders.set(key,value)},
+    end(body){nodeBody=body}
+  };
+  const nodeResult=await handler({url:'/api/fire-perimeters?lat=36.70&lon=-6.10&radius=100'},nodeResponse);
+  assert.equal(nodeResult,undefined);
+  assert.equal(nodeResponse.statusCode,200);
+  assert.equal(nodeHeaders.get('content-type'),'application/json; charset=utf-8');
+  assert.equal(JSON.parse(nodeBody).version,'4.9.3');
+
   __resetEffisCacheForTests();
   const outside=await handler(new Request('https://fuegocerca.test/api/fire-perimeters?lat=36.70&lon=-6.15&radius=100'));
   const outsideData=await outside.json();
