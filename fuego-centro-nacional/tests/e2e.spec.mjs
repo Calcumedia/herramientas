@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 const situation={
-  version:'4.7.0',dataEngineVersion:'4.3.1',generatedAt:'2026-07-26T13:05:00.000Z',degraded:false,
+  version:'4.8.0',dataEngineVersion:'4.3.1',generatedAt:'2026-07-26T13:05:00.000Z',degraded:false,
   coverage:[{id:'test',label:'Fuente de prueba',ok:true,fallback:false,summary:'Activa',receivedAt:new Date().toISOString(),lastSuccessAt:new Date().toISOString()}],
   regionalCoverage:[{region:'Andalucía',aliases:['Andalucía','Andalucia'],mode:'viewer',sourceLabel:'INFOCA',sourceUrl:'https://example.com',description:'Visor oficial identificado.',ok:false}],
   incidents:[
@@ -34,17 +34,31 @@ const situation={
 };
 const jerez={id:'1',name:'Jerez de la Frontera',displayName:'Jerez de la Frontera, Cádiz, Andalucía, España',lat:36.6817,lon:-6.1372,region:'Andalucía',placeType:'city',category:'place'};
 const danger={
-  version:'4.7.0',source:'AEMET',attribution:'© AEMET',area:'p',configured:false,
+  version:'4.8.0',source:'AEMET',attribution:'© AEMET',area:'PB',areaLabel:'Península y Baleares',configured:true,
   viewerUrl:'https://www.aemet.es/es/eltiempo/prediccion/incendios',
   helpUrl:'https://www.aemet.es/es/eltiempo/prediccion/incendios/ayuda',
   levels:['Muy bajo','Bajo','Moderado','Alto','Muy alto','Extremo'],resolutionKm:1,
-  updatedDaily:true,exactLocalLevel:false,estimated:null,tomorrow:null,
-  message:'La integración automática necesita una API Key de AEMET. El visor oficial sigue disponible.'
+  updatedDaily:true,exactLocalLevel:true,retrievedAt:'2026-07-27T09:00:00Z',
+  validityNote:'El producto representa el máximo peligro diario, alrededor de las 12 UTC. No confirma que exista un incendio.',
+  today:{validFor:'2026-07-27',officialImageUrl:'https://www.aemet.es/mapa-hoy.png',localLevel:{value:6,label:'Extremo',rgba:[245,35,0,255]}},
+  tomorrow:{validFor:'2026-07-28',officialImageUrl:'https://www.aemet.es/mapa-manana.png',localLevel:{value:5,label:'Muy alto',rgba:[239,133,4,255]}}
 };
 const weather={
-  version:'4.7.0',source:'Open-Meteo',sourceUrl:'https://open-meteo.com/en/docs',degraded:false,
+  version:'4.8.0',source:'Open-Meteo',sourceUrl:'https://open-meteo.com/en/docs',degraded:false,
   current:{temperatureC:31,relativeHumidity:24,windSpeedKmh:18,windDirectionDeg:225,windGustKmh:33},
   next24Hours:{maxWindSpeedKmh:27,maxWindGustKmh:49}
+};
+const roads={
+  version:'4.8.0',source:'DGT',format:'DATEX II 3.7',official:true,radiusKm:50,
+  publicationTime:'2026-07-27T10:05:00Z',retrievedAt:'2026-07-27T10:06:00Z',
+  nearbyCount:1,closuresCount:1,
+  incidents:[{
+    id:'dgt-close-a4',type:'roadClosed',typeLabel:'Carretera cortada',severity:'closed',
+    road:'A-4',municipality:'Jerez de la Frontera',province:'Cádiz',kilometerFrom:636,kilometerTo:636,
+    distanceKm:2.4,updatedAt:'2026-07-27T10:02:00Z'
+  }],
+  coverageNote:'Red estatal de carreteras, excepto Cataluña y País Vasco. Una ausencia de registros no garantiza que todas las vías estén abiertas.',
+  relationshipNote:'La DGT no siempre indica si una incidencia está relacionada con un incendio.'
 };
 
 async function mockApis(page){
@@ -52,8 +66,9 @@ async function mockApis(page){
   await page.route('**/api/geocode**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({results:[jerez]})}));
   await page.route('**/api/reverse-geocode**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({result:jerez})}));
   await page.route('**/api/fire-danger**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(danger)}));
+  await page.route('**/api/road-incidents**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(roads)}));
   await page.route('**/api/weather**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(weather)}));
-  await page.route('**/api/health**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({status:'ok',version:'4.7.0',brand:'FuegoCerca'})}));
+  await page.route('**/api/health**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({status:'ok',version:'4.8.0',brand:'FuegoCerca'})}));
 }
 
 async function showMapOnMobile(page,testInfo){
@@ -128,10 +143,27 @@ test('AEMET se muestra como prevención y no como incendio confirmado',async({pa
   expect(Math.abs(preventionBox.width-toolsBox.width)).toBeLessThanOrEqual(1);
   await expect(page.locator('#preventionStatus')).toContainText('AEMET');
   await expect(page.locator('#preventionStatus')).toContainText('Jerez de la Frontera');
-  await expect(page.locator('#preventionStatus')).toContainText('Integración automática pendiente de credencial');
+  await expect(page.locator('#preventionStatus')).toContainText('Producto oficial disponible');
+  await expect(page.locator('#preventionStatus')).toContainText('Hoy');
+  await expect(page.locator('#preventionStatus')).toContainText('Mañana');
+  await expect(page.locator('#preventionStatus')).toContainText('Muy alto');
   await expect(page.locator('#preventionStatus')).toContainText('No confirma un incendio');
   await expect(page.locator('#preventionStatus')).toContainText('Extremo');
+  await expect(page.locator('#preventionStatus')).toContainText('píxel de 1 km');
   await expect(page.locator('#aemetDangerLink')).toHaveAttribute('href',/aemet\.es/);
+});
+
+test('DGT muestra cortes cercanos sin atribuirlos automáticamente al incendio',async({page})=>{
+  await consultJerez(page);
+  const roadsPanel=page.locator('#localRoadStatus');
+  await expect(roadsPanel).toContainText('1 incidencias DGT en 50 km');
+  await expect(roadsPanel).toContainText('1 cortes');
+  await expect(roadsPanel).toContainText('Carretera cortada');
+  await expect(roadsPanel).toContainText('A-4');
+  await expect(roadsPanel).toContainText('2.4 km');
+  await expect(roadsPanel).toContainText('km 636');
+  await expect(roadsPanel).toContainText('excepto Cataluña y País Vasco');
+  await expect(roadsPanel).toContainText('no siempre indica si una incidencia está relacionada con un incendio');
 });
 
 test('la ficha local inteligente separa distancias, atención no oficial y cronología',async({page})=>{
