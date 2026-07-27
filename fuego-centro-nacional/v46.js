@@ -4,7 +4,7 @@
   const SNAPSHOT_KEY='fc_last_snapshot_v47';
   const MAX_HISTORY=8;
   const DGT_URL='https://www.dgt.es/conoce-el-estado-del-trafico/informacion-e-incidencias-de-trafico/index.html';
-  const EFFIS_URL='https://forest-fire.emergency.copernicus.eu/apps/effis_current_situation/';
+  const EFFIS_URL='https://forest-fire.emergency.copernicus.eu/apps/effis.csv/';
   const $=selector=>document.querySelector(selector);
   const escapeHtml=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   const finite=value=>Number.isFinite(value);
@@ -256,7 +256,7 @@
     panel.id='localContextPanel';
     panel.className='localContextPanel';
     panel.setAttribute('aria-labelledby','localContextTitle');
-    panel.innerHTML=`<div class="localContextHead"><div><small>CONTEXTO LOCAL</small><h4 id="localContextTitle">Viento y condiciones próximas</h4></div><span class="modelTag">Predicción modelizada</span></div><div id="localWeatherStatus" class="localWeatherStatus" aria-live="polite"><span class="historyEmpty">Consultando viento y rachas…</span></div><section class="roadPanel" aria-labelledby="roadPanelTitle"><div class="roadPanelHead"><div><small>DGT · DATEX II</small><h5 id="roadPanelTitle">Carreteras e incidencias cercanas</h5></div><a href="${DGT_URL}" target="_blank" rel="noopener">Abrir DGT ↗</a></div><div id="localRoadStatus" aria-live="polite"><span class="historyEmpty">Consultando incidencias en 50 km…</span></div></section><div class="operationalLinks"><div><b>Perímetros y área quemada</b><p>Consulta manual en el visor europeo EFFIS. Solo se mostrará geometría automática cuando pueda verificarse.</p><a href="${EFFIS_URL}" target="_blank" rel="noopener">Abrir EFFIS ↗</a></div></div>`;
+    panel.innerHTML=`<div class="localContextHead"><div><small>CONTEXTO LOCAL</small><h4 id="localContextTitle">Viento y condiciones próximas</h4></div><span class="modelTag">Predicción modelizada</span></div><div id="localWeatherStatus" class="localWeatherStatus" aria-live="polite"><span class="historyEmpty">Consultando viento y rachas…</span></div><section class="perimeterPanel" aria-labelledby="perimeterPanelTitle"><div class="perimeterPanelHead"><div><small>EFFIS · COPERNICUS EMS</small><h5 id="perimeterPanelTitle">Perímetros de área quemada cercanos</h5></div><a href="${EFFIS_URL}" target="_blank" rel="noopener">Abrir EFFIS ↗</a></div><div id="localPerimeterStatus" aria-live="polite"><span class="historyEmpty">Consultando perímetros en 100 km…</span></div></section><section class="roadPanel" aria-labelledby="roadPanelTitle"><div class="roadPanelHead"><div><small>DGT · DATEX II</small><h5 id="roadPanelTitle">Carreteras e incidencias cercanas</h5></div><a href="${DGT_URL}" target="_blank" rel="noopener">Abrir DGT ↗</a></div><div id="localRoadStatus" aria-live="polite"><span class="historyEmpty">Consultando incidencias en 50 km…</span></div></section>`;
     const note=report.querySelector('.note');
     if(note)note.insertAdjacentElement('beforebegin',panel);else report.append(panel);
   }
@@ -306,8 +306,89 @@
     const incidents=Array.isArray(data.incidents)?data.incidents:[];
     const summary=incidents.length?`${data.nearbyCount} incidencias DGT en ${data.radiusKm} km${data.closuresCount?`, ${data.closuresCount} cortes`:''}`:`Sin incidencias DGT publicadas en ${data.radiusKm} km`;
     host.dataset.roadSummary=summary;
-    const rows=incidents.map(item=>`<article class="roadIncident"><div class="roadIncidentHead"><span class="roadSeverity ${escapeHtml(item.severity)}">${escapeHtml(item.typeLabel)}</span><b>${finite(item.distanceKm)?`${item.distanceKm.toFixed(1)} km`:'Distancia no disponible'}</b></div><h6>${escapeHtml(item.road)}</h6><p>${escapeHtml([item.municipality,item.province].filter(Boolean).join(', ')||'Ubicación publicada por la DGT')} · ${escapeHtml(roadKilometer(item))}</p><small>Actualizada: ${escapeHtml(localTime(item.updatedAt||data.publicationTime))}</small></article>`).join('');
-    host.innerHTML=`<div class="roadSummary"><b>${escapeHtml(summary)}</b><small>Desde ${escapeHtml(report.name)} · feed publicado ${escapeHtml(localTime(data.publicationTime))}</small></div>${rows?`<div class="roadIncidentList">${rows}</div>`:'<div class="roadEmpty">No se han recuperado incidencias dentro del radio consultado.</div>'}<p class="roadCoverage">${escapeHtml(data.coverageNote||'Cobertura según la red publicada por la DGT.')}</p><p class="roadRelationship">${escapeHtml(data.relationshipNote||'Una incidencia de tráfico no implica que esté relacionada con un incendio.')}</p>`;
+    const rows=incidents.map((item,index)=>`<article class="roadIncident${index>=3?' roadIncidentExtra':''}"><div class="roadIncidentHead"><span class="roadSeverity ${escapeHtml(item.severity)}">${escapeHtml(item.typeLabel)}</span><b>${finite(item.distanceKm)?`${item.distanceKm.toFixed(1)} km`:'Distancia no disponible'}</b></div><h6>${escapeHtml(item.road)}</h6><p>${escapeHtml([item.municipality,item.province].filter(Boolean).join(', ')||'Ubicación publicada por la DGT')} · ${escapeHtml(roadKilometer(item))}</p><small>Actualizada: ${escapeHtml(localTime(item.updatedAt||data.publicationTime))}</small></article>`).join('');
+    const toggle=incidents.length>3?`<button type="button" class="secondary roadToggle" data-road-toggle aria-expanded="false">Ver las ${incidents.length} incidencias priorizadas</button>`:'';
+    host.innerHTML=`<div class="roadSummary"><b>${escapeHtml(summary)}</b><small>Desde ${escapeHtml(report.name)} · feed publicado ${escapeHtml(localTime(data.publicationTime))}</small></div>${rows?`<div class="roadIncidentList is-collapsed">${rows}</div>${toggle}`:'<div class="roadEmpty">No se han recuperado incidencias dentro del radio consultado.</div>'}<p class="roadCoverage">${escapeHtml(data.coverageNote||'Cobertura según la red publicada por la DGT.')}</p><p class="roadRelationship">${escapeHtml(data.relationshipNote||'Una incidencia de tráfico no implica que esté relacionada con un incendio.')}</p>`;
+  }
+
+  let perimeterLayer=null;
+  function clearPerimeterLayer(){
+    if(perimeterLayer&&window.__FC_MAP__?.hasLayer?.(perimeterLayer))window.__FC_MAP__.removeLayer(perimeterLayer);
+    perimeterLayer=null;
+  }
+
+  function drawPerimeters(perimeters){
+    clearPerimeterLayer();
+    if(!window.L||!window.__FC_MAP__)return;
+    const features=perimeters.filter(item=>item.geometry).map(item=>({
+      type:'Feature',
+      geometry:item.geometry,
+      properties:{
+        id:item.id,
+        areaHa:item.areaHa,
+        distanceToEdgeKm:item.distanceToEdgeKm,
+        municipality:item.municipality,
+        province:item.province,
+        updatedAt:item.updatedAt
+      }
+    }));
+    if(!features.length)return;
+    perimeterLayer=window.L.geoJSON({type:'FeatureCollection',features},{
+      style:{color:'#ff8c5a',weight:2,opacity:.9,fillColor:'#ff7043',fillOpacity:.16,dashArray:'6 4'},
+      onEachFeature:(feature,layer)=>{
+        const properties=feature.properties||{};
+        const area=finite(properties.areaHa)?`${Math.round(properties.areaHa).toLocaleString('es-ES')} ha`:'Superficie no disponible';
+        const distance=finite(properties.distanceToEdgeKm)?`${properties.distanceToEdgeKm.toFixed(1)} km al borde`:'Distancia no disponible';
+        layer.bindPopup(`<b>Perímetro EFFIS</b><br>${escapeHtml([properties.municipality,properties.province].filter(Boolean).join(', ')||'Área cartografiada')}<br>${escapeHtml(area)} · ${escapeHtml(distance)}<br><small>Área quemada satelital; no es el frente de llama.</small>`);
+      }
+    }).addTo(window.__FC_MAP__);
+  }
+
+  function perimeterDistanceLabel(item){
+    if(item.containsLocality)return'La coordenada consultada está dentro';
+    return finite(item.distanceToEdgeKm)?`${item.distanceToEdgeKm.toFixed(1)} km al borde`:'Distancia no disponible';
+  }
+
+  function renderPerimeters(data,report){
+    const host=$('#localPerimeterStatus');
+    if(!host)return;
+    if(data.degraded){
+      clearPerimeterLayer();
+      host.dataset.perimeterSummary='';
+      host.innerHTML=`<div class="perimeterUnavailable"><b>No se ha podido consultar EFFIS.</b><p>${escapeHtml(data.coverageNote||'La ausencia de perímetros no significa que no exista un incendio.')}</p></div>`;
+      return;
+    }
+    const perimeters=Array.isArray(data.perimeters)?data.perimeters:[];
+    drawPerimeters(perimeters);
+    if(!perimeters.length){
+      host.dataset.perimeterSummary=`Sin perímetro EFFIS publicado en ${data.radiusKm} km`;
+      host.innerHTML=`<div class="perimeterEmpty"><b>Sin perímetros recientes publicados en ${escapeHtml(data.radiusKm)} km.</b><p>Esto no demuestra que no exista un incendio: EFFIS puede tardar en cartografiarlo y puede omitir incendios pequeños o recientes.</p></div><p class="perimeterCoverage">${escapeHtml(data.coverageNote||'Cobertura satelital europea.')}</p>`;
+      return;
+    }
+    const nearest=perimeters[0];
+    const area=finite(nearest.areaHa)?`${Math.round(nearest.areaHa).toLocaleString('es-ES')} ha`:'Superficie no disponible';
+    const location=[nearest.municipality,nearest.province].filter(Boolean).join(', ')||'Área sin nombre publicado';
+    const summary=`Perímetro EFFIS más próximo: ${perimeterDistanceLabel(nearest)}`;
+    host.dataset.perimeterSummary=summary;
+    const additional=perimeters.length-1;
+    host.innerHTML=`<article class="perimeterNearest"><div class="perimeterNearestHead"><span>Perímetro más próximo</span><b>${escapeHtml(perimeterDistanceLabel(nearest))}</b></div><h6>${escapeHtml(location)}</h6><div class="perimeterMetrics"><span><small>Área cartografiada</small><strong>${escapeHtml(area)}</strong></span><span><small>Fecha del producto</small><strong>${escapeHtml(localTime(nearest.updatedAt||nearest.fireDate))}</strong></span></div><p><b>Qué significa:</b> distancia desde ${escapeHtml(report.name)} hasta el borde del área quemada cartografiada por satélite.</p></article>${additional?`<p class="perimeterMore">${additional} ${additional===1?'perímetro reciente adicional':'perímetros recientes adicionales'} dentro de ${escapeHtml(data.radiusKm)} km se ${additional===1?'muestra':'muestran'} en el mapa.</p>`:''}<p class="perimeterWarning"><b>No es el frente de llama.</b> EFFIS no confirma por sí solo que el incendio siga activo ni sustituye perímetros y órdenes de las autoridades.</p><p class="perimeterCoverage">${escapeHtml(data.coverageNote||'Cobertura satelital europea.')}</p>`;
+  }
+
+  async function loadPerimeters(report,{force=false}={}){
+    const host=$('#localPerimeterStatus');
+    if(!host||!finite(report?.lat)||!finite(report?.lon))return;
+    const key=`${report.lat.toFixed(4)}|${report.lon.toFixed(4)}|100`;
+    if(!force&&host.dataset.loadedFor===key)return;
+    host.dataset.loadedFor=key;
+    host.innerHTML='<span class="historyEmpty">Consultando perímetros en 100 km…</span>';
+    try{
+      const response=await fetch(`/api/fire-perimeters?lat=${encodeURIComponent(report.lat)}&lon=${encodeURIComponent(report.lon)}&radius=100`,{cache:'no-store'});
+      const data=await response.json();
+      if(!response.ok&&response.status!==503)throw Error(`HTTP ${response.status}`);
+      renderPerimeters(data,report);
+    }catch{
+      renderPerimeters({degraded:true,coverageNote:'No se ha podido consultar EFFIS. La ausencia de perímetros no significa que no exista un incendio.'},report);
+    }
   }
 
   async function loadRoadIncidents(report,{force=false}={}){
@@ -333,7 +414,8 @@
   function shareText(report,url){
     const weather=$('#localWeatherStatus')?.dataset.weatherSummary||'';
     const roads=$('#localRoadStatus')?.dataset.roadSummary||'';
-    return [`${BRAND} · ${report.name}`,report.badge,report.lead,weather,roads,`Consulta: ${new Date(report.time).toLocaleString('es-ES')}`,'En una emergencia prevalecen ES-Alert, 112 y las autoridades.',url].filter(Boolean).join('\n');
+    const perimeter=$('#localPerimeterStatus')?.dataset.perimeterSummary||'';
+    return [`${BRAND} · ${report.name}`,report.badge,report.lead,perimeter,weather,roads,`Consulta: ${new Date(report.time).toLocaleString('es-ES')}`,'En una emergencia prevalecen ES-Alert, 112 y las autoridades.',url].filter(Boolean).join('\n');
   }
   async function copyText(text){
     if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(text);return}
@@ -372,11 +454,11 @@
   function syncReport(){
     clearTimeout(reportTimer);
     reportTimer=setTimeout(()=>{
-      let report=currentReport();if(!report)return;
+      let report=currentReport();if(!report){clearPerimeterLayer();return}
       ensureSmartLocalInsights(report);ensureLocalContext();ensureShareControls();
       report=currentReport();
       saveHistory({name:report.name,time:report.time,lat:report.lat,lon:report.lon});
-      loadWeather(report);loadRoadIncidents(report);loadDanger();saveSnapshot(report);
+      loadWeather(report);loadPerimeters(report);loadRoadIncidents(report);loadDanger();saveSnapshot(report);
     },180);
   }
 
@@ -386,6 +468,14 @@
     $('#recentPlaces')?.addEventListener('click',event=>{const button=event.target.closest('[data-history]');if(button)openHistory(Number(button.dataset.history))});
     $('#localReport')?.addEventListener('click',event=>{
       if(event.target.closest('#shareReportBtn'))shareCurrentReport();
+      const roadToggle=event.target.closest('[data-road-toggle]');
+      if(roadToggle){
+        const list=$('#localRoadStatus .roadIncidentList');
+        const expanded=roadToggle.getAttribute('aria-expanded')==='true';
+        roadToggle.setAttribute('aria-expanded',String(!expanded));
+        roadToggle.textContent=expanded?`Ver las ${list?.children.length||0} incidencias priorizadas`:'Mostrar solo las 3 más importantes';
+        list?.classList.toggle('is-collapsed',expanded);
+      }
       const incidentButton=event.target.closest('[data-smart-incident]');
       if(incidentButton)window.openIncident?.(incidentButton.dataset.smartIncident);
     });
@@ -393,6 +483,6 @@
     addEventListener('offline',setOfflineState);addEventListener('online',setOfflineState);openDeepLink();
   }
 
-  window.FC46={getHistory,loadDanger,loadWeather,loadRoadIncidents,currentReport,setOfflineState,shareCurrentReport,openPlace,combinedTimeline,ensureSmartLocalInsights};
+  window.FC46={getHistory,loadDanger,loadWeather,loadPerimeters,loadRoadIncidents,currentReport,setOfflineState,shareCurrentReport,openPlace,combinedTimeline,ensureSmartLocalInsights,getPerimeterLayerCount:()=>perimeterLayer?.getLayers?.().length||0};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();
 })();

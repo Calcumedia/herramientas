@@ -16,11 +16,13 @@ Herramienta nacional para consultar la situación de incendios forestales cerca 
 - La carga inicial no ejecuta `fitBounds`; el encuadre completo solo se activa con **Ver todo**.
 - Las actualizaciones conservan pestaña, filtros, búsqueda y posición del mapa.
 - Se mantienen separados los incidentes oficiales, las señales preliminares y los grupos térmicos.
-- Las API `/api/situation`, `/api/geocode`, `/api/weather`, `/api/fire-danger`, `/api/fire-danger-map`, `/api/road-incidents` y `/api/health` deben responder correctamente.
+- Las API `/api/situation`, `/api/geocode`, `/api/weather`, `/api/fire-danger`, `/api/fire-danger-map`, `/api/fire-perimeters`, `/api/road-incidents` y `/api/health` deben responder correctamente.
 - El nivel de atención local debe presentarse siempre como orientación calculada por FuegoCerca, nunca como nivel oficial ni como estimación de riesgo.
 - Las distancias deben distinguir incidente oficial, señal preliminar y señal térmica, y aclarar que se miden hasta puntos de referencia.
 - El peligro meteorológico procede del producto oficial diario de AEMET a 1 km y nunca debe presentarse como incendio confirmado, alerta o predicción de trayectoria.
 - Las incidencias DGT se muestran como información de tráfico independiente: no deben atribuirse a un incendio si la fuente no establece esa relación.
+- Los perímetros EFFIS se presentan como áreas quemadas cartografiadas por satélite, nunca como frente de llama, estado oficial del incendio u orden de emergencia.
+- La distancia EFFIS se mide desde la coordenada de la localidad hasta el borde cartografiado; no reemplaza las distancias existentes a los puntos de referencia de incidentes.
 
 ## Desarrollo y pruebas
 
@@ -32,7 +34,7 @@ npm test
 Pruebas disponibles:
 
 - `npm run test:source`: integridad de archivos, sintaxis y contratos críticos.
-- `npm run test:contract`: contratos del raster oficial de AEMET y del feed DATEX II 3.7 de la DGT.
+- `npm run test:contract`: contratos del raster oficial de AEMET, los perímetros EFFIS y el feed DATEX II 3.7 de la DGT.
 - `npm run test:e2e`: navegador local con API simulada; comprueba escritura, búsqueda y centro del mapa.
 - `npm run test:production`: comprobación de recursos y API de producción.
 
