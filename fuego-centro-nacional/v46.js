@@ -312,9 +312,22 @@
   }
 
   let perimeterLayer=null;
+  function perimeterControl(){
+    return $('#perimeterToggle');
+  }
+
+  function syncPerimeterVisibility(){
+    const map=window.__FC_MAP__,toggle=perimeterControl();
+    if(!map||!perimeterLayer||!toggle)return;
+    if(toggle.checked&&!map.hasLayer(perimeterLayer))perimeterLayer.addTo(map);
+    if(!toggle.checked&&map.hasLayer(perimeterLayer))map.removeLayer(perimeterLayer);
+  }
+
   function clearPerimeterLayer(){
     if(perimeterLayer&&window.__FC_MAP__?.hasLayer?.(perimeterLayer))window.__FC_MAP__.removeLayer(perimeterLayer);
     perimeterLayer=null;
+    const toggle=perimeterControl();
+    if(toggle)toggle.disabled=true;
   }
 
   function drawPerimeters(perimeters){
@@ -329,19 +342,30 @@
         distanceToEdgeKm:item.distanceToEdgeKm,
         municipality:item.municipality,
         province:item.province,
-        updatedAt:item.updatedAt
+        updatedAt:item.updatedAt,
+        ageCategory:item.ageCategory,
+        ageLabel:item.ageLabel
       }
     }));
     if(!features.length)return;
     perimeterLayer=window.L.geoJSON({type:'FeatureCollection',features},{
-      style:{color:'#ff8c5a',weight:2,opacity:.9,fillColor:'#ff7043',fillOpacity:.16,dashArray:'6 4'},
+      style:feature=>{
+        const age=feature?.properties?.ageCategory;
+        if(age==='old')return {color:'#9aa4ad',weight:2,opacity:.8,fillColor:'#7f8b94',fillOpacity:.1,dashArray:'3 6'};
+        if(age==='aging')return {color:'#f3c548',weight:2,opacity:.88,fillColor:'#dba932',fillOpacity:.13,dashArray:'7 5'};
+        if(age==='unknown')return {color:'#ae9acb',weight:2,opacity:.8,fillColor:'#8d79aa',fillOpacity:.1,dashArray:'2 6'};
+        return {color:'#ff8c5a',weight:2,opacity:.92,fillColor:'#ff7043',fillOpacity:.16};
+      },
       onEachFeature:(feature,layer)=>{
         const properties=feature.properties||{};
         const area=finite(properties.areaHa)?`${Math.round(properties.areaHa).toLocaleString('es-ES')} ha`:'Superficie no disponible';
         const distance=finite(properties.distanceToEdgeKm)?`${properties.distanceToEdgeKm.toFixed(1)} km al borde`:'Distancia no disponible';
-        layer.bindPopup(`<b>Perímetro EFFIS</b><br>${escapeHtml([properties.municipality,properties.province].filter(Boolean).join(', ')||'Área cartografiada')}<br>${escapeHtml(area)} · ${escapeHtml(distance)}<br><small>Área quemada satelital; no es el frente de llama.</small>`);
+        layer.bindPopup(`<b>Área quemada EFFIS</b><br>${escapeHtml([properties.municipality,properties.province].filter(Boolean).join(', ')||'Área cartografiada')}<br>${escapeHtml(area)} · ${escapeHtml(distance)}<br><small>${escapeHtml(properties.ageLabel||'Antigüedad no confirmada')}</small><br><small>No confirma un incendio activo ni representa el frente de llama.</small>`);
       }
-    }).addTo(window.__FC_MAP__);
+    });
+    const toggle=perimeterControl();
+    if(toggle)toggle.disabled=false;
+    syncPerimeterVisibility();
   }
 
   function perimeterDistanceLabel(item){
@@ -371,7 +395,9 @@
     const summary=`Perímetro EFFIS más próximo: ${perimeterDistanceLabel(nearest)}`;
     host.dataset.perimeterSummary=summary;
     const additional=perimeters.length-1;
-    host.innerHTML=`<article class="perimeterNearest"><div class="perimeterNearestHead"><span>Perímetro más próximo</span><b>${escapeHtml(perimeterDistanceLabel(nearest))}</b></div><h6>${escapeHtml(location)}</h6><div class="perimeterMetrics"><span><small>Área cartografiada</small><strong>${escapeHtml(area)}</strong></span><span><small>Fecha del producto</small><strong>${escapeHtml(localTime(nearest.updatedAt||nearest.fireDate))}</strong></span></div><p><b>Qué significa:</b> distancia desde ${escapeHtml(report.name)} hasta el borde del área quemada cartografiada por satélite.</p></article>${additional?`<p class="perimeterMore">${additional} ${additional===1?'perímetro reciente adicional':'perímetros recientes adicionales'} dentro de ${escapeHtml(data.radiusKm)} km se ${additional===1?'muestra':'muestran'} en el mapa.</p>`:''}<p class="perimeterWarning"><b>No es el frente de llama.</b> EFFIS no confirma por sí solo que el incendio siga activo ni sustituye perímetros y órdenes de las autoridades.</p><p class="perimeterCoverage">${escapeHtml(data.coverageNote||'Cobertura satelital europea.')}</p>`;
+    const ageCategory=['recent','aging','old','unknown'].includes(nearest.ageCategory)?nearest.ageCategory:'unknown';
+    const staleNotice=data.usingStaleCache?`<p class="perimeterStale"><b>Mostrando la última copia válida.</b> EFFIS no ha podido actualizarse; datos recuperados ${escapeHtml(localTime(data.retrievedAt))}.</p>`:'';
+    host.innerHTML=`${staleNotice}<article class="perimeterNearest"><div class="perimeterNearestHead"><span>Área quemada más próxima</span><b>${escapeHtml(perimeterDistanceLabel(nearest))}</b></div><div class="perimeterAge ${ageCategory}">${escapeHtml(nearest.ageLabel||'Antigüedad no confirmada')}</div><h6>${escapeHtml(location)}</h6><div class="perimeterMetrics"><span><small>Área cartografiada</small><strong>${escapeHtml(area)}</strong></span><span><small>Fecha del producto</small><strong>${escapeHtml(localTime(nearest.updatedAt||nearest.fireDate))}</strong></span></div><p><b>Qué significa:</b> distancia desde ${escapeHtml(report.name)} hasta el borde de un área quemada cartografiada por satélite.</p></article>${additional?`<p class="perimeterMore">${additional} ${additional===1?'área cartografiada adicional':'áreas cartografiadas adicionales'} dentro de ${escapeHtml(data.radiusKm)} km se ${additional===1?'muestra':'muestran'} en el mapa.</p>`:''}<p class="perimeterWarning"><b>No es un incendio activo ni el frente de llama.</b> El perímetro puede ser antiguo y EFFIS no confirma por sí solo que el fuego siga activo.</p><p class="perimeterAssociation">${escapeHtml(data.associationNote||nearest.associationNote||'No se vincula automáticamente a un incendio oficial sin una coincidencia verificable.')}</p><p class="perimeterCoverage">${escapeHtml(data.coverageNote||'Cobertura satelital europea.')}</p>`;
   }
 
   async function loadPerimeters(report,{force=false}={}){
@@ -382,7 +408,7 @@
     host.dataset.loadedFor=key;
     host.innerHTML='<span class="historyEmpty">Consultando perímetros en 100 km…</span>';
     try{
-      const response=await fetch(`/api/fire-perimeters?lat=${encodeURIComponent(report.lat)}&lon=${encodeURIComponent(report.lon)}&radius=100`,{cache:'no-store'});
+      const response=await fetch(`/api/fire-perimeters?lat=${encodeURIComponent(report.lat)}&lon=${encodeURIComponent(report.lon)}&radius=100`);
       const data=await response.json();
       if(!response.ok&&response.status!==503)throw Error(`HTTP ${response.status}`);
       renderPerimeters(data,report);
@@ -465,6 +491,7 @@
   function bind(){
     renderHistory();setOfflineState();loadDanger();
     $('#refreshDangerBtn')?.addEventListener('click',loadDanger);
+    $('#perimeterToggle')?.addEventListener('change',syncPerimeterVisibility);
     $('#recentPlaces')?.addEventListener('click',event=>{const button=event.target.closest('[data-history]');if(button)openHistory(Number(button.dataset.history))});
     $('#localReport')?.addEventListener('click',event=>{
       if(event.target.closest('#shareReportBtn'))shareCurrentReport();
@@ -483,6 +510,6 @@
     addEventListener('offline',setOfflineState);addEventListener('online',setOfflineState);openDeepLink();
   }
 
-  window.FC46={getHistory,loadDanger,loadWeather,loadPerimeters,loadRoadIncidents,currentReport,setOfflineState,shareCurrentReport,openPlace,combinedTimeline,ensureSmartLocalInsights,getPerimeterLayerCount:()=>perimeterLayer?.getLayers?.().length||0};
+  window.FC46={getHistory,loadDanger,loadWeather,loadPerimeters,loadRoadIncidents,currentReport,setOfflineState,shareCurrentReport,openPlace,combinedTimeline,ensureSmartLocalInsights,getPerimeterLayerCount:()=>perimeterLayer?.getLayers?.().length||0,isPerimeterLayerVisible:()=>Boolean(perimeterLayer&&window.__FC_MAP__?.hasLayer?.(perimeterLayer))};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();
 })();

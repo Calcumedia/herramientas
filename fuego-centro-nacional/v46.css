@@ -116,6 +116,11 @@
 .perimeterNearestHead b{font-size:13px;text-align:right}
 .perimeterNearest h6{margin:8px 0;font-size:14px}
 .perimeterNearest p{margin:9px 0 0;color:#c5ced7;font-size:10px;line-height:1.45}
+.perimeterAge{display:inline-flex;margin-top:8px;border:1px solid currentColor;border-radius:999px;padding:4px 7px;font-size:9px;font-weight:800}
+.perimeterAge.recent{color:#ffb294;background:rgba(255,112,67,.09)}
+.perimeterAge.aging{color:#f3d979;background:rgba(243,197,72,.08)}
+.perimeterAge.old{color:#b4bec7;background:rgba(174,184,194,.08)}
+.perimeterAge.unknown{color:#c7b5df;background:rgba(174,154,203,.08)}
 .perimeterMetrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
 .perimeterMetrics span{padding:8px;border:1px solid rgba(255,255,255,.09);border-radius:8px;background:#10161c}
 .perimeterMetrics small,.perimeterMetrics strong{display:block}
@@ -123,8 +128,12 @@
 .perimeterMetrics strong{margin-top:3px;font-size:12px}
 .perimeterMore,.perimeterCoverage{margin:0;color:#9aa7b3;font-size:9px;line-height:1.45}
 .perimeterWarning{margin:0;padding-left:8px;border-left:2px solid #ff8c5a;color:#c4cdd6;font-size:10px;line-height:1.45}
+.perimeterAssociation{margin:0;padding-left:8px;border-left:2px solid #79bdff;color:#aeb9c4;font-size:9px;line-height:1.45}
+.perimeterStale{margin:0;padding:9px;border:1px solid rgba(243,197,72,.3);border-radius:9px;background:rgba(243,197,72,.07);color:#d9d1aa;font-size:10px;line-height:1.45}
 .perimeterEmpty,.perimeterUnavailable{padding:9px;border:1px solid rgba(243,197,72,.25);border-radius:9px;background:rgba(243,197,72,.06)}
 .perimeterEmpty p,.perimeterUnavailable p{margin:5px 0 0;color:#c7d0d9;font-size:10px;line-height:1.45}
+.perimeterToggle:has(input:disabled){opacity:.52}
+.perimeterLegend{display:inline-block;width:15px;height:9px;border:2px dashed #ff8c5a;border-radius:2px;background:rgba(255,112,67,.16)}
 .reportShare{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px}
 .reportShare .shareFeedback{flex:1 1 180px;margin:0}
 

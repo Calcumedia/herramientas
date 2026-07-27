@@ -56,13 +56,13 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
   <link rel="stylesheet" href="/styles.css?v=471">
   <link rel="stylesheet" href="/v45.css?v=471">
-  <link rel="stylesheet" href="/v46.css?v=490">
+  <link rel="stylesheet" href="/v46.css?v=491">
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin="" defer></script>
   <script src="/analytics-config.js"></script>
   <script src="/v45.js?v=471" defer></script>
   <script src="/app.js?v=471" defer></script>
   <script src="/reset-after-app.js?v=471" defer></script>
-  <script src="/v46.js?v=490" defer></script>
+  <script src="/v46.js?v=491" defer></script>
 </head>
 <body>
 <header class="top">
@@ -78,17 +78,18 @@
 </div>
 <main class="shell">
   <section class="mapWrap" aria-labelledby="mainHeading">
-    <p id="mapDescription" class="srOnly">Los marcadores oficiales, preliminares y térmicos son puntos de referencia y no representan perímetros de incendio.</p>
+    <p id="mapDescription" class="srOnly">Los marcadores oficiales, preliminares y térmicos son puntos de referencia. Las áreas EFFIS muestran superficie quemada cartografiada, no incendios activos ni frentes de llama.</p>
     <div class="mapTools">
       <select id="riskFilter" aria-label="Filtrar por prioridad del panel"><option value="all">Todas las prioridades</option><option value="critical">Crítica</option><option value="high">Alta</option><option value="medium">Media</option><option value="watch">Vigilancia</option></select>
       <select id="statusFilter" aria-label="Filtrar por estado"><option value="all">Todos los estados</option><option value="active">Activos</option><option value="stabilized">Estabilizados</option><option value="unconfirmed">Sin confirmar</option></select>
       <label class="toggle"><input id="thermalToggle" type="checkbox" checked> Térmicas</label>
+      <label class="toggle perimeterToggle" title="Áreas quemadas cartografiadas por EFFIS; no son frentes activos"><input id="perimeterToggle" type="checkbox" checked disabled> Perímetros EFFIS</label>
       <button id="homeBtn" type="button" title="Volver a la vista inicial">⌂ Vista inicial</button>
       <button id="locateBtn" type="button" title="Consultar lo que ocurre cerca de tu ubicación">◎ Mi ubicación</button>
       <button id="fitBtn" type="button">Ver todo</button>
     </div>
     <div id="map" aria-describedby="mapDescription"></div>
-    <div class="mapLegend" aria-label="Leyenda del mapa"><span><i class="dot criticalBg"></i>Crítica</span><span><i class="dot highBg"></i>Alta</span><span><i class="dot mediumBg"></i>Media</span><span><i class="dot watchBg"></i>Vigilancia</span><span><i class="dot thermalBg"></i>Térmica</span></div>
+    <div class="mapLegend" aria-label="Leyenda del mapa"><span><i class="dot criticalBg"></i>Crítica</span><span><i class="dot highBg"></i>Alta</span><span><i class="dot mediumBg"></i>Media</span><span><i class="dot watchBg"></i>Vigilancia</span><span><i class="dot thermalBg"></i>Térmica</span><span><i class="perimeterLegend"></i>Área quemada EFFIS</span></div>
   </section>
   <aside class="panel" aria-label="Información y consultas">
     <section class="seoIntro" aria-labelledby="mainHeading">

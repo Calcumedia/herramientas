@@ -47,6 +47,8 @@ No publicar si falla alguno de estos puntos:
 8. La cobertura regional contiene 19 territorios.
 9. No desaparecen incidentes, alertas, noticias, fuentes, localidades guardadas ni notificaciones.
 10. AEMET conserva la etiqueta preventiva, EFFIS se identifica como área quemada satelital y DGT conserva la advertencia de que sus incidencias no siempre están relacionadas con incendios.
+11. El control «Perímetros EFFIS» permite ocultar y volver a mostrar la capa; la antigüedad del producto es visible y una copia antigua se identifica como tal.
+12. Dos consultas de localidades distintas reutilizan el conjunto nacional de EFFIS y un fallo de actualización no convierte un área quemada en un incendio activo.
 
 ## Recuperación
 

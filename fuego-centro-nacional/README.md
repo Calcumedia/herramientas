@@ -23,6 +23,8 @@ Herramienta nacional para consultar la situación de incendios forestales cerca 
 - Las incidencias DGT se muestran como información de tráfico independiente: no deben atribuirse a un incendio si la fuente no establece esa relación.
 - Los perímetros EFFIS se presentan como áreas quemadas cartografiadas por satélite, nunca como frente de llama, estado oficial del incendio u orden de emergencia.
 - La distancia EFFIS se mide desde la coordenada de la localidad hasta el borde cartografiado; no reemplaza las distancias existentes a los puntos de referencia de incidentes.
+- La versión 4.9.1 reutiliza el conjunto nacional de EFFIS entre localidades, limita el tiempo de espera y puede servir durante 24 horas la última copia válida con una advertencia explícita.
+- Cada área quemada muestra su antigüedad y puede ocultarse desde el control «Perímetros EFFIS». No se vincula automáticamente a un incendio oficial sin una coincidencia espacial y temporal verificable.
 
 ## Desarrollo y pruebas
 

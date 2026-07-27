@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 const situation={
-  version:'4.9.0',dataEngineVersion:'4.3.1',generatedAt:'2026-07-26T13:05:00.000Z',degraded:false,
+  version:'4.9.1',dataEngineVersion:'4.3.1',generatedAt:'2026-07-26T13:05:00.000Z',degraded:false,
   coverage:[{id:'test',label:'Fuente de prueba',ok:true,fallback:false,summary:'Activa',receivedAt:new Date().toISOString(),lastSuccessAt:new Date().toISOString()}],
   regionalCoverage:[{region:'Andalucía',aliases:['Andalucía','Andalucia'],mode:'viewer',sourceLabel:'INFOCA',sourceUrl:'https://example.com',description:'Visor oficial identificado.',ok:false}],
   incidents:[
@@ -34,7 +34,7 @@ const situation={
 };
 const jerez={id:'1',name:'Jerez de la Frontera',displayName:'Jerez de la Frontera, Cádiz, Andalucía, España',lat:36.6817,lon:-6.1372,region:'Andalucía',placeType:'city',category:'place'};
 const danger={
-  version:'4.9.0',source:'AEMET',attribution:'© AEMET',area:'PB',areaLabel:'Península y Baleares',configured:true,
+  version:'4.9.1',source:'AEMET',attribution:'© AEMET',area:'PB',areaLabel:'Península y Baleares',configured:true,
   viewerUrl:'https://www.aemet.es/es/eltiempo/prediccion/incendios',
   helpUrl:'https://www.aemet.es/es/eltiempo/prediccion/incendios/ayuda',
   levels:['Muy bajo','Bajo','Moderado','Alto','Muy alto','Extremo'],resolutionKm:1,
@@ -44,12 +44,12 @@ const danger={
   tomorrow:{validFor:'2026-07-28',officialImageUrl:'https://www.aemet.es/mapa-manana.png',localLevel:{value:5,label:'Muy alto',rgba:[239,133,4,255]}}
 };
 const weather={
-  version:'4.9.0',source:'Open-Meteo',sourceUrl:'https://open-meteo.com/en/docs',degraded:false,
+  version:'4.9.1',source:'Open-Meteo',sourceUrl:'https://open-meteo.com/en/docs',degraded:false,
   current:{temperatureC:31,relativeHumidity:24,windSpeedKmh:18,windDirectionDeg:225,windGustKmh:33},
   next24Hours:{maxWindSpeedKmh:27,maxWindGustKmh:49}
 };
 const roads={
-  version:'4.9.0',source:'DGT',format:'DATEX II 3.7',official:true,radiusKm:50,
+  version:'4.9.1',source:'DGT',format:'DATEX II 3.7',official:true,radiusKm:50,
   publicationTime:'2026-07-27T10:05:00Z',retrievedAt:'2026-07-27T10:06:00Z',
   nearbyCount:8,closuresCount:1,
   incidents:[{
@@ -65,23 +65,26 @@ const roads={
   relationshipNote:'La DGT no siempre indica si una incidencia está relacionada con un incendio.'
 };
 const perimeters={
-  version:'4.9.0',source:'EFFIS · Copernicus EMS',official:false,radiusKm:100,
+  version:'4.9.1',source:'EFFIS · Copernicus EMS',official:false,radiusKm:100,
   retrievedAt:'2026-07-27T10:08:00Z',nearbyCount:2,
   perimeters:[
     {
       id:'effis-near',source:'EFFIS · Copernicus EMS',sourceType:'perímetro satelital de área quemada',
       areaHa:482.4,fireDate:'2026-07-24T12:00:00Z',updatedAt:'2026-07-27T09:00:00Z',
+      ageHours:2,ageCategory:'recent',ageLabel:'Producto actualizado en las últimas 72 h',associationStatus:'not-linked',
       province:'Cádiz',municipality:'Jerez de la Frontera',distanceToEdgeKm:3.2,containsLocality:false,
       geometry:{type:'Polygon',coordinates:[[[-6.18,36.70],[-6.15,36.70],[-6.15,36.73],[-6.18,36.73],[-6.18,36.70]]]}
     },
     {
       id:'effis-second',source:'EFFIS · Copernicus EMS',sourceType:'perímetro satelital de área quemada',
       areaHa:95,fireDate:'2026-07-25T12:00:00Z',updatedAt:'2026-07-27T08:00:00Z',
+      ageHours:240,ageCategory:'old',ageLabel:'Perímetro histórico reciente',associationStatus:'not-linked',
       province:'Cádiz',municipality:'Arcos de la Frontera',distanceToEdgeKm:22.8,containsLocality:false,
       geometry:{type:'Polygon',coordinates:[[[-5.9,36.70],[-5.88,36.70],[-5.88,36.72],[-5.9,36.72],[-5.9,36.70]]]}
     }
   ],
-  coverageNote:'EFFIS cartografía áreas quemadas mediante satélite. No representa el frente de llama en tiempo real.'
+  coverageNote:'EFFIS cartografía áreas quemadas mediante satélite. No representa el frente de llama en tiempo real.',
+  associationNote:'FuegoCerca no asocia automáticamente estos perímetros a incendios oficiales sin una coincidencia espacial y temporal verificable.'
 };
 
 async function mockApis(page){
@@ -92,7 +95,7 @@ async function mockApis(page){
   await page.route('**/api/fire-perimeters**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(perimeters)}));
   await page.route('**/api/road-incidents**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(roads)}));
   await page.route('**/api/weather**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(weather)}));
-  await page.route('**/api/health**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({status:'ok',version:'4.9.0',brand:'FuegoCerca'})}));
+  await page.route('**/api/health**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({status:'ok',version:'4.9.1',brand:'FuegoCerca'})}));
 }
 
 async function showMapOnMobile(page,testInfo){
@@ -195,16 +198,27 @@ test('DGT prioriza tres incidencias y permite desplegar el resto',async({page})=
   await expect(roadsPanel.locator('[data-road-toggle]')).toContainText('Mostrar solo las 3');
 });
 
-test('EFFIS muestra distancia al borde y dibuja los perímetros sin tratarlos como frente activo',async({page})=>{
+test('EFFIS muestra antigüedad y permite ocultar perímetros sin tratarlos como fuego activo',async({page},testInfo)=>{
   await consultJerez(page);
   const panel=page.locator('#localPerimeterStatus');
-  await expect(panel).toContainText('Perímetro más próximo');
+  await expect(panel).toContainText('Área quemada más próxima');
   await expect(panel).toContainText('3.2 km al borde');
   await expect(panel).toContainText('482 ha');
+  await expect(panel).toContainText('Producto actualizado en las últimas 72 h');
   await expect(panel).toContainText('distancia desde Jerez de la Frontera hasta el borde');
-  await expect(panel).toContainText('No es el frente de llama');
-  await expect(panel).toContainText('1 perímetro reciente adicional');
+  await expect(panel).toContainText('No es un incendio activo ni el frente de llama');
+  await expect(panel).toContainText('no asocia automáticamente');
+  await expect(panel).toContainText('1 área cartografiada adicional');
   await expect.poll(()=>page.evaluate(()=>window.FC46.getPerimeterLayerCount())).toBe(2);
+  await showMapOnMobile(page,testInfo);
+  const toggle=page.locator('#perimeterToggle');
+  await expect(toggle).toBeEnabled();
+  await expect(toggle).toBeChecked();
+  await expect.poll(()=>page.evaluate(()=>window.FC46.isPerimeterLayerVisible())).toBe(true);
+  await toggle.uncheck();
+  await expect.poll(()=>page.evaluate(()=>window.FC46.isPerimeterLayerVisible())).toBe(false);
+  await toggle.check();
+  await expect.poll(()=>page.evaluate(()=>window.FC46.isPerimeterLayerVisible())).toBe(true);
 });
 
 test('la ficha local inteligente separa distancias, atención no oficial y cronología',async({page})=>{

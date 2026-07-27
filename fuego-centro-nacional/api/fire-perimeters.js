@@ -4,11 +4,19 @@ const EFFIS_API='https://api.effis.emergency.copernicus.eu/rest/2/burntareas/cur
 const EFFIS_VIEWER='https://forest-fire.emergency.copernicus.eu/apps/effis.csv/';
 const EFFIS_METHOD='https://forest-fire.emergency.copernicus.eu/about-effis/technical-background/rapid-damage-assessment';
 const EFFIS_LICENSE='https://forest-fire.emergency.copernicus.eu/about-effis/data-license';
+const CACHE_TTL_MS=60*60*1000;
+const STALE_TTL_MS=24*60*60*1000;
+const FETCH_TIMEOUT_MS=22000;
 const HEADERS={
   'content-type':'application/json; charset=utf-8',
   'cache-control':'public, s-maxage=900, stale-while-revalidate=3600',
   'access-control-allow-origin':'*'
 };
+let effisCache={records:null,fetchedAt:0,queriedFrom:null};
+
+export function __resetEffisCacheForTests(){
+  effisCache={records:null,fetchedAt:0,queriedFrom:null};
+}
 
 function validCoordinates(lat,lon){
   return Number.isFinite(lat)&&Number.isFinite(lon)&&lat>=27&&lat<=44.5&&lon>=-19&&lon<=5.5;
@@ -113,12 +121,24 @@ function bboxMayBeNear(bbox,origin,radius){
   return [lat,lon].every(Number.isFinite)&&haversine(origin.lat,origin.lon,lat,lon)<=radius+2;
 }
 
+function perimeterAge(record){
+  const reference=Date.parse(record.lastupdate||record.lastfiredate||record.firedate||'');
+  if(!Number.isFinite(reference)){
+    return {ageHours:null,ageCategory:'unknown',ageLabel:'Antigüedad no confirmada',isOld:true};
+  }
+  const ageHours=Math.max(0,(Date.now()-reference)/3600000);
+  if(ageHours<=72)return {ageHours,ageCategory:'recent',ageLabel:'Producto actualizado en las últimas 72 h',isOld:false};
+  if(ageHours<=168)return {ageHours,ageCategory:'aging',ageLabel:'Producto sin actualización en más de 72 h',isOld:false};
+  return {ageHours,ageCategory:'old',ageLabel:'Perímetro histórico reciente',isOld:true};
+}
+
 function normalize(record,origin,radius){
   if(!record?.shape||!bboxMayBeNear(record.bbox,origin,radius))return null;
   const edge=geometryDistance(record.shape,origin);
   if(!Number.isFinite(edge.distanceKm)||edge.distanceKm>radius)return null;
   const coordinates=record.centroid?.coordinates||[];
   const centroid={lat:Number(coordinates[1]),lon:Number(coordinates[0])};
+  const age=perimeterAge(record);
   return {
     id:`effis-${record.id}`,
     source:'EFFIS · Copernicus EMS',
@@ -135,8 +155,47 @@ function normalize(record,origin,radius){
     containsLocality:edge.contains,
     bbox:record.bbox,
     geometry:simplifyGeometry(record.shape),
-    viewerUrl:EFFIS_VIEWER
+    viewerUrl:EFFIS_VIEWER,
+    ...age,
+    associationStatus:'not-linked',
+    associationNote:'No se vincula automáticamente a un incendio oficial: un área quemada no demuestra que el fuego siga activo.'
   };
+}
+
+function stableSince(){
+  const date=new Date(Date.now()-45*24*60*60*1000);
+  date.setUTCHours(0,0,0,0);
+  return date.toISOString();
+}
+
+async function fetchEffisRecords(){
+  const now=Date.now();
+  if(Array.isArray(effisCache.records)&&now-effisCache.fetchedAt<CACHE_TTL_MS){
+    return {...effisCache,cacheStatus:'memory',usingStaleCache:false};
+  }
+  const since=stableSince();
+  const upstream=new URL(EFFIS_API);
+  upstream.searchParams.set('country','ES');
+  upstream.searchParams.set('firedate__gte',since);
+  upstream.searchParams.set('ordering','-lastupdate');
+  upstream.searchParams.set('limit','500');
+  const controller=new AbortController();
+  const timeout=setTimeout(()=>controller.abort(),FETCH_TIMEOUT_MS);
+  try{
+    const response=await fetch(upstream,{headers:{accept:'application/json'},cache:'force-cache',signal:controller.signal});
+    if(!response.ok)throw Error(`EFFIS HTTP ${response.status}`);
+    const raw=await response.json();
+    const records=Array.isArray(raw.results)?raw.results:[];
+    effisCache={records,fetchedAt:now,queriedFrom:since};
+    return {...effisCache,cacheStatus:'upstream',usingStaleCache:false};
+  }catch(error){
+    if(Array.isArray(effisCache.records)&&now-effisCache.fetchedAt<STALE_TTL_MS){
+      return {...effisCache,cacheStatus:'stale',usingStaleCache:true,refreshError:String(error.message||error)};
+    }
+    throw error;
+  }finally{
+    clearTimeout(timeout);
+  }
 }
 
 export default async function handler(request){
@@ -147,41 +206,37 @@ export default async function handler(request){
   if(!validCoordinates(lat,lon)){
     return new Response(JSON.stringify({error:'Coordenadas no válidas para España'}),{status:400,headers:HEADERS});
   }
-  const since=new Date(Date.now()-45*24*60*60*1000).toISOString();
-  const upstream=new URL(EFFIS_API);
-  upstream.searchParams.set('country','ES');
-  upstream.searchParams.set('firedate__gte',since);
-  upstream.searchParams.set('ordering','-lastupdate');
-  upstream.searchParams.set('limit','500');
   try{
-    const response=await fetch(upstream,{headers:{accept:'application/json'},cache:'no-store'});
-    if(!response.ok)throw Error(`EFFIS HTTP ${response.status}`);
-    const raw=await response.json();
+    const dataset=await fetchEffisRecords();
     const origin={lat,lon};
-    const perimeters=(Array.isArray(raw.results)?raw.results:[])
+    const perimeters=dataset.records
       .map(record=>normalize(record,origin,radius))
       .filter(Boolean)
       .sort((a,b)=>Number(b.containsLocality)-Number(a.containsLocality)||a.distanceToEdgeKm-b.distanceToEdgeKm)
       .slice(0,12);
     return new Response(JSON.stringify({
-      version:'4.9.0',
+      version:'4.9.1',
       source:'EFFIS · Copernicus EMS',
       official:false,
       product:'Rapid Damage Assessment · Burnt Areas',
       radiusKm:radius,
-      retrievedAt:new Date().toISOString(),
-      queriedFrom:since,
+      servedAt:new Date().toISOString(),
+      retrievedAt:new Date(dataset.fetchedAt).toISOString(),
+      queriedFrom:dataset.queriedFrom,
+      cacheStatus:dataset.cacheStatus,
+      usingStaleCache:dataset.usingStaleCache,
       nearbyCount:perimeters.length,
       perimeters,
       viewerUrl:EFFIS_VIEWER,
       methodologyUrl:EFFIS_METHOD,
       licenseUrl:EFFIS_LICENSE,
       distanceMethod:'Distancia aproximada en línea recta desde la coordenada de la localidad hasta el borde del perímetro cartografiado.',
-      coverageNote:'EFFIS cartografía áreas quemadas mediante satélite. No representa el frente de llama en tiempo real, no distingue todos los tipos de quema y puede omitir incendios pequeños o recientes.'
+      coverageNote:'EFFIS cartografía áreas quemadas mediante satélite. No representa el frente de llama en tiempo real, no distingue todos los tipos de quema y puede omitir incendios pequeños o recientes.',
+      associationNote:'FuegoCerca no asocia automáticamente estos perímetros a incendios oficiales sin una coincidencia espacial y temporal verificable.'
     }),{status:200,headers:HEADERS});
   }catch(error){
     return new Response(JSON.stringify({
-      version:'4.9.0',
+      version:'4.9.1',
       source:'EFFIS · Copernicus EMS',
       degraded:true,
       radiusKm:radius,
