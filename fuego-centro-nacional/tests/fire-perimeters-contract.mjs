@@ -1,5 +1,9 @@
 import { strict as assert } from 'node:assert';
-import handler,{__resetEffisCacheForTests} from '../api/fire-perimeters.js';
+import handler,{
+  __resetEffisCacheForTests,
+  __setEffisRuntimeCacheForTests,
+  __setEffisBackgroundSchedulerForTests
+} from '../api/fire-perimeters.js';
 
 const originalFetch=globalThis.fetch;
 const originalDateNow=Date.now;
@@ -42,16 +46,32 @@ const payload={
 };
 
 let fetchCount=0;
+let runtimeSetOptions=null;
+const runtimeStore=new Map();
+const runtimeCache={
+  async get(key){return runtimeStore.get(key)},
+  async set(key,value,options){runtimeStore.set(key,value);runtimeSetOptions=options}
+};
 globalThis.fetch=async()=>{fetchCount++;return new Response(JSON.stringify(payload),{status:200,headers:{'content-type':'application/json'}})};
 
 try{
+  __setEffisRuntimeCacheForTests(runtimeCache);
+  __setEffisBackgroundSchedulerForTests(null);
   __resetEffisCacheForTests();
   const inside=await handler(new Request('https://fuegocerca.test/api/fire-perimeters?lat=36.70&lon=-6.10&radius=100'));
   assert.equal(inside.status,200);
   const insideData=await inside.json();
-  assert.equal(insideData.version,'4.9.1');
+  assert.equal(insideData.version,'4.9.2');
   assert.equal(insideData.source,'EFFIS · Copernicus EMS');
   assert.equal(insideData.official,false);
+  assert.equal(insideData.cacheStatus,'upstream');
+  assert.equal(insideData.persistentCache,true);
+  assert.ok(insideData.datasetBytes>0);
+  assert.ok(insideData.datasetBytes<1750*1024);
+  assert.ok(Number.isFinite(insideData.processingMs));
+  assert.match(inside.headers.get('server-timing'),/fuegocerca;dur=/);
+  assert.equal(runtimeSetOptions.ttl,86400);
+  assert.deepEqual(runtimeSetOptions.tags,['effis-spain','fire-perimeters']);
   assert.equal(insideData.nearbyCount,2);
   assert.equal(insideData.perimeters[0].containsLocality,true);
   assert.equal(insideData.perimeters[0].distanceToEdgeKm,0);
@@ -65,8 +85,10 @@ try{
   assert.match(insideData.coverageNote,/No representa el frente de llama/);
   assert.match(insideData.associationNote,/no asocia automáticamente/i);
 
+  __resetEffisCacheForTests();
   const outside=await handler(new Request('https://fuegocerca.test/api/fire-perimeters?lat=36.70&lon=-6.15&radius=100'));
   const outsideData=await outside.json();
+  assert.equal(outsideData.cacheStatus,'runtime');
   assert.ok(outsideData.perimeters[0].distanceToEdgeKm>2);
   assert.ok(outsideData.perimeters[0].distanceToEdgeKm<8);
   assert.equal(outsideData.perimeters[0].containsLocality,false);
@@ -76,15 +98,23 @@ try{
   const invalid=await handler(new Request('https://fuegocerca.test/api/fire-perimeters?lat=91&lon=0'));
   assert.equal(invalid.status,400);
 
+  let scheduledRefreshes=0;
+  __setEffisBackgroundSchedulerForTests(()=>{scheduledRefreshes++});
   Date.now=()=>originalDateNow()+2*60*60*1000;
   globalThis.fetch=async()=>new Response('fallo temporal',{status:502});
+  __resetEffisCacheForTests();
   const stale=await handler(new Request('https://fuegocerca.test/api/fire-perimeters?lat=36.70&lon=-6.10'));
   assert.equal(stale.status,200);
   const staleData=await stale.json();
   assert.equal(staleData.usingStaleCache,true);
-  assert.equal(staleData.cacheStatus,'stale');
+  assert.equal(staleData.cacheStatus,'runtime-stale');
+  assert.equal(staleData.refreshing,true);
+  assert.equal(scheduledRefreshes,1);
   assert.equal(staleData.perimeters.length,2);
+  assert.match(stale.headers.get('cache-control'),/s-maxage=30/);
 
+  runtimeStore.clear();
+  __setEffisBackgroundSchedulerForTests(null);
   __resetEffisCacheForTests();
   globalThis.fetch=async()=>new Response('fallo',{status:502});
   const degraded=await handler(new Request('https://fuegocerca.test/api/fire-perimeters?lat=36.70&lon=-6.10'));
@@ -95,6 +125,8 @@ try{
 
   console.log('EFFIS fire perimeter endpoint contract checks passed.');
 }finally{
+  __setEffisRuntimeCacheForTests(undefined);
+  __setEffisBackgroundSchedulerForTests(undefined);
   Date.now=originalDateNow;
   globalThis.fetch=originalFetch;
 }

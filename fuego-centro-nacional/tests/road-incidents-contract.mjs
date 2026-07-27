@@ -31,7 +31,7 @@ try{
   const valid=await handler(new Request('https://fuegocerca.test/api/road-incidents?lat=36.6817&lon=-6.1372&radius=50'));
   assert.equal(valid.status,200);
   const data=await valid.json();
-  assert.equal(data.version,'4.9.1');
+  assert.equal(data.version,'4.9.2');
   assert.equal(data.source,'DGT');
   assert.equal(data.format,'DATEX II 3.7');
   assert.equal(data.nearbyCount,1);

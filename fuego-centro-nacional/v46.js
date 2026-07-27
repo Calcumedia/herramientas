@@ -376,6 +376,8 @@
   function renderPerimeters(data,report){
     const host=$('#localPerimeterStatus');
     if(!host)return;
+    host.dataset.cacheStatus=data.cacheStatus||'unavailable';
+    host.dataset.processingMs=finite(data.processingMs)?String(data.processingMs):'';
     if(data.degraded){
       clearPerimeterLayer();
       host.dataset.perimeterSummary='';
@@ -396,7 +398,8 @@
     host.dataset.perimeterSummary=summary;
     const additional=perimeters.length-1;
     const ageCategory=['recent','aging','old','unknown'].includes(nearest.ageCategory)?nearest.ageCategory:'unknown';
-    const staleNotice=data.usingStaleCache?`<p class="perimeterStale"><b>Mostrando la última copia válida.</b> EFFIS no ha podido actualizarse; datos recuperados ${escapeHtml(localTime(data.retrievedAt))}.</p>`:'';
+    const staleMessage=data.refreshing?'EFFIS se está actualizando en segundo plano.':'La actualización de EFFIS no está disponible ahora.';
+    const staleNotice=data.usingStaleCache?`<p class="perimeterStale"><b>Mostrando la última copia válida.</b> ${escapeHtml(staleMessage)} Datos recuperados ${escapeHtml(localTime(data.retrievedAt))}.</p>`:'';
     host.innerHTML=`${staleNotice}<article class="perimeterNearest"><div class="perimeterNearestHead"><span>Área quemada más próxima</span><b>${escapeHtml(perimeterDistanceLabel(nearest))}</b></div><div class="perimeterAge ${ageCategory}">${escapeHtml(nearest.ageLabel||'Antigüedad no confirmada')}</div><h6>${escapeHtml(location)}</h6><div class="perimeterMetrics"><span><small>Área cartografiada</small><strong>${escapeHtml(area)}</strong></span><span><small>Fecha del producto</small><strong>${escapeHtml(localTime(nearest.updatedAt||nearest.fireDate))}</strong></span></div><p><b>Qué significa:</b> distancia desde ${escapeHtml(report.name)} hasta el borde de un área quemada cartografiada por satélite.</p></article>${additional?`<p class="perimeterMore">${additional} ${additional===1?'área cartografiada adicional':'áreas cartografiadas adicionales'} dentro de ${escapeHtml(data.radiusKm)} km se ${additional===1?'muestra':'muestran'} en el mapa.</p>`:''}<p class="perimeterWarning"><b>No es un incendio activo ni el frente de llama.</b> El perímetro puede ser antiguo y EFFIS no confirma por sí solo que el fuego siga activo.</p><p class="perimeterAssociation">${escapeHtml(data.associationNote||nearest.associationNote||'No se vincula automáticamente a un incendio oficial sin una coincidencia verificable.')}</p><p class="perimeterCoverage">${escapeHtml(data.coverageNote||'Cobertura satelital europea.')}</p>`;
   }
 
@@ -406,7 +409,7 @@
     const key=`${report.lat.toFixed(4)}|${report.lon.toFixed(4)}|100`;
     if(!force&&host.dataset.loadedFor===key)return;
     host.dataset.loadedFor=key;
-    host.innerHTML='<span class="historyEmpty">Consultando perímetros en 100 km…</span>';
+    host.innerHTML='<span class="historyEmpty">El informe local ya está disponible. Añadiendo las áreas EFFIS en segundo plano…</span>';
     try{
       const response=await fetch(`/api/fire-perimeters?lat=${encodeURIComponent(report.lat)}&lon=${encodeURIComponent(report.lon)}&radius=100`);
       const data=await response.json();
@@ -415,6 +418,13 @@
     }catch{
       renderPerimeters({degraded:true,coverageNote:'No se ha podido consultar EFFIS. La ausencia de perímetros no significa que no exista un incendio.'},report);
     }
+  }
+
+  let perimeterPrewarmStarted=false;
+  function prewarmPerimeters(){
+    if(perimeterPrewarmStarted||!navigator.onLine||navigator.connection?.saveData)return;
+    perimeterPrewarmStarted=true;
+    fetch('/api/fire-perimeters?lat=40.4167&lon=-3.7033&radius=10&prewarm=1').catch(()=>{});
   }
 
   async function loadRoadIncidents(report,{force=false}={}){
@@ -490,6 +500,7 @@
 
   function bind(){
     renderHistory();setOfflineState();loadDanger();
+    setTimeout(prewarmPerimeters,700);
     $('#refreshDangerBtn')?.addEventListener('click',loadDanger);
     $('#perimeterToggle')?.addEventListener('change',syncPerimeterVisibility);
     $('#recentPlaces')?.addEventListener('click',event=>{const button=event.target.closest('[data-history]');if(button)openHistory(Number(button.dataset.history))});
@@ -510,6 +521,6 @@
     addEventListener('offline',setOfflineState);addEventListener('online',setOfflineState);openDeepLink();
   }
 
-  window.FC46={getHistory,loadDanger,loadWeather,loadPerimeters,loadRoadIncidents,currentReport,setOfflineState,shareCurrentReport,openPlace,combinedTimeline,ensureSmartLocalInsights,getPerimeterLayerCount:()=>perimeterLayer?.getLayers?.().length||0,isPerimeterLayerVisible:()=>Boolean(perimeterLayer&&window.__FC_MAP__?.hasLayer?.(perimeterLayer))};
+  window.FC46={getHistory,loadDanger,loadWeather,loadPerimeters,loadRoadIncidents,prewarmPerimeters,currentReport,setOfflineState,shareCurrentReport,openPlace,combinedTimeline,ensureSmartLocalInsights,getPerimeterLayerCount:()=>perimeterLayer?.getLayers?.().length||0,isPerimeterLayerVisible:()=>Boolean(perimeterLayer&&window.__FC_MAP__?.hasLayer?.(perimeterLayer))};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();
 })();

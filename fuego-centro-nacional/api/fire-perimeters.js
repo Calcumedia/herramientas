@@ -1,4 +1,6 @@
-export const config={runtime:'edge'};
+import {getCache,waitUntil} from '@vercel/functions';
+
+export const config={maxDuration:60};
 
 const EFFIS_API='https://api.effis.emergency.copernicus.eu/rest/2/burntareas/current/';
 const EFFIS_VIEWER='https://forest-fire.emergency.copernicus.eu/apps/effis.csv/';
@@ -7,15 +9,30 @@ const EFFIS_LICENSE='https://forest-fire.emergency.copernicus.eu/about-effis/dat
 const CACHE_TTL_MS=60*60*1000;
 const STALE_TTL_MS=24*60*60*1000;
 const FETCH_TIMEOUT_MS=22000;
+const RUNTIME_CACHE_KEY='effis-spain-burnt-areas-v492';
+const RUNTIME_CACHE_TTL_SECONDS=24*60*60;
+const RUNTIME_CACHE_MAX_BYTES=1750*1024;
 const HEADERS={
   'content-type':'application/json; charset=utf-8',
   'cache-control':'public, s-maxage=900, stale-while-revalidate=3600',
   'access-control-allow-origin':'*'
 };
 let effisCache={records:null,fetchedAt:0,queriedFrom:null};
+let effisRefreshPromise=null;
+let runtimeCacheOverride;
+let backgroundSchedulerOverride;
 
 export function __resetEffisCacheForTests(){
   effisCache={records:null,fetchedAt:0,queriedFrom:null};
+  effisRefreshPromise=null;
+}
+
+export function __setEffisRuntimeCacheForTests(cache){
+  runtimeCacheOverride=cache;
+}
+
+export function __setEffisBackgroundSchedulerForTests(scheduler){
+  backgroundSchedulerOverride=scheduler;
 }
 
 function validCoordinates(lat,lon){
@@ -108,9 +125,9 @@ function simplifyRing(ring,tolerance=.00055){
   return simplified;
 }
 
-function simplifyGeometry(geometry){
-  if(geometry?.type==='Polygon')return {type:'Polygon',coordinates:(geometry.coordinates||[]).map(ring=>simplifyRing(ring))};
-  if(geometry?.type==='MultiPolygon')return {type:'MultiPolygon',coordinates:(geometry.coordinates||[]).map(polygon=>polygon.map(ring=>simplifyRing(ring)))};
+function simplifyGeometry(geometry,tolerance=.00055){
+  if(geometry?.type==='Polygon')return {type:'Polygon',coordinates:(geometry.coordinates||[]).map(ring=>simplifyRing(ring,tolerance))};
+  if(geometry?.type==='MultiPolygon')return {type:'MultiPolygon',coordinates:(geometry.coordinates||[]).map(polygon=>polygon.map(ring=>simplifyRing(ring,tolerance)))};
   return null;
 }
 
@@ -168,37 +185,148 @@ function stableSince(){
   return date.toISOString();
 }
 
+function compactRecord(record,tolerance){
+  if(!record?.shape)return null;
+  return {
+    id:record.id,
+    centroid:record.centroid||null,
+    bbox:record.bbox||null,
+    shape:simplifyGeometry(record.shape,tolerance),
+    area_ha:record.area_ha??null,
+    firedate:record.firedate||null,
+    lastfiredate:record.lastfiredate||null,
+    lastupdate:record.lastupdate||null,
+    province:record.province||null,
+    commune:record.commune||null
+  };
+}
+
+function compactDataset(rawRecords){
+  const tolerances=[.00055,.0012,.0025,.005];
+  let records=[],bytes=Infinity;
+  for(const tolerance of tolerances){
+    records=rawRecords.map(record=>compactRecord(record,tolerance)).filter(record=>record?.shape);
+    bytes=new TextEncoder().encode(JSON.stringify(records)).byteLength;
+    if(bytes<=RUNTIME_CACHE_MAX_BYTES)break;
+  }
+  return {records,bytes,cacheable:bytes<=RUNTIME_CACHE_MAX_BYTES};
+}
+
+export function __compactEffisDatasetForTests(records){
+  return compactDataset(records);
+}
+
+function runtimeCache(){
+  if(runtimeCacheOverride!==undefined)return runtimeCacheOverride;
+  try{return getCache({namespace:'fuegocerca-effis'})}catch{return null}
+}
+
+function validDataset(dataset){
+  return dataset&&Array.isArray(dataset.records)&&Number.isFinite(dataset.fetchedAt)&&typeof dataset.queriedFrom==='string';
+}
+
+async function readRuntimeDataset(){
+  try{
+    const cache=runtimeCache();
+    if(!cache)return null;
+    const cached=await cache.get(RUNTIME_CACHE_KEY);
+    return validDataset(cached)?cached:null;
+  }catch{
+    return null;
+  }
+}
+
+async function writeRuntimeDataset(dataset){
+  if(!dataset.cacheable)return false;
+  try{
+    const cache=runtimeCache();
+    if(!cache)return false;
+    await cache.set(RUNTIME_CACHE_KEY,{
+      records:dataset.records,
+      fetchedAt:dataset.fetchedAt,
+      queriedFrom:dataset.queriedFrom,
+      bytes:dataset.bytes
+    },{
+      ttl:RUNTIME_CACHE_TTL_SECONDS,
+      tags:['effis-spain','fire-perimeters'],
+      name:'EFFIS Spain burnt areas'
+    });
+    return true;
+  }catch{
+    return false;
+  }
+}
+
+async function refreshEffisRecords(){
+  if(effisRefreshPromise)return effisRefreshPromise;
+  effisRefreshPromise=(async()=>{
+    const startedAt=Date.now();
+    const since=stableSince();
+    const upstream=new URL(EFFIS_API);
+    upstream.searchParams.set('country','ES');
+    upstream.searchParams.set('firedate__gte',since);
+    upstream.searchParams.set('ordering','-lastupdate');
+    upstream.searchParams.set('limit','500');
+    const controller=new AbortController();
+    const timeout=setTimeout(()=>controller.abort(),FETCH_TIMEOUT_MS);
+    try{
+      const response=await fetch(upstream,{headers:{accept:'application/json'},cache:'force-cache',signal:controller.signal});
+      if(!response.ok)throw Error(`EFFIS HTTP ${response.status}`);
+      const raw=await response.json();
+      const compact=compactDataset(Array.isArray(raw.results)?raw.results:[]);
+      const dataset={
+        records:compact.records,
+        fetchedAt:Date.now(),
+        queriedFrom:since,
+        bytes:compact.bytes,
+        cacheable:compact.cacheable,
+        upstreamDurationMs:Date.now()-startedAt
+      };
+      const persisted=await writeRuntimeDataset(dataset);
+      effisCache={records:dataset.records,fetchedAt:dataset.fetchedAt,queriedFrom:dataset.queriedFrom,bytes:dataset.bytes,persisted};
+      return {...dataset,persisted,cacheStatus:'upstream',usingStaleCache:false,refreshing:false};
+    }finally{
+      clearTimeout(timeout);
+    }
+  })();
+  try{return await effisRefreshPromise}finally{effisRefreshPromise=null}
+}
+
+function scheduleRefresh(){
+  const factory=()=>refreshEffisRecords().catch(()=>null);
+  if(backgroundSchedulerOverride)return backgroundSchedulerOverride(factory);
+  const task=factory();
+  try{waitUntil(task)}catch{}
+}
+
 async function fetchEffisRecords(){
   const now=Date.now();
-  if(Array.isArray(effisCache.records)&&now-effisCache.fetchedAt<CACHE_TTL_MS){
-    return {...effisCache,cacheStatus:'memory',usingStaleCache:false};
+  if(validDataset(effisCache)&&now-effisCache.fetchedAt<CACHE_TTL_MS){
+    return {...effisCache,cacheStatus:'memory',usingStaleCache:false,refreshing:false};
   }
-  const since=stableSince();
-  const upstream=new URL(EFFIS_API);
-  upstream.searchParams.set('country','ES');
-  upstream.searchParams.set('firedate__gte',since);
-  upstream.searchParams.set('ordering','-lastupdate');
-  upstream.searchParams.set('limit','500');
-  const controller=new AbortController();
-  const timeout=setTimeout(()=>controller.abort(),FETCH_TIMEOUT_MS);
+  const persistent=await readRuntimeDataset();
+  if(persistent){
+    effisCache={records:persistent.records,fetchedAt:persistent.fetchedAt,queriedFrom:persistent.queriedFrom,bytes:persistent.bytes,persisted:true};
+    const age=now-persistent.fetchedAt;
+    if(age<CACHE_TTL_MS)return {...persistent,cacheStatus:'runtime',usingStaleCache:false,refreshing:false};
+    if(age<STALE_TTL_MS){
+      scheduleRefresh();
+      return {...persistent,cacheStatus:'runtime-stale',usingStaleCache:true,refreshing:true};
+    }
+  }
+  const fallback=validDataset(effisCache)&&now-effisCache.fetchedAt<STALE_TTL_MS?{...effisCache}:null;
   try{
-    const response=await fetch(upstream,{headers:{accept:'application/json'},cache:'force-cache',signal:controller.signal});
-    if(!response.ok)throw Error(`EFFIS HTTP ${response.status}`);
-    const raw=await response.json();
-    const records=Array.isArray(raw.results)?raw.results:[];
-    effisCache={records,fetchedAt:now,queriedFrom:since};
-    return {...effisCache,cacheStatus:'upstream',usingStaleCache:false};
+    return await refreshEffisRecords();
   }catch(error){
-    if(Array.isArray(effisCache.records)&&now-effisCache.fetchedAt<STALE_TTL_MS){
-      return {...effisCache,cacheStatus:'stale',usingStaleCache:true,refreshError:String(error.message||error)};
+    if(fallback){
+      return {...fallback,cacheStatus:'stale',usingStaleCache:true,refreshing:false,refreshError:String(error.message||error)};
     }
     throw error;
-  }finally{
-    clearTimeout(timeout);
   }
 }
 
 export default async function handler(request){
+  const startedAt=Date.now();
   const url=new URL(request.url);
   const lat=Number(url.searchParams.get('lat'));
   const lon=Number(url.searchParams.get('lon'));
@@ -214,8 +342,11 @@ export default async function handler(request){
       .filter(Boolean)
       .sort((a,b)=>Number(b.containsLocality)-Number(a.containsLocality)||a.distanceToEdgeKm-b.distanceToEdgeKm)
       .slice(0,12);
+    const responseHeaders=dataset.usingStaleCache
+      ?{...HEADERS,'cache-control':'public, s-maxage=30, stale-while-revalidate=60'}
+      :HEADERS;
     return new Response(JSON.stringify({
-      version:'4.9.1',
+      version:'4.9.2',
       source:'EFFIS · Copernicus EMS',
       official:false,
       product:'Rapid Damage Assessment · Burnt Areas',
@@ -225,6 +356,11 @@ export default async function handler(request){
       queriedFrom:dataset.queriedFrom,
       cacheStatus:dataset.cacheStatus,
       usingStaleCache:dataset.usingStaleCache,
+      refreshing:dataset.refreshing,
+      persistentCache:dataset.persisted!==false,
+      datasetBytes:dataset.bytes||null,
+      upstreamDurationMs:dataset.upstreamDurationMs||null,
+      processingMs:Date.now()-startedAt,
       nearbyCount:perimeters.length,
       perimeters,
       viewerUrl:EFFIS_VIEWER,
@@ -233,14 +369,15 @@ export default async function handler(request){
       distanceMethod:'Distancia aproximada en línea recta desde la coordenada de la localidad hasta el borde del perímetro cartografiado.',
       coverageNote:'EFFIS cartografía áreas quemadas mediante satélite. No representa el frente de llama en tiempo real, no distingue todos los tipos de quema y puede omitir incendios pequeños o recientes.',
       associationNote:'FuegoCerca no asocia automáticamente estos perímetros a incendios oficiales sin una coincidencia espacial y temporal verificable.'
-    }),{status:200,headers:HEADERS});
+    }),{status:200,headers:{...responseHeaders,'server-timing':`fuegocerca;dur=${Date.now()-startedAt}`}});
   }catch(error){
     return new Response(JSON.stringify({
-      version:'4.9.1',
+      version:'4.9.2',
       source:'EFFIS · Copernicus EMS',
       degraded:true,
       radiusKm:radius,
       retrievedAt:new Date().toISOString(),
+      processingMs:Date.now()-startedAt,
       perimeters:[],
       viewerUrl:EFFIS_VIEWER,
       methodologyUrl:EFFIS_METHOD,
