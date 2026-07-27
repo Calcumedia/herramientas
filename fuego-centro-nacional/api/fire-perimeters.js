@@ -348,7 +348,7 @@ async function createResponse(request){
       ?{...HEADERS,'cache-control':'public, s-maxage=30, stale-while-revalidate=60'}
       :HEADERS;
     return new Response(JSON.stringify({
-      version:'4.9.3',
+      version:'4.10.0',
       source:'EFFIS · Copernicus EMS',
       official:false,
       product:'Rapid Damage Assessment · Burnt Areas',
@@ -374,7 +374,7 @@ async function createResponse(request){
     }),{status:200,headers:{...responseHeaders,'server-timing':`fuegocerca;dur=${Date.now()-startedAt}`}});
   }catch(error){
     return new Response(JSON.stringify({
-      version:'4.9.3',
+      version:'4.10.0',
       source:'EFFIS · Copernicus EMS',
       degraded:true,
       radiusKm:radius,
