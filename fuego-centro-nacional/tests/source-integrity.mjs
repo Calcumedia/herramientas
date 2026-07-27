@@ -12,7 +12,7 @@ const required = [
 ];
 for (const file of required) await access(join(root, file), constants.R_OK);
 
-const [html,app,v45,v46css,v46,health,danger,dangerMap,perimeters,roads,situation,weather,pkg,lock,manifest,readme,deployment] = await Promise.all([
+const [html,app,v45,v46css,v46,health,danger,dangerMap,perimeters,roads,situation,weather,pkg,lock,manifest,readme,deployment,vercelConfig] = await Promise.all([
   readFile(join(root,'index.html'),'utf8'),
   readFile(join(root,'app.js'),'utf8'),
   readFile(join(root,'v45.js'),'utf8'),
@@ -29,7 +29,8 @@ const [html,app,v45,v46css,v46,health,danger,dangerMap,perimeters,roads,situatio
   readFile(join(root,'package-lock.json'),'utf8'),
   readFile(join(root,'manifest.webmanifest'),'utf8'),
   readFile(join(root,'README.md'),'utf8'),
-  readFile(join(root,'DEPLOYMENT.md'),'utf8')
+  readFile(join(root,'DEPLOYMENT.md'),'utf8'),
+  readFile(join(root,'vercel.json'),'utf8')
 ]);
 
 for (const id of ['preventionPanel','recentPlaces','offlineSnapshotNotice']) assert.match(html,new RegExp(`id="${id}"`));
@@ -118,6 +119,7 @@ assert.match(perimeters,/FETCH_TIMEOUT_MS/);
 assert.match(perimeters,/getCache/);
 assert.match(perimeters,/waitUntil/);
 assert.match(perimeters,/maxDuration:60/);
+assert.equal(JSON.parse(vercelConfig).functions['api/fire-perimeters.js'].maxDuration,60);
 assert.match(perimeters,/RUNTIME_CACHE_KEY/);
 assert.match(perimeters,/runtime-stale/);
 assert.match(perimeters,/server-timing/);
