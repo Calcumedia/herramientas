@@ -90,6 +90,8 @@
 .roadSummary b{font-size:12px}
 .roadSummary small{color:#9eabb7;font-size:9px;text-align:right}
 .roadIncidentList{display:grid;gap:7px}
+.roadIncidentList.is-collapsed .roadIncidentExtra{display:none}
+.roadToggle{justify-self:start}
 .roadIncident{padding:9px;border:1px solid rgba(255,255,255,.1);border-radius:9px;background:#121820}
 .roadIncidentHead{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .roadIncidentHead b{font-size:12px}
@@ -103,6 +105,26 @@
 .roadEmpty{color:#b8c2cc;font-size:11px}
 .roadUnavailable{padding:9px;border:1px solid rgba(243,197,72,.3);border-radius:9px;background:rgba(243,197,72,.07)}
 .roadUnavailable p{margin:5px 0 0;color:#c7d0d9;font-size:10px;line-height:1.45}
+.perimeterPanel{display:grid;gap:9px;padding:11px;border:1px solid rgba(255,140,90,.24);border-radius:12px;background:#0e141a}
+.perimeterPanelHead{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.perimeterPanelHead small{display:block;margin-bottom:3px;color:#ffaf8d;font-size:9px;font-weight:800;letter-spacing:.08em}
+.perimeterPanelHead h5{margin:0;font-size:14px}
+.perimeterPanelHead a{font-size:10px}
+.perimeterNearest{padding:11px;border:1px solid rgba(255,140,90,.25);border-radius:10px;background:rgba(255,112,67,.06)}
+.perimeterNearestHead{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.perimeterNearestHead span{color:#ffb294;font-size:9px;font-weight:900;text-transform:uppercase}
+.perimeterNearestHead b{font-size:13px;text-align:right}
+.perimeterNearest h6{margin:8px 0;font-size:14px}
+.perimeterNearest p{margin:9px 0 0;color:#c5ced7;font-size:10px;line-height:1.45}
+.perimeterMetrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.perimeterMetrics span{padding:8px;border:1px solid rgba(255,255,255,.09);border-radius:8px;background:#10161c}
+.perimeterMetrics small,.perimeterMetrics strong{display:block}
+.perimeterMetrics small{color:#98a5b0;font-size:9px}
+.perimeterMetrics strong{margin-top:3px;font-size:12px}
+.perimeterMore,.perimeterCoverage{margin:0;color:#9aa7b3;font-size:9px;line-height:1.45}
+.perimeterWarning{margin:0;padding-left:8px;border-left:2px solid #ff8c5a;color:#c4cdd6;font-size:10px;line-height:1.45}
+.perimeterEmpty,.perimeterUnavailable{padding:9px;border:1px solid rgba(243,197,72,.25);border-radius:9px;background:rgba(243,197,72,.06)}
+.perimeterEmpty p,.perimeterUnavailable p{margin:5px 0 0;color:#c7d0d9;font-size:10px;line-height:1.45}
 .reportShare{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px}
 .reportShare .shareFeedback{flex:1 1 180px;margin:0}
 
@@ -114,6 +136,8 @@
   .localContextHead{align-items:stretch;flex-direction:column}
   .modelTag{align-self:flex-start}
   .weatherGrid,.operationalLinks,.dangerProducts{grid-template-columns:1fr}
-  .dangerProduct,.roadPanelHead,.roadSummary{align-items:flex-start;flex-direction:column}
+  .dangerProduct,.roadPanelHead,.roadSummary,.perimeterPanelHead,.perimeterNearestHead{align-items:flex-start;flex-direction:column}
   .roadSummary small{text-align:left}
+  .perimeterNearestHead b{text-align:left}
+  .perimeterMetrics{grid-template-columns:1fr}
 }

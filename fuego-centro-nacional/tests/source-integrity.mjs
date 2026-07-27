@@ -7,12 +7,12 @@ const root = new URL('../', import.meta.url).pathname;
 const required = [
   'index.html','styles.css','v45.css','v46.css','app.js','v45.js','v46.js','analytics-config.js','sw.js',
   'manifest.webmanifest','favicon.svg',
-  'api/situation.js','api/geocode.js','api/reverse-geocode.js','api/health.js','api/fire-danger.js','api/fire-danger-map.js','api/road-incidents.js','api/weather.js',
-  'playwright.config.mjs','tests/e2e.spec.mjs','tests/fire-danger-contract.mjs','tests/road-incidents-contract.mjs','vercel.json'
+  'api/situation.js','api/geocode.js','api/reverse-geocode.js','api/health.js','api/fire-danger.js','api/fire-danger-map.js','api/fire-perimeters.js','api/road-incidents.js','api/weather.js',
+  'playwright.config.mjs','tests/e2e.spec.mjs','tests/fire-danger-contract.mjs','tests/fire-perimeters-contract.mjs','tests/road-incidents-contract.mjs','vercel.json'
 ];
 for (const file of required) await access(join(root, file), constants.R_OK);
 
-const [html,app,v45,v46css,v46,health,danger,dangerMap,roads,situation,weather,pkg,lock,manifest,readme,deployment] = await Promise.all([
+const [html,app,v45,v46css,v46,health,danger,dangerMap,perimeters,roads,situation,weather,pkg,lock,manifest,readme,deployment] = await Promise.all([
   readFile(join(root,'index.html'),'utf8'),
   readFile(join(root,'app.js'),'utf8'),
   readFile(join(root,'v45.js'),'utf8'),
@@ -21,6 +21,7 @@ const [html,app,v45,v46css,v46,health,danger,dangerMap,roads,situation,weather,p
   readFile(join(root,'api/health.js'),'utf8'),
   readFile(join(root,'api/fire-danger.js'),'utf8'),
   readFile(join(root,'api/fire-danger-map.js'),'utf8'),
+  readFile(join(root,'api/fire-perimeters.js'),'utf8'),
   readFile(join(root,'api/road-incidents.js'),'utf8'),
   readFile(join(root,'api/situation.js'),'utf8'),
   readFile(join(root,'api/weather.js'),'utf8'),
@@ -50,11 +51,17 @@ assert.match(v46css,/\.smartTimeline/);
 assert.match(v46css,/\.dangerProducts/);
 assert.match(v46css,/\.roadPanel/);
 assert.match(v46css,/\.roadIncident/);
+assert.match(v46css,/\.perimeterPanel/);
+assert.match(v46css,/\.roadIncidentList\.is-collapsed/);
 assert.match(v46,/fc_recent_places_v47/);
 assert.match(v46,/fc_last_snapshot_v47/);
 assert.match(v46,/navigator\.share/);
 assert.match(v46,/api\/fire-danger/);
 assert.match(v46,/api\/road-incidents/);
+assert.match(v46,/api\/fire-perimeters/);
+assert.match(v46,/getPerimeterLayerCount/);
+assert.match(v46,/No es el frente de llama/);
+assert.match(v46,/Ver las \$\{incidents\.length\} incidencias priorizadas/);
 assert.match(v46,/sampleDangerProduct/);
 assert.match(v46,/No es una alerta/);
 assert.match(v46,/relationshipNote/);
@@ -73,19 +80,24 @@ assert.match(health,/localAttentionIsUnofficial:true/);
 assert.match(health,/combinedIncidentTimeline:true/);
 assert.match(health,/fireDangerOfficialRaster:true/);
 assert.match(health,/roadIncidentsEndpoint:true/);
-assert.match(health,/version:'4\.8\.0'/);
+assert.match(health,/firePerimetersEndpoint:true/);
+assert.match(health,/effisPerimeterDistance:true/);
+assert.match(health,/version:'4\.9\.0'/);
 assert.match(danger,/AEMET/);
-assert.match(danger,/version:'4\.8\.0'/);
+assert.match(danger,/version:'4\.9\.0'/);
 assert.match(danger,/exactLocalLevel:true/);
 assert.match(danger,/timeline\/riesgo/);
 assert.match(dangerMap,/imagen\/RIESGO/);
 assert.match(roads,/DATEX II 3\.7/);
 assert.match(roads,/datex2_v37\.xml/);
-assert.match(situation,/data\.version='4\.8\.0'/);
-assert.match(weather,/version:'4\.8\.0'/);
-assert.equal(JSON.parse(pkg).version,'4.8.0');
+assert.match(perimeters,/api\.effis\.emergency\.copernicus\.eu/);
+assert.match(perimeters,/distanceToEdgeKm/);
+assert.match(perimeters,/No representa el frente de llama/);
+assert.match(situation,/data\.version='4\.9\.0'/);
+assert.match(weather,/version:'4\.9\.0'/);
+assert.equal(JSON.parse(pkg).version,'4.9.0');
 assert.equal(JSON.parse(pkg).name,'fuegocerca');
-assert.equal(JSON.parse(lock).version,'4.8.0');
+assert.equal(JSON.parse(lock).version,'4.9.0');
 assert.equal(JSON.parse(lock).name,'fuegocerca');
 assert.equal(JSON.parse(manifest).name,'FuegoCerca');
 
@@ -94,4 +106,4 @@ for(const [name,content] of Object.entries({html,v46,health,manifest,readme,depl
   assert.doesNotMatch(content,oldBrand,`${name} no debe reintroducir una marca anterior`);
 }
 
-console.log('Source integrity checks passed for FuegoCerca 4.8.');
+console.log('Source integrity checks passed for FuegoCerca 4.9.');
