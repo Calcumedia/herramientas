@@ -152,7 +152,7 @@ export default async function handler(request){
     const xml=await response.text();
     const {publicationTime,records}=parseFeed(xml,{lat,lon},radius);
     return new Response(JSON.stringify({
-      version:'4.9.2',
+      version:'4.9.3',
       source:'DGT',
       sourceUrl:DGT_FEED,
       mapUrl:DGT_MAP,
@@ -169,7 +169,7 @@ export default async function handler(request){
     }),{status:200,headers:HEADERS});
   }catch(error){
     return new Response(JSON.stringify({
-      version:'4.9.2',
+      version:'4.9.3',
       source:'DGT',
       mapUrl:DGT_MAP,
       degraded:true,

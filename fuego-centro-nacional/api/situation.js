@@ -37,7 +37,7 @@ export default async function handler(request){
     if(!response.ok)throw Error(`Upstream HTTP ${response.status}`);
     const data=await response.json();
     const upstreamCoverage=new Map((data.regionalCoverage||[]).map(x=>[x.region,x]));
-    data.version='4.9.2';
+    data.version='4.9.3';
     data.dataEngineVersion='4.3.1';
     data.regionalCoverage=DIRECTORY.map(item=>{
       const old=upstreamCoverage.get(item.region);
@@ -52,6 +52,6 @@ export default async function handler(request){
     };
     return new Response(JSON.stringify(data),{status:200,headers});
   }catch(error){
-    return new Response(JSON.stringify({version:'4.9.2',dataEngineVersion:'4.3.1',degraded:true,error:String(error.message||error),regionalCoverage:DIRECTORY,incidents:[],archive:[],alerts:[],thermalSignals:[],news:[],coverage:[]}),{status:503,headers});
+    return new Response(JSON.stringify({version:'4.9.3',dataEngineVersion:'4.3.1',degraded:true,error:String(error.message||error),regionalCoverage:DIRECTORY,incidents:[],archive:[],alerts:[],thermalSignals:[],news:[],coverage:[]}),{status:503,headers});
   }
 }

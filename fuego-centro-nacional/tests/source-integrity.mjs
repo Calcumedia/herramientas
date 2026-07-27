@@ -103,9 +103,9 @@ assert.match(health,/effisAutomaticPrewarm:true/);
 assert.match(health,/effisServerTiming:true/);
 assert.match(health,/effisStaleFallbackHours:24/);
 assert.match(health,/effisAutoAssociation:false/);
-assert.match(health,/version:'4\.9\.2'/);
+assert.match(health,/version:'4\.9\.3'/);
 assert.match(danger,/AEMET/);
-assert.match(danger,/version:'4\.9\.2'/);
+assert.match(danger,/version:'4\.9\.3'/);
 assert.match(danger,/exactLocalLevel:true/);
 assert.match(danger,/timeline\/riesgo/);
 assert.match(dangerMap,/imagen\/RIESGO/);
@@ -124,12 +124,12 @@ assert.match(perimeters,/server-timing/);
 assert.match(perimeters,/ageCategory/);
 assert.match(perimeters,/associationStatus:'not-linked'/);
 assert.match(perimeters,/No representa el frente de llama/);
-assert.match(situation,/data\.version='4\.9\.2'/);
-assert.match(weather,/version:'4\.9\.2'/);
-assert.equal(JSON.parse(pkg).version,'4.9.2');
+assert.match(situation,/data\.version='4\.9\.3'/);
+assert.match(weather,/version:'4\.9\.3'/);
+assert.equal(JSON.parse(pkg).version,'4.9.3');
 assert.equal(JSON.parse(pkg).name,'fuegocerca');
 assert.equal(JSON.parse(pkg).dependencies['@vercel/functions'],'^3.7.6');
-assert.equal(JSON.parse(lock).version,'4.9.2');
+assert.equal(JSON.parse(lock).version,'4.9.3');
 assert.equal(JSON.parse(lock).name,'fuegocerca');
 assert.equal(JSON.parse(manifest).name,'FuegoCerca');
 
@@ -138,4 +138,5 @@ for(const [name,content] of Object.entries({html,v46,health,manifest,readme,depl
   assert.doesNotMatch(content,oldBrand,`${name} no debe reintroducir una marca anterior`);
 }
 
-console.log('Source integrity checks passed for FuegoCerca 4.9.2.');
+assert.match(health,/effisNodeRelativeUrlCompatible:true/);
+console.log('Source integrity checks passed for FuegoCerca 4.9.3.');

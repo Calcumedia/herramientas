@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 const situation={
-  version:'4.9.2',dataEngineVersion:'4.3.1',generatedAt:'2026-07-26T13:05:00.000Z',degraded:false,
+  version:'4.9.3',dataEngineVersion:'4.3.1',generatedAt:'2026-07-26T13:05:00.000Z',degraded:false,
   coverage:[{id:'test',label:'Fuente de prueba',ok:true,fallback:false,summary:'Activa',receivedAt:new Date().toISOString(),lastSuccessAt:new Date().toISOString()}],
   regionalCoverage:[{region:'Andalucía',aliases:['Andalucía','Andalucia'],mode:'viewer',sourceLabel:'INFOCA',sourceUrl:'https://example.com',description:'Visor oficial identificado.',ok:false}],
   incidents:[
@@ -34,7 +34,7 @@ const situation={
 };
 const jerez={id:'1',name:'Jerez de la Frontera',displayName:'Jerez de la Frontera, Cádiz, Andalucía, España',lat:36.6817,lon:-6.1372,region:'Andalucía',placeType:'city',category:'place'};
 const danger={
-  version:'4.9.2',source:'AEMET',attribution:'© AEMET',area:'PB',areaLabel:'Península y Baleares',configured:true,
+  version:'4.9.3',source:'AEMET',attribution:'© AEMET',area:'PB',areaLabel:'Península y Baleares',configured:true,
   viewerUrl:'https://www.aemet.es/es/eltiempo/prediccion/incendios',
   helpUrl:'https://www.aemet.es/es/eltiempo/prediccion/incendios/ayuda',
   levels:['Muy bajo','Bajo','Moderado','Alto','Muy alto','Extremo'],resolutionKm:1,
@@ -44,12 +44,12 @@ const danger={
   tomorrow:{validFor:'2026-07-28',officialImageUrl:'https://www.aemet.es/mapa-manana.png',localLevel:{value:5,label:'Muy alto',rgba:[239,133,4,255]}}
 };
 const weather={
-  version:'4.9.2',source:'Open-Meteo',sourceUrl:'https://open-meteo.com/en/docs',degraded:false,
+  version:'4.9.3',source:'Open-Meteo',sourceUrl:'https://open-meteo.com/en/docs',degraded:false,
   current:{temperatureC:31,relativeHumidity:24,windSpeedKmh:18,windDirectionDeg:225,windGustKmh:33},
   next24Hours:{maxWindSpeedKmh:27,maxWindGustKmh:49}
 };
 const roads={
-  version:'4.9.2',source:'DGT',format:'DATEX II 3.7',official:true,radiusKm:50,
+  version:'4.9.3',source:'DGT',format:'DATEX II 3.7',official:true,radiusKm:50,
   publicationTime:'2026-07-27T10:05:00Z',retrievedAt:'2026-07-27T10:06:00Z',
   nearbyCount:8,closuresCount:1,
   incidents:[{
@@ -65,7 +65,7 @@ const roads={
   relationshipNote:'La DGT no siempre indica si una incidencia está relacionada con un incendio.'
 };
 const perimeters={
-  version:'4.9.2',source:'EFFIS · Copernicus EMS',official:false,radiusKm:100,
+  version:'4.9.3',source:'EFFIS · Copernicus EMS',official:false,radiusKm:100,
   retrievedAt:'2026-07-27T10:08:00Z',nearbyCount:2,cacheStatus:'runtime',usingStaleCache:false,
   refreshing:false,persistentCache:true,processingMs:14,
   perimeters:[
@@ -96,7 +96,7 @@ async function mockApis(page){
   await page.route('**/api/fire-perimeters**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(perimeters)}));
   await page.route('**/api/road-incidents**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(roads)}));
   await page.route('**/api/weather**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(weather)}));
-  await page.route('**/api/health**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({status:'ok',version:'4.9.2',brand:'FuegoCerca'})}));
+  await page.route('**/api/health**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({status:'ok',version:'4.9.3',brand:'FuegoCerca'})}));
 }
 
 async function showMapOnMobile(page,testInfo){
