@@ -1,4 +1,4 @@
-export const config={runtime:'edge'};
+export const config={runtime:'nodejs',maxDuration:20};
 
 const ICA_CSV='https://ica.miteco.es/datos/ica-ultima-hora.csv';
 const ICA_VIEWER='https://ica.miteco.es/';
@@ -108,11 +108,18 @@ export default async function handler(request){
   const controller=new AbortController();
   const timeout=setTimeout(()=>controller.abort(),FETCH_TIMEOUT_MS);
   try{
-    const response=await fetch(ICA_CSV,{headers:{accept:'text/csv'},cache:'force-cache',signal:controller.signal});
+    const response=await fetch(ICA_CSV,{
+      headers:{
+        accept:'text/csv,text/plain;q=0.9,*/*;q=0.1',
+        'user-agent':'FuegoCerca/4.10 (+https://fuego-centro-nacional.vercel.app)'
+      },
+      cache:'force-cache',
+      signal:controller.signal
+    });
     if(!response.ok)throw Error(`MITECO ICA HTTP ${response.status}`);
     const stations=parseStations(await response.text(),{lat,lon},radius);
     return new Response(JSON.stringify({
-      version:'4.10.0',
+      version:'4.10.1',
       source:'MITECO · Índice Nacional de Calidad del Aire',
       officialPublisher:'Ministerio para la Transición Ecológica y el Reto Demográfico',
       sourceUrl:ICA_CSV,
@@ -132,7 +139,7 @@ export default async function handler(request){
     }),{status:200,headers:HEADERS});
   }catch(error){
     return new Response(JSON.stringify({
-      version:'4.10.0',
+      version:'4.10.1',
       source:'MITECO · Índice Nacional de Calidad del Aire',
       degraded:true,
       radiusKm:radius,

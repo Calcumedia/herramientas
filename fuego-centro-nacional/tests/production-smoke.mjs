@@ -50,6 +50,8 @@ assert.equal(health.fireDangerOfficialRaster, true);
 assert.equal(health.airQualityEndpoint, true);
 assert.equal(health.airQualityOfficialDataset, true);
 assert.equal(health.airQualityFireAttribution, false);
+assert.equal(health.airQualityFunctionRuntime, 'nodejs');
+assert.equal(health.airQualityMaxDurationSeconds, 20);
 assert.equal(health.roadIncidentsEndpoint, true);
 assert.ok(Array.isArray(health.failedSources));
 
