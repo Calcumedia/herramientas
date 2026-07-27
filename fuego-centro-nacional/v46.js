@@ -9,6 +9,7 @@
   const escapeHtml=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   const finite=value=>Number.isFinite(value);
   const metric=(value,suffix='')=>finite(value)?`${Math.round(value)}${suffix}`:'No disponible';
+  const DANGER_TONES={0:'none',1:'very-low',2:'low',3:'moderate',4:'high',5:'very-high',6:'extreme',255:'unavailable'};
 
   function readJson(key,fallback){try{return JSON.parse(localStorage.getItem(key)||'null')??fallback}catch{return fallback}}
   function getHistory(){const value=readJson(HISTORY_KEY,[]);return Array.isArray(value)?value:[]}
@@ -140,20 +141,111 @@
     return {lat:finite(center?.lat)?center.lat:40.4167,lon:finite(center?.lng)?center.lng:-3.7033,name:'España'};
   }
 
-  function renderDanger(data,place){
+  function dateLabel(value){
+    if(!value)return'Fecha no disponible';
+    const date=new Date(`${value}T12:00:00`);
+    return Number.isNaN(date.getTime())?String(value):date.toLocaleDateString('es-ES',{weekday:'short',day:'numeric',month:'short'});
+  }
+
+  function dangerLevelHtml(level){
+    if(!level)return'<strong class="dangerLevel unavailable">No disponible</strong>';
+    const tone=DANGER_TONES[level.value]||'unavailable';
+    return`<strong class="dangerLevel ${tone}">${escapeHtml(level.label||'Sin datos')}</strong>`;
+  }
+
+  function presetDangerLevel(product){
+    const level=product?.localLevel;
+    return level&&Number.isFinite(Number(level.value))?{...level,value:Number(level.value)}:null;
+  }
+
+  function loadDangerImage(url){
+    return new Promise((resolve,reject)=>{
+      const image=new Image();
+      image.onload=()=>resolve(image);
+      image.onerror=()=>reject(Error('No se ha podido leer el mapa oficial'));
+      image.src=url;
+    });
+  }
+
+  function productExtent(bounds){
+    const points=(Array.isArray(bounds)?bounds:[]).filter(point=>Array.isArray(point)&&point.length>=2).map(([lon,lat])=>({lon:Number(lon),lat:Number(lat)})).filter(point=>finite(point.lat)&&finite(point.lon));
+    if(!points.length)return null;
+    return {
+      minLon:Math.min(...points.map(point=>point.lon)),
+      maxLon:Math.max(...points.map(point=>point.lon)),
+      minLat:Math.min(...points.map(point=>point.lat)),
+      maxLat:Math.max(...points.map(point=>point.lat))
+    };
+  }
+
+  function closestDangerLevel(rgba,palette){
+    if(rgba[3]===0)return null;
+    let best=null;
+    for(const entry of palette||[]){
+      if(!Array.isArray(entry.rgba))continue;
+      const distance=Math.sqrt((rgba[0]-entry.rgba[0])**2+(rgba[1]-entry.rgba[1])**2+(rgba[2]-entry.rgba[2])**2+(rgba[3]-entry.rgba[3])**2);
+      if(!best||distance<best.distance)best={...entry,distance};
+    }
+    return best&&best.distance<=70?best:null;
+  }
+
+  async function sampleDangerProduct(product,place,palette){
+    const preset=presetDangerLevel(product);
+    if(preset)return preset;
+    const extent=productExtent(product?.bounds);
+    if(!extent||!product?.imageUrl||!finite(place?.lat)||!finite(place?.lon))return null;
+    if(place.lon<extent.minLon||place.lon>extent.maxLon||place.lat<extent.minLat||place.lat>extent.maxLat)return null;
+    const image=await loadDangerImage(product.imageUrl);
+    const canvas=document.createElement('canvas');
+    canvas.width=image.naturalWidth;
+    canvas.height=image.naturalHeight;
+    const context=canvas.getContext('2d',{willReadFrequently:true});
+    context.drawImage(image,0,0);
+    const x=Math.max(0,Math.min(canvas.width-1,Math.round((place.lon-extent.minLon)/(extent.maxLon-extent.minLon)*(canvas.width-1))));
+    const y=Math.max(0,Math.min(canvas.height-1,Math.round((extent.maxLat-place.lat)/(extent.maxLat-extent.minLat)*(canvas.height-1))));
+    const candidates=[];
+    for(let offsetY=-1;offsetY<=1;offsetY++)for(let offsetX=-1;offsetX<=1;offsetX++){
+      const pixel=context.getImageData(Math.max(0,Math.min(canvas.width-1,x+offsetX)),Math.max(0,Math.min(canvas.height-1,y+offsetY)),1,1).data;
+      const level=closestDangerLevel(pixel,palette);
+      if(level)candidates.push(level);
+    }
+    if(!candidates.length)return null;
+    const counts=new Map();
+    for(const candidate of candidates)counts.set(candidate.value,(counts.get(candidate.value)||0)+1);
+    return candidates.sort((a,b)=>(counts.get(b.value)-counts.get(a.value))||a.distance-b.distance)[0];
+  }
+
+  async function resolveDangerProducts(data,place){
+    const products=[['today',data.today],['tomorrow',data.tomorrow]].filter(([,product])=>product);
+    await Promise.all(products.map(async([kind,product])=>{
+      const target=document.querySelector(`[data-danger-level="${kind}"]`);
+      if(!target)return;
+      try{
+        const level=await sampleDangerProduct(product,place,data.palette);
+        target.innerHTML=dangerLevelHtml(level);
+        target.dataset.level=level?.label||'No disponible';
+      }catch{
+        target.innerHTML=dangerLevelHtml(null);
+        target.dataset.level='No disponible';
+      }
+    }));
+  }
+
+  async function renderDanger(data,place){
     const host=$('#preventionStatus');
     if(!host)return;
     const levels=(data.levels||[]).map(level=>`<span>${escapeHtml(level)}</span>`).join('');
-    const status=data.configured?(data.degraded?'Integración temporalmente degradada':'Productos oficiales disponibles'):'Integración automática pendiente de credencial';
-    const productLinks=[data.estimated?.dataUrl?`<a href="${escapeHtml(data.estimated.dataUrl)}" target="_blank" rel="noopener">Mapa estimado ↗</a>`:'',data.tomorrow?.dataUrl?`<a href="${escapeHtml(data.tomorrow.dataUrl)}" target="_blank" rel="noopener">Previsión de mañana ↗</a>`:''].filter(Boolean).join(' · ');
-    host.innerHTML=`<div class="preventionStatus"><div><small>Fuente</small><strong>${escapeHtml(data.source||'AEMET')}</strong></div><div><small>Zona consultada</small><strong>${escapeHtml(place.name)}</strong></div><div><small>Estado</small><strong>${escapeHtml(status)}</strong></div><div><small>Resolución oficial</small><strong>${escapeHtml(data.resolutionKm||1)} km</strong></div></div><div class="aemetLevels" aria-label="Niveles oficiales AEMET">${levels}</div><div class="preventionDisclaimer"><b>No confirma un incendio.</b> El peligro meteorológico expresa condiciones favorables para la ignición y propagación. ${BRAND} no calcula todavía un nivel exacto para estas coordenadas.</div>${data.message?`<p>${escapeHtml(data.message)}</p>`:''}${productLinks?`<p>${productLinks}</p>`:''}`;
+    const status=data.degraded?'Consulta temporalmente degradada':'Producto oficial disponible';
+    const productCard=(kind,product,label)=>product?`<article class="dangerProduct"><div><small>${escapeHtml(label)} · ${escapeHtml(dateLabel(product.validFor))}</small><div data-danger-level="${kind}" aria-live="polite"><strong class="dangerLevel loading">Calculando píxel…</strong></div></div><a href="${escapeHtml(product.officialImageUrl||data.viewerUrl)}" target="_blank" rel="noopener">Abrir mapa oficial ↗</a></article>`:`<article class="dangerProduct unavailable"><div><small>${escapeHtml(label)}</small><strong class="dangerLevel unavailable">Sin producto publicado</strong></div></article>`;
+    host.innerHTML=`<div class="preventionStatus"><div><small>Fuente</small><strong>${escapeHtml(data.source||'AEMET')}</strong></div><div><small>Zona consultada</small><strong>${escapeHtml(place.name)}</strong></div><div><small>Estado</small><strong>${escapeHtml(status)}</strong></div><div><small>Resolución oficial</small><strong>${escapeHtml(data.resolutionKm||1)} km</strong></div></div><div class="dangerProducts">${productCard('today',data.today,'Hoy')}${productCard('tomorrow',data.tomorrow,'Mañana')}</div><div class="preventionDisclaimer"><b>No confirma un incendio.</b> Es el nivel meteorológico oficial del píxel de 1 km que contiene la localidad. No es una alerta, no equivale a una evaluación local de riesgo y no sustituye instrucciones de emergencia.</div><p class="dangerValidity">${escapeHtml(data.validityNote||'Producto preventivo diario de AEMET.')}${data.retrievedAt?` Consultado: ${escapeHtml(localTime(data.retrievedAt))}.`:''}</p>${data.degraded?`<p>${escapeHtml(data.message||'No se ha podido recuperar el producto oficial.')}</p><div class="aemetLevels" aria-label="Niveles oficiales AEMET">${levels}</div>`:''}`;
     const link=$('#aemetDangerLink');if(link&&data.viewerUrl)link.href=data.viewerUrl;
+    if(!data.degraded)await resolveDangerProducts(data,place);
   }
 
   async function loadDanger(){
     const host=$('#preventionStatus');if(host)host.innerHTML='<span class="historyEmpty">Consultando AEMET…</span>';
     const place=coordsForContext();
-    try{const response=await fetch(`/api/fire-danger?lat=${encodeURIComponent(place.lat)}&lon=${encodeURIComponent(place.lon)}`,{cache:'no-store'});if(!response.ok)throw Error(`HTTP ${response.status}`);renderDanger(await response.json(),place)}
+    try{const response=await fetch(`/api/fire-danger?lat=${encodeURIComponent(place.lat)}&lon=${encodeURIComponent(place.lon)}`,{cache:'no-store'});if(!response.ok)throw Error(`HTTP ${response.status}`);await renderDanger(await response.json(),place)}
     catch{if(host)host.innerHTML='<div class="preventionDisclaimer">No se ha podido consultar AEMET. Usa el enlace al visor oficial y no interpretes esta ausencia como riesgo bajo.</div>'}
   }
 
@@ -164,7 +256,7 @@
     panel.id='localContextPanel';
     panel.className='localContextPanel';
     panel.setAttribute('aria-labelledby','localContextTitle');
-    panel.innerHTML=`<div class="localContextHead"><div><small>CONTEXTO LOCAL</small><h4 id="localContextTitle">Viento y condiciones próximas</h4></div><span class="modelTag">Predicción modelizada</span></div><div id="localWeatherStatus" class="localWeatherStatus" aria-live="polite"><span class="historyEmpty">Consultando viento y rachas…</span></div><div class="operationalLinks"><div><b>Carreteras e incidencias</b><p>Consulta manual en el mapa oficial de la DGT. Los cortes aún no se integran en este informe.</p><a href="${DGT_URL}" target="_blank" rel="noopener">Abrir DGT ↗</a></div><div><b>Perímetros y área quemada</b><p>Consulta manual en el visor europeo EFFIS. Solo se mostrará geometría automática cuando pueda verificarse.</p><a href="${EFFIS_URL}" target="_blank" rel="noopener">Abrir EFFIS ↗</a></div></div>`;
+    panel.innerHTML=`<div class="localContextHead"><div><small>CONTEXTO LOCAL</small><h4 id="localContextTitle">Viento y condiciones próximas</h4></div><span class="modelTag">Predicción modelizada</span></div><div id="localWeatherStatus" class="localWeatherStatus" aria-live="polite"><span class="historyEmpty">Consultando viento y rachas…</span></div><section class="roadPanel" aria-labelledby="roadPanelTitle"><div class="roadPanelHead"><div><small>DGT · DATEX II</small><h5 id="roadPanelTitle">Carreteras e incidencias cercanas</h5></div><a href="${DGT_URL}" target="_blank" rel="noopener">Abrir DGT ↗</a></div><div id="localRoadStatus" aria-live="polite"><span class="historyEmpty">Consultando incidencias en 50 km…</span></div></section><div class="operationalLinks"><div><b>Perímetros y área quemada</b><p>Consulta manual en el visor europeo EFFIS. Solo se mostrará geometría automática cuando pueda verificarse.</p><a href="${EFFIS_URL}" target="_blank" rel="noopener">Abrir EFFIS ↗</a></div></div>`;
     const note=report.querySelector('.note');
     if(note)note.insertAdjacentElement('beforebegin',panel);else report.append(panel);
   }
@@ -198,12 +290,50 @@
     }
   }
 
+  function roadKilometer(item){
+    if(!finite(item?.kilometerFrom))return'Punto kilométrico no publicado';
+    return finite(item.kilometerTo)&&item.kilometerTo!==item.kilometerFrom?`km ${item.kilometerFrom}–${item.kilometerTo}`:`km ${item.kilometerFrom}`;
+  }
+
+  function renderRoadIncidents(data,report){
+    const host=$('#localRoadStatus');
+    if(!host)return;
+    if(data.degraded){
+      host.dataset.roadSummary='';
+      host.innerHTML=`<div class="roadUnavailable"><b>No se ha podido consultar el feed oficial de la DGT.</b><p>${escapeHtml(data.coverageNote||'Comprueba el mapa oficial y no interpretes esta ausencia como carreteras abiertas.')}</p></div>`;
+      return;
+    }
+    const incidents=Array.isArray(data.incidents)?data.incidents:[];
+    const summary=incidents.length?`${data.nearbyCount} incidencias DGT en ${data.radiusKm} km${data.closuresCount?`, ${data.closuresCount} cortes`:''}`:`Sin incidencias DGT publicadas en ${data.radiusKm} km`;
+    host.dataset.roadSummary=summary;
+    const rows=incidents.map(item=>`<article class="roadIncident"><div class="roadIncidentHead"><span class="roadSeverity ${escapeHtml(item.severity)}">${escapeHtml(item.typeLabel)}</span><b>${finite(item.distanceKm)?`${item.distanceKm.toFixed(1)} km`:'Distancia no disponible'}</b></div><h6>${escapeHtml(item.road)}</h6><p>${escapeHtml([item.municipality,item.province].filter(Boolean).join(', ')||'Ubicación publicada por la DGT')} · ${escapeHtml(roadKilometer(item))}</p><small>Actualizada: ${escapeHtml(localTime(item.updatedAt||data.publicationTime))}</small></article>`).join('');
+    host.innerHTML=`<div class="roadSummary"><b>${escapeHtml(summary)}</b><small>Desde ${escapeHtml(report.name)} · feed publicado ${escapeHtml(localTime(data.publicationTime))}</small></div>${rows?`<div class="roadIncidentList">${rows}</div>`:'<div class="roadEmpty">No se han recuperado incidencias dentro del radio consultado.</div>'}<p class="roadCoverage">${escapeHtml(data.coverageNote||'Cobertura según la red publicada por la DGT.')}</p><p class="roadRelationship">${escapeHtml(data.relationshipNote||'Una incidencia de tráfico no implica que esté relacionada con un incendio.')}</p>`;
+  }
+
+  async function loadRoadIncidents(report,{force=false}={}){
+    const host=$('#localRoadStatus');
+    if(!host||!finite(report?.lat)||!finite(report?.lon))return;
+    const key=`${report.lat.toFixed(4)}|${report.lon.toFixed(4)}|50`;
+    if(!force&&host.dataset.loadedFor===key)return;
+    host.dataset.loadedFor=key;
+    host.innerHTML='<span class="historyEmpty">Consultando incidencias en 50 km…</span>';
+    try{
+      const response=await fetch(`/api/road-incidents?lat=${encodeURIComponent(report.lat)}&lon=${encodeURIComponent(report.lon)}&radius=50`,{cache:'no-store'});
+      const data=await response.json();
+      if(!response.ok&&response.status!==503)throw Error(`HTTP ${response.status}`);
+      renderRoadIncidents(data,report);
+    }catch{
+      renderRoadIncidents({degraded:true,coverageNote:'No se ha podido consultar la DGT. Comprueba su mapa oficial y no interpretes esta ausencia como carreteras abiertas.'},report);
+    }
+  }
+
   function reportUrl(report){
     const url=new URL(location.href);url.search='';url.hash='';url.searchParams.set('localidad',report.name);return url.toString();
   }
   function shareText(report,url){
     const weather=$('#localWeatherStatus')?.dataset.weatherSummary||'';
-    return [`${BRAND} · ${report.name}`,report.badge,report.lead,weather,`Consulta: ${new Date(report.time).toLocaleString('es-ES')}`,'En una emergencia prevalecen ES-Alert, 112 y las autoridades.',url].filter(Boolean).join('\n');
+    const roads=$('#localRoadStatus')?.dataset.roadSummary||'';
+    return [`${BRAND} · ${report.name}`,report.badge,report.lead,weather,roads,`Consulta: ${new Date(report.time).toLocaleString('es-ES')}`,'En una emergencia prevalecen ES-Alert, 112 y las autoridades.',url].filter(Boolean).join('\n');
   }
   async function copyText(text){
     if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(text);return}
@@ -246,7 +376,7 @@
       ensureSmartLocalInsights(report);ensureLocalContext();ensureShareControls();
       report=currentReport();
       saveHistory({name:report.name,time:report.time,lat:report.lat,lon:report.lon});
-      loadWeather(report);loadDanger();saveSnapshot(report);
+      loadWeather(report);loadRoadIncidents(report);loadDanger();saveSnapshot(report);
     },180);
   }
 
@@ -263,6 +393,6 @@
     addEventListener('offline',setOfflineState);addEventListener('online',setOfflineState);openDeepLink();
   }
 
-  window.FC46={getHistory,loadDanger,loadWeather,currentReport,setOfflineState,shareCurrentReport,openPlace,combinedTimeline,ensureSmartLocalInsights};
+  window.FC46={getHistory,loadDanger,loadWeather,loadRoadIncidents,currentReport,setOfflineState,shareCurrentReport,openPlace,combinedTimeline,ensureSmartLocalInsights};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();
 })();

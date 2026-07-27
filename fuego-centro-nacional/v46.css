@@ -67,6 +67,42 @@
 .operationalLinks b{display:block;font-size:12px}
 .operationalLinks p{margin:5px 0;color:#aeb8c2;font-size:10px;line-height:1.45}
 .operationalLinks a{font-size:11px}
+.dangerProducts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}
+.dangerProduct{display:flex;min-width:0;align-items:center;justify-content:space-between;gap:10px;padding:11px;border:1px solid rgba(255,255,255,.11);border-radius:11px;background:#0e141a}
+.dangerProduct>div{min-width:0}
+.dangerProduct small{display:block;margin-bottom:6px;color:#aeb8c2;font-size:10px;text-transform:uppercase}
+.dangerProduct a{flex:0 0 auto;font-size:10px}
+.dangerLevel{display:inline-flex;align-items:center;min-height:28px;border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:5px 10px;font-size:13px}
+.dangerLevel.loading,.dangerLevel.unavailable,.dangerLevel.none{color:#bdc7d0;background:rgba(174,184,194,.08)}
+.dangerLevel.very-low{color:#a8d1ff;background:rgba(75,150,227,.15);border-color:rgba(75,150,227,.45)}
+.dangerLevel.low{color:#a8eaff;background:rgba(81,209,246,.14);border-color:rgba(81,209,246,.45)}
+.dangerLevel.moderate{color:#aef58a;background:rgba(87,229,50,.13);border-color:rgba(87,229,50,.45)}
+.dangerLevel.high{color:#fff58b;background:rgba(249,251,47,.13);border-color:rgba(249,251,47,.45)}
+.dangerLevel.very-high{color:#ffc27d;background:rgba(239,133,4,.14);border-color:rgba(239,133,4,.5)}
+.dangerLevel.extreme{color:#ff9386;background:rgba(245,35,0,.15);border-color:rgba(245,35,0,.55)}
+.dangerValidity{margin:8px 0 0;color:#9faab4;font-size:10px;line-height:1.45}
+.roadPanel{display:grid;gap:9px;padding:11px;border:1px solid rgba(255,255,255,.1);border-radius:12px;background:#0e141a}
+.roadPanelHead{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.roadPanelHead small{display:block;margin-bottom:3px;color:#9aa7b3;font-size:9px;font-weight:800;letter-spacing:.08em}
+.roadPanelHead h5{margin:0;font-size:14px}
+.roadPanelHead a{font-size:10px}
+.roadSummary{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:9px;border-radius:9px;background:rgba(121,189,255,.07)}
+.roadSummary b{font-size:12px}
+.roadSummary small{color:#9eabb7;font-size:9px;text-align:right}
+.roadIncidentList{display:grid;gap:7px}
+.roadIncident{padding:9px;border:1px solid rgba(255,255,255,.1);border-radius:9px;background:#121820}
+.roadIncidentHead{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.roadIncidentHead b{font-size:12px}
+.roadSeverity{border:1px solid currentColor;border-radius:999px;padding:3px 6px;color:#b9c4ce;font-size:8px;font-weight:900;text-transform:uppercase}
+.roadSeverity.closed{color:#ff9999}.roadSeverity.high{color:#ffc08a}.roadSeverity.medium{color:#f3d979}.roadSeverity.info{color:#9fd4ff}
+.roadIncident h6{margin:7px 0 3px;font-size:13px}
+.roadIncident p{margin:0;color:#bac4ce;font-size:10px;line-height:1.4}
+.roadIncident small{display:block;margin-top:5px;color:#8f9ca8;font-size:9px}
+.roadCoverage,.roadRelationship{margin:0;color:#9aa7b3;font-size:9px;line-height:1.45}
+.roadRelationship{padding-left:8px;border-left:2px solid #f3c548}
+.roadEmpty{color:#b8c2cc;font-size:11px}
+.roadUnavailable{padding:9px;border:1px solid rgba(243,197,72,.3);border-radius:9px;background:rgba(243,197,72,.07)}
+.roadUnavailable p{margin:5px 0 0;color:#c7d0d9;font-size:10px;line-height:1.45}
 .reportShare{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px}
 .reportShare .shareFeedback{flex:1 1 180px;margin:0}
 
@@ -77,5 +113,7 @@
   .smartTimelineHead button{align-self:flex-start}
   .localContextHead{align-items:stretch;flex-direction:column}
   .modelTag{align-self:flex-start}
-  .weatherGrid,.operationalLinks{grid-template-columns:1fr}
+  .weatherGrid,.operationalLinks,.dangerProducts{grid-template-columns:1fr}
+  .dangerProduct,.roadPanelHead,.roadSummary{align-items:flex-start;flex-direction:column}
+  .roadSummary small{text-align:left}
 }

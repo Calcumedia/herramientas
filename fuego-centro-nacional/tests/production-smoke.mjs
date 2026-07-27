@@ -46,6 +46,8 @@ assert.equal(health.mapZoom, 6);
 assert.equal(health.staticLocalitySearch, true);
 assert.equal(health.initialAutoFit, false);
 assert.equal(health.nationalCoverageDirectory, 19);
+assert.equal(health.fireDangerOfficialRaster, true);
+assert.equal(health.roadIncidentsEndpoint, true);
 assert.ok(Array.isArray(health.failedSources));
 
 console.log(`Production smoke checks passed for ${origin}.`);
