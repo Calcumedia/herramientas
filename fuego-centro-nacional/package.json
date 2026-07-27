@@ -1,6 +1,6 @@
 {
   "name": "fuegocerca",
-  "version": "4.9.1",
+  "version": "4.9.2",
   "private": true,
   "type": "module",
   "scripts": {
@@ -9,6 +9,9 @@
     "test:contract": "node tests/fire-danger-contract.mjs && node tests/fire-perimeters-contract.mjs && node tests/road-incidents-contract.mjs",
     "test:e2e": "playwright test",
     "test:production": "node tests/production-smoke.mjs"
+  },
+  "dependencies": {
+    "@vercel/functions": "^3.7.6"
   },
   "devDependencies": {
     "@playwright/test": "^1.54.1"

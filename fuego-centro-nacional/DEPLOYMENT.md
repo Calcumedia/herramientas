@@ -49,6 +49,9 @@ No publicar si falla alguno de estos puntos:
 10. AEMET conserva la etiqueta preventiva, EFFIS se identifica como área quemada satelital y DGT conserva la advertencia de que sus incidencias no siempre están relacionadas con incendios.
 11. El control «Perímetros EFFIS» permite ocultar y volver a mostrar la capa; la antigüedad del producto es visible y una copia antigua se identifica como tal.
 12. Dos consultas de localidades distintas reutilizan el conjunto nacional de EFFIS y un fallo de actualización no convierte un área quemada en un incendio activo.
+13. La caché regional persistente de EFFIS se reutiliza después de reiniciar la función y conserva un TTL máximo de 24 horas.
+14. Si la copia supera una hora, la respuesta es inmediata, se marca como guardada y la renovación se ejecuta en segundo plano.
+15. La precarga automática de EFFIS no bloquea ni reconstruye el buscador, el informe local o el mapa.
 
 ## Recuperación
 
