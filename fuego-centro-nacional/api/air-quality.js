@@ -97,8 +97,8 @@ export function __parseIcaForTests(text,origin,radius=100){
   return parseStations(text,origin,radius);
 }
 
-export default async function handler(request){
-  const url=new URL(request.url);
+async function createResponse(request){
+  const url=new URL(request.url,'https://fuegocerca.local');
   const lat=Number(url.searchParams.get('lat'));
   const lon=Number(url.searchParams.get('lon'));
   const radius=Math.min(150,Math.max(10,Number(url.searchParams.get('radius'))||100));
@@ -153,4 +153,12 @@ export default async function handler(request){
   }finally{
     clearTimeout(timeout);
   }
+}
+
+export default async function handler(request,response){
+  const webResponse=await createResponse(request);
+  if(!response)return webResponse;
+  response.statusCode=webResponse.status;
+  webResponse.headers.forEach((value,key)=>response.setHeader(key,value));
+  response.end(await webResponse.text());
 }

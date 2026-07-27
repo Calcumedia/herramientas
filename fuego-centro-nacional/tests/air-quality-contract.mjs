@@ -32,6 +32,17 @@ try{
   assert.match(data.fireRelationshipNote,/no atribuye/i);
   assert.match(response.headers.get('cache-control'),/s-maxage=300/);
 
+  let nodeBody='';
+  const nodeResponse={
+    statusCode:0,
+    headers:{},
+    setHeader(name,value){this.headers[name]=value},
+    end(value){nodeBody=value}
+  };
+  await handler({url:'/api/air-quality?lat=36.6817&lon=-6.1372&radius=100'},nodeResponse);
+  assert.equal(nodeResponse.statusCode,200);
+  assert.equal(JSON.parse(nodeBody).version,'4.10.1');
+
   const invalid=await handler(new Request('https://fuegocerca.test/api/air-quality?lat=91&lon=0'));
   assert.equal(invalid.status,400);
 

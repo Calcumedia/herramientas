@@ -123,6 +123,8 @@ assert.match(airQuality,/ica-ultima-hora\.csv/);
 assert.match(airQuality,/runtime:'nodejs'/);
 assert.match(airQuality,/maxDuration:20/);
 assert.match(airQuality,/version:'4\.10\.1'/);
+assert.match(airQuality,/new URL\(request\.url,'https:\/\/fuegocerca\.local'\)/);
+assert.match(airQuality,/if\(!response\)return webResponse/);
 assert.match(airQuality,/Datos horarios provisionales y no validados/);
 assert.match(airQuality,/no atribuye su resultado al humo/i);
 assert.match(roads,/DATEX II 3\.7/);
