@@ -7,7 +7,7 @@ const root = new URL('../', import.meta.url).pathname;
 const required = [
   'index.html','styles.css','v45.css','v46.css','app.js','v45.js','v46.js','analytics-config.js','sw.js',
   'manifest.webmanifest','favicon.svg',
-  'api/situation.js','api/geocode.js','api/reverse-geocode.js','api/health.js','api/fire-danger.js','api/fire-danger-map.js','api/air-quality.js','api/fire-perimeters.js','api/road-incidents.js','api/weather.js',
+  'api/situation.js','api/geocode.js','api/reverse-geocode.js','api/health.js','api/fire-danger.js','api/fire-danger-map.js','api/air-quality.js','api/fnmt-ca.js','api/fire-perimeters.js','api/road-incidents.js','api/weather.js',
   'playwright.config.mjs','tests/e2e.spec.mjs','tests/fire-danger-contract.mjs','tests/air-quality-contract.mjs','tests/fire-perimeters-contract.mjs','tests/road-incidents-contract.mjs','vercel.json'
 ];
 for (const file of required) await access(join(root, file), constants.R_OK);
@@ -125,6 +125,8 @@ assert.match(airQuality,/maxDuration:20/);
 assert.match(airQuality,/version:'4\.10\.1'/);
 assert.match(airQuality,/new URL\(request\.url,'https:\/\/fuegocerca\.local'\)/);
 assert.match(airQuality,/if\(!response\)return webResponse/);
+assert.match(airQuality,/UNABLE_TO_VERIFY_LEAF_SIGNATURE/);
+assert.doesNotMatch(airQuality,/NODE_TLS_REJECT_UNAUTHORIZED/);
 assert.match(airQuality,/Datos horarios provisionales y no validados/);
 assert.match(airQuality,/no atribuye su resultado al humo/i);
 assert.match(roads,/DATEX II 3\.7/);
