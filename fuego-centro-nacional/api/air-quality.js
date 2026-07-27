@@ -1,4 +1,7 @@
-export const config={runtime:'edge'};
+import {request as httpsRequest} from 'node:https';
+import {FNMT_CHAIN} from './fnmt-ca.js';
+
+export const config={runtime:'nodejs',maxDuration:20};
 
 const ICA_CSV='https://ica.miteco.es/datos/ica-ultima-hora.csv';
 const ICA_VIEWER='https://ica.miteco.es/';
@@ -93,12 +96,58 @@ function parseStations(text,origin,radius){
   return rows.map(row=>normalize(row,origin)).filter(Boolean).filter(station=>station.distanceKm<=radius).sort((a,b)=>a.distanceKm-b.distanceKm);
 }
 
+function downloadWithFnmtChain(signal){
+  return new Promise((resolve,reject)=>{
+    const request=httpsRequest(ICA_CSV,{
+      ca:FNMT_CHAIN,
+      headers:{
+        accept:'text/csv,text/plain;q=0.9,*/*;q=0.1',
+        'user-agent':'FuegoCerca/4.10 (+https://fuego-centro-nacional.vercel.app)'
+      }
+    },response=>{
+      if(response.statusCode!==200){
+        response.resume();
+        reject(Error(`MITECO ICA HTTP ${response.statusCode}`));
+        return;
+      }
+      let body='';
+      response.setEncoding('utf8');
+      response.on('data',chunk=>{
+        body+=chunk;
+        if(body.length>5*1024*1024)request.destroy(Error('CSV ICA demasiado grande'));
+      });
+      response.on('end',()=>resolve(body));
+    });
+    request.on('error',reject);
+    signal?.addEventListener('abort',()=>request.destroy(Error('MITECO ICA timeout')),{once:true});
+    request.end();
+  });
+}
+
+async function downloadCsv(signal){
+  try{
+    const response=await fetch(ICA_CSV,{
+      headers:{
+        accept:'text/csv,text/plain;q=0.9,*/*;q=0.1',
+        'user-agent':'FuegoCerca/4.10 (+https://fuego-centro-nacional.vercel.app)'
+      },
+      cache:'force-cache',
+      signal
+    });
+    if(!response.ok)throw Error(`MITECO ICA HTTP ${response.status}`);
+    return await response.text();
+  }catch(error){
+    if(error?.cause?.code!=='UNABLE_TO_VERIFY_LEAF_SIGNATURE')throw error;
+    return downloadWithFnmtChain(signal);
+  }
+}
+
 export function __parseIcaForTests(text,origin,radius=100){
   return parseStations(text,origin,radius);
 }
 
-export default async function handler(request){
-  const url=new URL(request.url);
+async function createResponse(request){
+  const url=new URL(request.url,'https://fuegocerca.local');
   const lat=Number(url.searchParams.get('lat'));
   const lon=Number(url.searchParams.get('lon'));
   const radius=Math.min(150,Math.max(10,Number(url.searchParams.get('radius'))||100));
@@ -108,11 +157,9 @@ export default async function handler(request){
   const controller=new AbortController();
   const timeout=setTimeout(()=>controller.abort(),FETCH_TIMEOUT_MS);
   try{
-    const response=await fetch(ICA_CSV,{headers:{accept:'text/csv'},cache:'force-cache',signal:controller.signal});
-    if(!response.ok)throw Error(`MITECO ICA HTTP ${response.status}`);
-    const stations=parseStations(await response.text(),{lat,lon},radius);
+    const stations=parseStations(await downloadCsv(controller.signal),{lat,lon},radius);
     return new Response(JSON.stringify({
-      version:'4.10.0',
+      version:'4.10.1',
       source:'MITECO · Índice Nacional de Calidad del Aire',
       officialPublisher:'Ministerio para la Transición Ecológica y el Reto Demográfico',
       sourceUrl:ICA_CSV,
@@ -132,7 +179,7 @@ export default async function handler(request){
     }),{status:200,headers:HEADERS});
   }catch(error){
     return new Response(JSON.stringify({
-      version:'4.10.0',
+      version:'4.10.1',
       source:'MITECO · Índice Nacional de Calidad del Aire',
       degraded:true,
       radiusKm:radius,
@@ -146,4 +193,12 @@ export default async function handler(request){
   }finally{
     clearTimeout(timeout);
   }
+}
+
+export default async function handler(request,response){
+  const webResponse=await createResponse(request);
+  if(!response)return webResponse;
+  response.statusCode=webResponse.status;
+  webResponse.headers.forEach((value,key)=>response.setHeader(key,value));
+  response.end(await webResponse.text());
 }

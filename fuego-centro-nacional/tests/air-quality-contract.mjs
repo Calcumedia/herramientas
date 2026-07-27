@@ -1,5 +1,5 @@
 import {strict as assert} from 'node:assert';
-import handler,{__parseIcaForTests} from '../api/air-quality.js';
+import handler,{config,__parseIcaForTests} from '../api/air-quality.js';
 
 const originalFetch=globalThis.fetch;
 const csv=`cod_estacion,nombre,tipo,latitud,longitud,activa,fecha,indice,debido_a
@@ -10,6 +10,8 @@ const csv=`cod_estacion,nombre,tipo,latitud,longitud,activa,fecha,indice,debido_
 `;
 
 try{
+  assert.equal(config.runtime,'nodejs');
+  assert.equal(config.maxDuration,20);
   const parsed=__parseIcaForTests(csv,{lat:36.6817,lon:-6.1372},100);
   assert.equal(parsed.length,2);
   assert.equal(parsed[0].name,'ESTACIÓN CERCANA');
@@ -21,7 +23,7 @@ try{
   const response=await handler(new Request('https://fuegocerca.test/api/air-quality?lat=36.6817&lon=-6.1372&radius=100'));
   assert.equal(response.status,200);
   const data=await response.json();
-  assert.equal(data.version,'4.10.0');
+  assert.equal(data.version,'4.10.1');
   assert.equal(data.officialDataset,true);
   assert.equal(data.provisional,true);
   assert.equal(data.validated,false);
@@ -29,6 +31,17 @@ try{
   assert.ok(data.nearest.distanceKm<10);
   assert.match(data.fireRelationshipNote,/no atribuye/i);
   assert.match(response.headers.get('cache-control'),/s-maxage=300/);
+
+  let nodeBody='';
+  const nodeResponse={
+    statusCode:0,
+    headers:{},
+    setHeader(name,value){this.headers[name]=value},
+    end(value){nodeBody=value}
+  };
+  await handler({url:'/api/air-quality?lat=36.6817&lon=-6.1372&radius=100'},nodeResponse);
+  assert.equal(nodeResponse.statusCode,200);
+  assert.equal(JSON.parse(nodeBody).version,'4.10.1');
 
   const invalid=await handler(new Request('https://fuegocerca.test/api/air-quality?lat=91&lon=0'));
   assert.equal(invalid.status,400);

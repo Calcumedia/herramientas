@@ -61,7 +61,7 @@ try{
   const inside=await handler(new Request('https://fuegocerca.test/api/fire-perimeters?lat=36.70&lon=-6.10&radius=100'));
   assert.equal(inside.status,200);
   const insideData=await inside.json();
-  assert.equal(insideData.version,'4.10.0');
+  assert.equal(insideData.version,'4.10.1');
   assert.equal(insideData.source,'EFFIS · Copernicus EMS');
   assert.equal(insideData.official,false);
   assert.equal(insideData.cacheStatus,'upstream');
@@ -88,7 +88,7 @@ try{
   const relativeRequest=await handler({url:'/api/fire-perimeters?lat=36.70&lon=-6.10&radius=100'});
   assert.equal(relativeRequest.status,200);
   const relativeData=await relativeRequest.json();
-  assert.equal(relativeData.version,'4.10.0');
+  assert.equal(relativeData.version,'4.10.1');
   assert.equal(relativeData.nearbyCount,2);
 
   const nodeHeaders=new Map();
@@ -102,7 +102,7 @@ try{
   assert.equal(nodeResult,undefined);
   assert.equal(nodeResponse.statusCode,200);
   assert.equal(nodeHeaders.get('content-type'),'application/json; charset=utf-8');
-  assert.equal(JSON.parse(nodeBody).version,'4.10.0');
+  assert.equal(JSON.parse(nodeBody).version,'4.10.1');
 
   __resetEffisCacheForTests();
   const outside=await handler(new Request('https://fuegocerca.test/api/fire-perimeters?lat=36.70&lon=-6.15&radius=100'));
