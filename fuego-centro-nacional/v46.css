@@ -81,6 +81,33 @@
 .dangerLevel.very-high{color:#ffc27d;background:rgba(239,133,4,.14);border-color:rgba(239,133,4,.5)}
 .dangerLevel.extreme{color:#ff9386;background:rgba(245,35,0,.15);border-color:rgba(245,35,0,.55)}
 .dangerValidity{margin:8px 0 0;color:#9faab4;font-size:10px;line-height:1.45}
+.airPanel{display:grid;gap:9px;padding:11px;border:1px solid rgba(126,206,190,.25);border-radius:12px;background:#0e141a}
+.airPanelHead{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.airPanelHead small{display:block;margin-bottom:3px;color:#8ed9ca;font-size:9px;font-weight:800;letter-spacing:.08em}
+.airPanelHead h5{margin:0;font-size:14px}
+.airPanelHead a{font-size:10px}
+.airNearest{padding:11px;border:1px solid rgba(126,206,190,.22);border-radius:10px;background:rgba(82,172,154,.06)}
+.airNearestHead{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.airNearestHead b{font-size:11px;text-align:right}
+.airLevel{display:inline-flex;border:1px solid currentColor;border-radius:999px;padding:5px 8px;font-size:9px;font-weight:900;text-transform:uppercase}
+.airLevel.good{color:#86e6b2;background:rgba(57,190,119,.1)}
+.airLevel.reasonably-good{color:#a9e6dd;background:rgba(92,187,171,.1)}
+.airLevel.regular{color:#f3d979;background:rgba(243,197,72,.1)}
+.airLevel.unfavourable{color:#ffc08a;background:rgba(255,158,76,.11)}
+.airLevel.very-unfavourable{color:#ff9e9e;background:rgba(236,91,91,.11)}
+.airLevel.extremely-unfavourable{color:#eab4ff;background:rgba(177,91,214,.12)}
+.airNearest h6{margin:9px 0 7px;font-size:14px}
+.airNearest p{margin:9px 0 0;color:#c5ced7;font-size:10px;line-height:1.45}
+.airMetrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.airMetrics span{padding:8px;border:1px solid rgba(255,255,255,.09);border-radius:8px;background:#10161c}
+.airMetrics small,.airMetrics strong{display:block}
+.airMetrics small{color:#98a5b0;font-size:9px}
+.airMetrics strong{margin-top:3px;font-size:11px;line-height:1.35}
+.airPartial{display:inline-flex;margin-top:8px;border:1px solid rgba(243,197,72,.42);border-radius:999px;padding:4px 7px;color:#f3d979;font-size:8px;font-weight:800;text-transform:uppercase}
+.airFireNote{margin:0;padding-left:8px;border-left:2px solid #8ed9ca;color:#c4cdd6;font-size:10px;line-height:1.45}
+.airCoverage{margin:0;color:#9aa7b3;font-size:9px;line-height:1.45}
+.airEmpty,.airUnavailable{padding:9px;border:1px solid rgba(243,197,72,.25);border-radius:9px;background:rgba(243,197,72,.06)}
+.airEmpty p,.airUnavailable p{margin:5px 0 0;color:#c7d0d9;font-size:10px;line-height:1.45}
 .roadPanel{display:grid;gap:9px;padding:11px;border:1px solid rgba(255,255,255,.1);border-radius:12px;background:#0e141a}
 .roadPanelHead{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
 .roadPanelHead small{display:block;margin-bottom:3px;color:#9aa7b3;font-size:9px;font-weight:800;letter-spacing:.08em}
@@ -145,7 +172,9 @@
   .localContextHead{align-items:stretch;flex-direction:column}
   .modelTag{align-self:flex-start}
   .weatherGrid,.operationalLinks,.dangerProducts{grid-template-columns:1fr}
-  .dangerProduct,.roadPanelHead,.roadSummary,.perimeterPanelHead,.perimeterNearestHead{align-items:flex-start;flex-direction:column}
+  .dangerProduct,.airPanelHead,.airNearestHead,.roadPanelHead,.roadSummary,.perimeterPanelHead,.perimeterNearestHead{align-items:flex-start;flex-direction:column}
+  .airNearestHead b{text-align:left}
+  .airMetrics{grid-template-columns:1fr}
   .roadSummary small{text-align:left}
   .perimeterNearestHead b{text-align:left}
   .perimeterMetrics{grid-template-columns:1fr}

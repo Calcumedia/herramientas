@@ -7,12 +7,12 @@ const root = new URL('../', import.meta.url).pathname;
 const required = [
   'index.html','styles.css','v45.css','v46.css','app.js','v45.js','v46.js','analytics-config.js','sw.js',
   'manifest.webmanifest','favicon.svg',
-  'api/situation.js','api/geocode.js','api/reverse-geocode.js','api/health.js','api/fire-danger.js','api/fire-danger-map.js','api/fire-perimeters.js','api/road-incidents.js','api/weather.js',
-  'playwright.config.mjs','tests/e2e.spec.mjs','tests/fire-danger-contract.mjs','tests/fire-perimeters-contract.mjs','tests/road-incidents-contract.mjs','vercel.json'
+  'api/situation.js','api/geocode.js','api/reverse-geocode.js','api/health.js','api/fire-danger.js','api/fire-danger-map.js','api/air-quality.js','api/fire-perimeters.js','api/road-incidents.js','api/weather.js',
+  'playwright.config.mjs','tests/e2e.spec.mjs','tests/fire-danger-contract.mjs','tests/air-quality-contract.mjs','tests/fire-perimeters-contract.mjs','tests/road-incidents-contract.mjs','vercel.json'
 ];
 for (const file of required) await access(join(root, file), constants.R_OK);
 
-const [html,app,v45,v46css,v46,health,danger,dangerMap,perimeters,roads,situation,weather,pkg,lock,manifest,readme,deployment,vercelConfig] = await Promise.all([
+const [html,app,v45,v46css,v46,health,danger,dangerMap,airQuality,perimeters,roads,situation,weather,pkg,lock,manifest,readme,deployment,vercelConfig] = await Promise.all([
   readFile(join(root,'index.html'),'utf8'),
   readFile(join(root,'app.js'),'utf8'),
   readFile(join(root,'v45.js'),'utf8'),
@@ -21,6 +21,7 @@ const [html,app,v45,v46css,v46,health,danger,dangerMap,perimeters,roads,situatio
   readFile(join(root,'api/health.js'),'utf8'),
   readFile(join(root,'api/fire-danger.js'),'utf8'),
   readFile(join(root,'api/fire-danger-map.js'),'utf8'),
+  readFile(join(root,'api/air-quality.js'),'utf8'),
   readFile(join(root,'api/fire-perimeters.js'),'utf8'),
   readFile(join(root,'api/road-incidents.js'),'utf8'),
   readFile(join(root,'api/situation.js'),'utf8'),
@@ -52,6 +53,8 @@ assert.match(v46css,/\.smartLocalPanel/);
 assert.match(v46css,/\.smartDistances/);
 assert.match(v46css,/\.smartTimeline/);
 assert.match(v46css,/\.dangerProducts/);
+assert.match(v46css,/\.airPanel/);
+assert.match(v46css,/\.airLevel\.unfavourable/);
 assert.match(v46css,/\.roadPanel/);
 assert.match(v46css,/\.roadIncident/);
 assert.match(v46css,/\.perimeterPanel/);
@@ -62,6 +65,7 @@ assert.match(v46,/fc_recent_places_v47/);
 assert.match(v46,/fc_last_snapshot_v47/);
 assert.match(v46,/navigator\.share/);
 assert.match(v46,/api\/fire-danger/);
+assert.match(v46,/api\/air-quality/);
 assert.match(v46,/api\/road-incidents/);
 assert.match(v46,/api\/fire-perimeters/);
 assert.match(v46,/getPerimeterLayerCount/);
@@ -76,6 +80,8 @@ assert.match(v46,/sampleDangerProduct/);
 assert.match(v46,/No es una alerta/);
 assert.match(v46,/relationshipNote/);
 assert.match(v46,/No confirma un incendio/);
+assert.match(v46,/No confirma humo de un incendio/);
+assert.match(v46,/no es una medición exacta/);
 assert.match(v46,/ORIENTACIÓN CALCULADA POR FUEGOCERCA/);
 assert.match(v46,/No es un nivel oficial/);
 assert.match(v46,/Incidente oficial más próximo/);
@@ -85,6 +91,9 @@ assert.match(v46,/combinedTimeline/);
 assert.match(v46,/Más reciente primero/);
 assert.match(v46,/id="shareReportBtn"/);
 assert.match(health,/fireDangerEndpoint:true/);
+assert.match(health,/airQualityEndpoint:true/);
+assert.match(health,/airQualityOfficialDataset:true/);
+assert.match(health,/airQualityFireAttribution:false/);
 assert.match(health,/smartLocalReport:true/);
 assert.match(health,/localAttentionIsUnofficial:true/);
 assert.match(health,/combinedIncidentTimeline:true/);
@@ -104,12 +113,15 @@ assert.match(health,/effisAutomaticPrewarm:true/);
 assert.match(health,/effisServerTiming:true/);
 assert.match(health,/effisStaleFallbackHours:24/);
 assert.match(health,/effisAutoAssociation:false/);
-assert.match(health,/version:'4\.9\.3'/);
+assert.match(health,/version:'4\.10\.0'/);
 assert.match(danger,/AEMET/);
-assert.match(danger,/version:'4\.9\.3'/);
+assert.match(danger,/version:'4\.10\.0'/);
 assert.match(danger,/exactLocalLevel:true/);
 assert.match(danger,/timeline\/riesgo/);
 assert.match(dangerMap,/imagen\/RIESGO/);
+assert.match(airQuality,/ica-ultima-hora\.csv/);
+assert.match(airQuality,/Datos horarios provisionales y no validados/);
+assert.match(airQuality,/no atribuye su resultado al humo/i);
 assert.match(roads,/DATEX II 3\.7/);
 assert.match(roads,/datex2_v37\.xml/);
 assert.match(perimeters,/api\.effis\.emergency\.copernicus\.eu/);
@@ -128,12 +140,12 @@ assert.match(perimeters,/server-timing/);
 assert.match(perimeters,/ageCategory/);
 assert.match(perimeters,/associationStatus:'not-linked'/);
 assert.match(perimeters,/No representa el frente de llama/);
-assert.match(situation,/data\.version='4\.9\.3'/);
-assert.match(weather,/version:'4\.9\.3'/);
-assert.equal(JSON.parse(pkg).version,'4.9.3');
+assert.match(situation,/data\.version='4\.10\.0'/);
+assert.match(weather,/version:'4\.10\.0'/);
+assert.equal(JSON.parse(pkg).version,'4.10.0');
 assert.equal(JSON.parse(pkg).name,'fuegocerca');
 assert.equal(JSON.parse(pkg).dependencies['@vercel/functions'],'^3.7.6');
-assert.equal(JSON.parse(lock).version,'4.9.3');
+assert.equal(JSON.parse(lock).version,'4.10.0');
 assert.equal(JSON.parse(lock).name,'fuegocerca');
 assert.equal(JSON.parse(manifest).name,'FuegoCerca');
 
@@ -143,4 +155,4 @@ for(const [name,content] of Object.entries({html,v46,health,manifest,readme,depl
 }
 
 assert.match(health,/effisNodeRelativeUrlCompatible:true/);
-console.log('Source integrity checks passed for FuegoCerca 4.9.3.');
+console.log('Source integrity checks passed for FuegoCerca 4.10.0.');

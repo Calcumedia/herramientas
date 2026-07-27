@@ -47,6 +47,9 @@ assert.equal(health.staticLocalitySearch, true);
 assert.equal(health.initialAutoFit, false);
 assert.equal(health.nationalCoverageDirectory, 19);
 assert.equal(health.fireDangerOfficialRaster, true);
+assert.equal(health.airQualityEndpoint, true);
+assert.equal(health.airQualityOfficialDataset, true);
+assert.equal(health.airQualityFireAttribution, false);
 assert.equal(health.roadIncidentsEndpoint, true);
 assert.ok(Array.isArray(health.failedSources));
 

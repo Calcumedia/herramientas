@@ -5,6 +5,7 @@
   const MAX_HISTORY=8;
   const DGT_URL='https://www.dgt.es/conoce-el-estado-del-trafico/informacion-e-incidencias-de-trafico/index.html';
   const EFFIS_URL='https://forest-fire.emergency.copernicus.eu/apps/effis.csv/';
+  const ICA_URL='https://ica.miteco.es/';
   const $=selector=>document.querySelector(selector);
   const escapeHtml=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   const finite=value=>Number.isFinite(value);
@@ -256,7 +257,7 @@
     panel.id='localContextPanel';
     panel.className='localContextPanel';
     panel.setAttribute('aria-labelledby','localContextTitle');
-    panel.innerHTML=`<div class="localContextHead"><div><small>CONTEXTO LOCAL</small><h4 id="localContextTitle">Viento y condiciones próximas</h4></div><span class="modelTag">Predicción modelizada</span></div><div id="localWeatherStatus" class="localWeatherStatus" aria-live="polite"><span class="historyEmpty">Consultando viento y rachas…</span></div><section class="perimeterPanel" aria-labelledby="perimeterPanelTitle"><div class="perimeterPanelHead"><div><small>EFFIS · COPERNICUS EMS</small><h5 id="perimeterPanelTitle">Perímetros de área quemada cercanos</h5></div><a href="${EFFIS_URL}" target="_blank" rel="noopener">Abrir EFFIS ↗</a></div><div id="localPerimeterStatus" aria-live="polite"><span class="historyEmpty">Consultando perímetros en 100 km…</span></div></section><section class="roadPanel" aria-labelledby="roadPanelTitle"><div class="roadPanelHead"><div><small>DGT · DATEX II</small><h5 id="roadPanelTitle">Carreteras e incidencias cercanas</h5></div><a href="${DGT_URL}" target="_blank" rel="noopener">Abrir DGT ↗</a></div><div id="localRoadStatus" aria-live="polite"><span class="historyEmpty">Consultando incidencias en 50 km…</span></div></section>`;
+    panel.innerHTML=`<div class="localContextHead"><div><small>CONTEXTO LOCAL</small><h4 id="localContextTitle">Viento y condiciones próximas</h4></div><span class="modelTag">Predicción modelizada</span></div><div id="localWeatherStatus" class="localWeatherStatus" aria-live="polite"><span class="historyEmpty">Consultando viento y rachas…</span></div><section class="airPanel" aria-labelledby="airPanelTitle"><div class="airPanelHead"><div><small>MITECO · ÍNDICE NACIONAL</small><h5 id="airPanelTitle">Calidad del aire próxima</h5></div><a href="${ICA_URL}" target="_blank" rel="noopener">Abrir ICA ↗</a></div><div id="localAirStatus" aria-live="polite"><span class="historyEmpty">Buscando la estación activa más próxima…</span></div></section><section class="perimeterPanel" aria-labelledby="perimeterPanelTitle"><div class="perimeterPanelHead"><div><small>EFFIS · COPERNICUS EMS</small><h5 id="perimeterPanelTitle">Perímetros de área quemada cercanos</h5></div><a href="${EFFIS_URL}" target="_blank" rel="noopener">Abrir EFFIS ↗</a></div><div id="localPerimeterStatus" aria-live="polite"><span class="historyEmpty">Consultando perímetros en 100 km…</span></div></section><section class="roadPanel" aria-labelledby="roadPanelTitle"><div class="roadPanelHead"><div><small>DGT · DATEX II</small><h5 id="roadPanelTitle">Carreteras e incidencias cercanas</h5></div><a href="${DGT_URL}" target="_blank" rel="noopener">Abrir DGT ↗</a></div><div id="localRoadStatus" aria-live="polite"><span class="historyEmpty">Consultando incidencias en 50 km…</span></div></section>`;
     const note=report.querySelector('.note');
     if(note)note.insertAdjacentElement('beforebegin',panel);else report.append(panel);
   }
@@ -287,6 +288,43 @@
       renderWeather(data,report);
     }catch{
       renderWeather({degraded:true,disclaimer:'No hay datos meteorológicos disponibles. Comprueba AEMET y no interpretes esta ausencia como riesgo bajo.'},report);
+    }
+  }
+
+  function renderAirQuality(data,report){
+    const host=$('#localAirStatus');
+    if(!host)return;
+    host.dataset.airSummary='';
+    if(data.degraded){
+      host.innerHTML=`<div class="airUnavailable"><b>No se ha podido consultar el Índice Nacional de Calidad del Aire.</b><p>${escapeHtml(data.coverageNote||'Comprueba el visor oficial y no interpretes esta ausencia como aire limpio.')}</p></div>`;
+      return;
+    }
+    const station=data.nearest;
+    if(!station){
+      host.innerHTML=`<div class="airEmpty"><b>Sin estación activa con índice disponible en ${escapeHtml(data.radiusKm)} km.</b><p>Esto no permite concluir que la calidad del aire sea buena. Consulta el visor oficial de MITECO.</p></div>`;
+      return;
+    }
+    const distance=finite(station.distanceKm)?`${station.distanceKm.toFixed(1)} km`:'Distancia no disponible';
+    const pollutant=station.dueTo?.length?station.dueTo.join(', '):'Contaminante determinante no publicado';
+    const partial=station.limitedPollutants?'<span class="airPartial">Calculado con menos contaminantes</span>':'';
+    host.dataset.airSummary=`Calidad del aire: ${station.categoryLabel} en ${station.name}, a ${distance}`;
+    host.innerHTML=`<article class="airNearest"><div class="airNearestHead"><span class="airLevel ${escapeHtml(station.categoryKey)}">${escapeHtml(station.categoryLabel)}</span><b>${escapeHtml(distance)} hasta la estación</b></div><h6>${escapeHtml(station.name)}</h6><div class="airMetrics"><span><small>Medición comunicada</small><strong>${escapeHtml(localTime(station.measuredAt))}</strong></span><span><small>Contaminante determinante</small><strong>${escapeHtml(pollutant)}</strong></span></div>${partial}<p><b>Cómo interpretarlo:</b> es el índice horario provisional de la estación activa más cercana a ${escapeHtml(report.name)}. La distancia importa: no es una medición exacta dentro de la localidad.</p></article><p class="airFireNote"><b>No confirma humo de un incendio.</b> ${escapeHtml(data.fireRelationshipNote||'El origen de la contaminación no se atribuye automáticamente a un fuego.')}</p><p class="airCoverage">${escapeHtml(data.coverageNote||'Datos horarios provisionales de MITECO.')}</p>`;
+  }
+
+  async function loadAirQuality(report,{force=false}={}){
+    const host=$('#localAirStatus');
+    if(!host||!finite(report?.lat)||!finite(report?.lon))return;
+    const key=`${report.lat.toFixed(4)}|${report.lon.toFixed(4)}|100`;
+    if(!force&&host.dataset.loadedFor===key)return;
+    host.dataset.loadedFor=key;
+    host.innerHTML='<span class="historyEmpty">Buscando la estación activa más próxima…</span>';
+    try{
+      const response=await fetch(`/api/air-quality?lat=${encodeURIComponent(report.lat)}&lon=${encodeURIComponent(report.lon)}&radius=100`);
+      const data=await response.json();
+      if(!response.ok&&response.status!==503)throw Error(`HTTP ${response.status}`);
+      renderAirQuality(data,report);
+    }catch{
+      renderAirQuality({degraded:true,coverageNote:'No hay datos nacionales disponibles ahora. Comprueba el visor oficial y no interpretes esta ausencia como aire limpio.'},report);
     }
   }
 
@@ -449,9 +487,10 @@
   }
   function shareText(report,url){
     const weather=$('#localWeatherStatus')?.dataset.weatherSummary||'';
+    const air=$('#localAirStatus')?.dataset.airSummary||'';
     const roads=$('#localRoadStatus')?.dataset.roadSummary||'';
     const perimeter=$('#localPerimeterStatus')?.dataset.perimeterSummary||'';
-    return [`${BRAND} · ${report.name}`,report.badge,report.lead,perimeter,weather,roads,`Consulta: ${new Date(report.time).toLocaleString('es-ES')}`,'En una emergencia prevalecen ES-Alert, 112 y las autoridades.',url].filter(Boolean).join('\n');
+    return [`${BRAND} · ${report.name}`,report.badge,report.lead,perimeter,weather,air,roads,`Consulta: ${new Date(report.time).toLocaleString('es-ES')}`,'En una emergencia prevalecen ES-Alert, 112 y las autoridades.',url].filter(Boolean).join('\n');
   }
   async function copyText(text){
     if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(text);return}
@@ -494,7 +533,7 @@
       ensureSmartLocalInsights(report);ensureLocalContext();ensureShareControls();
       report=currentReport();
       saveHistory({name:report.name,time:report.time,lat:report.lat,lon:report.lon});
-      loadWeather(report);loadPerimeters(report);loadRoadIncidents(report);loadDanger();saveSnapshot(report);
+      loadWeather(report);loadAirQuality(report);loadPerimeters(report);loadRoadIncidents(report);loadDanger();saveSnapshot(report);
     },180);
   }
 
@@ -521,6 +560,6 @@
     addEventListener('offline',setOfflineState);addEventListener('online',setOfflineState);openDeepLink();
   }
 
-  window.FC46={getHistory,loadDanger,loadWeather,loadPerimeters,loadRoadIncidents,prewarmPerimeters,currentReport,setOfflineState,shareCurrentReport,openPlace,combinedTimeline,ensureSmartLocalInsights,getPerimeterLayerCount:()=>perimeterLayer?.getLayers?.().length||0,isPerimeterLayerVisible:()=>Boolean(perimeterLayer&&window.__FC_MAP__?.hasLayer?.(perimeterLayer))};
+  window.FC46={getHistory,loadDanger,loadWeather,loadAirQuality,loadPerimeters,loadRoadIncidents,prewarmPerimeters,currentReport,setOfflineState,shareCurrentReport,openPlace,combinedTimeline,ensureSmartLocalInsights,getPerimeterLayerCount:()=>perimeterLayer?.getLayers?.().length||0,isPerimeterLayerVisible:()=>Boolean(perimeterLayer&&window.__FC_MAP__?.hasLayer?.(perimeterLayer))};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();
 })();
