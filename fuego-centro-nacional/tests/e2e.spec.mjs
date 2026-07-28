@@ -1,12 +1,15 @@
 import { test, expect } from '@playwright/test';
 
 const situation={
-  version:'4.11.0',dataEngineVersion:'4.3.1',generatedAt:'2026-07-26T13:05:00.000Z',degraded:false,
+  version:'4.12.0',dataEngineVersion:'4.3.1',generatedAt:'2026-07-26T13:05:00.000Z',degraded:false,
   coverage:[
     {id:'test',label:'Fuente de prueba',ok:true,fallback:false,summary:'Activa',receivedAt:new Date().toISOString(),lastSuccessAt:new Date().toISOString()},
     {id:'infoca',label:'INFOCA Andalucía',scope:'Andalucía',ok:true,fallback:false,summary:'1 vigente',receivedAt:new Date().toISOString(),lastSuccessAt:new Date().toISOString()}
   ],
-  regionalCoverage:[{region:'Andalucía',aliases:['Andalucía','Andalucia'],mode:'integrated',sourceLabel:'Agencia de Emergencias de Andalucía · INFOCA',sourceUrl:'https://example.com',description:'Registros oficiales integrados directamente.',ok:true}],
+  regionalCoverage:[
+    {region:'Andalucía',aliases:['Andalucía','Andalucia'],mode:'integrated',sourceLabel:'Agencia de Emergencias de Andalucía · INFOCA',sourceUrl:'https://example.com',description:'Registros oficiales integrados directamente.',ok:true},
+    {region:'Comunitat Valenciana',aliases:['Comunitat Valenciana','Comunidad Valenciana','Valenciana'],mode:'viewer',sourceLabel:'112 Comunitat Valenciana · PREVIFOC',sourceUrl:'https://www.112cv.gva.es/WebPublica-MapasOnLineV2/',description:'Nivel preventivo diario PREVIFOC integrado; visor de incidentes sin feed estructurado completo.',ok:false}
+  ],
   incidents:[
     {
       id:'test-fire',name:'Incendio oficial de prueba',area:'Cádiz',status:'ACTIVO',statusClass:'active',
@@ -36,8 +39,9 @@ const situation={
   ]
 };
 const jerez={id:'1',name:'Jerez de la Frontera',displayName:'Jerez de la Frontera, Cádiz, Andalucía, España',lat:36.6817,lon:-6.1372,region:'Andalucía',placeType:'city',category:'place'};
+const valencia={id:'2',name:'València',displayName:'València, València, Comunitat Valenciana, España',lat:39.4699,lon:-0.3763,region:'Comunitat Valenciana',placeType:'city',category:'place'};
 const danger={
-  version:'4.11.0',source:'AEMET',attribution:'© AEMET',area:'PB',areaLabel:'Península y Baleares',configured:true,
+  version:'4.12.0',source:'AEMET',attribution:'© AEMET',area:'PB',areaLabel:'Península y Baleares',configured:true,
   viewerUrl:'https://www.aemet.es/es/eltiempo/prediccion/incendios',
   helpUrl:'https://www.aemet.es/es/eltiempo/prediccion/incendios/ayuda',
   levels:['Muy bajo','Bajo','Moderado','Alto','Muy alto','Extremo'],resolutionKm:1,
@@ -47,12 +51,12 @@ const danger={
   tomorrow:{validFor:'2026-07-28',officialImageUrl:'https://www.aemet.es/mapa-manana.png',localLevel:{value:5,label:'Muy alto',rgba:[239,133,4,255]}}
 };
 const weather={
-  version:'4.11.0',source:'Open-Meteo',sourceUrl:'https://open-meteo.com/en/docs',degraded:false,
+  version:'4.12.0',source:'Open-Meteo',sourceUrl:'https://open-meteo.com/en/docs',degraded:false,
   current:{temperatureC:31,relativeHumidity:24,windSpeedKmh:18,windDirectionDeg:225,windGustKmh:33},
   next24Hours:{maxWindSpeedKmh:27,maxWindGustKmh:49}
 };
 const airQuality={
-  version:'4.11.0',source:'MITECO · Índice Nacional de Calidad del Aire',officialDataset:true,
+  version:'4.12.0',source:'MITECO · Índice Nacional de Calidad del Aire',officialDataset:true,
   provisional:true,validated:false,radiusKm:100,retrievedAt:'2026-07-27T10:10:00Z',nearbyCount:3,
   nearest:{
     code:'11001001',name:'JEREZ-CHAPÍN',stationType:'FONDO',lat:36.69,lon:-6.12,
@@ -65,7 +69,7 @@ const airQuality={
   fireRelationshipNote:'El ICA mide contaminación atmosférica. FuegoCerca no atribuye su resultado al humo de un incendio sin una confirmación específica de la autoridad.'
 };
 const roads={
-  version:'4.11.0',source:'DGT',format:'DATEX II 3.7',official:true,radiusKm:50,
+  version:'4.12.0',source:'DGT',format:'DATEX II 3.7',official:true,radiusKm:50,
   publicationTime:'2026-07-27T10:05:00Z',retrievedAt:'2026-07-27T10:06:00Z',
   nearbyCount:8,closuresCount:1,
   incidents:[{
@@ -81,7 +85,7 @@ const roads={
   relationshipNote:'La DGT no siempre indica si una incidencia está relacionada con un incendio.'
 };
 const perimeters={
-  version:'4.11.0',source:'EFFIS · Copernicus EMS',official:false,radiusKm:100,
+  version:'4.12.0',source:'EFFIS · Copernicus EMS',official:false,radiusKm:100,
   retrievedAt:'2026-07-27T10:08:00Z',nearbyCount:2,cacheStatus:'runtime',usingStaleCache:false,
   refreshing:false,persistentCache:true,processingMs:14,
   perimeters:[
@@ -103,17 +107,33 @@ const perimeters={
   coverageNote:'EFFIS cartografía áreas quemadas mediante satélite. No representa el frente de llama en tiempo real.',
   associationNote:'FuegoCerca no asocia automáticamente estos perímetros a incendios oficiales sin una coincidencia espacial y temporal verificable.'
 };
+const previfoc={
+  version:'4.12.0',ok:true,official:true,source:'112 Comunitat Valenciana · PREVIFOC',
+  sourceMode:'PDF oficial diario',validFor:'2026-07-28',current:true,applicable:true,degraded:false,
+  level:{value:3,label:'Riesgo extremo',tone:'extreme'},
+  pdfUrl:'https://wpr.112cv.gva.es/external/api/storage/descargar/pdf/previfoc/previfoc.pdf',
+  viewerUrl:'https://www.112cv.gva.es/WebPublica-MapasOnLineV2/municipiosPrevifoc.jsf',
+  incidentViewerUrl:'https://www.112cv.gva.es/WebPublica-MapasOnLineV2/incidentes.jsf',
+  method:'Muestreo aproximado del mapa oficial PREVIFOC',approximateResolutionKm:.72,
+  validityNote:'Nivel preventivo oficial válido para hoy. No confirma que exista un incendio.',
+  incidentCoverageNote:'El visor de incidentes 112CV publica un subconjunto de incidentes relevantes en curso con localización aproximada. FuegoCerca lo enlaza, pero no lo usa como un feed completo para confirmar incendios activos.'
+};
 
 async function mockApis(page){
   await page.route('**/api/situation**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(situation)}));
-  await page.route('**/api/geocode**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({results:[jerez]})}));
+  await page.route('**/api/geocode**',route=>{
+    const query=new URL(route.request().url()).searchParams.get('q')||'';
+    const result=query.toLocaleLowerCase('es').includes('val')?valencia:jerez;
+    return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({results:[result]})});
+  });
   await page.route('**/api/reverse-geocode**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({result:jerez})}));
   await page.route('**/api/fire-danger**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(danger)}));
+  await page.route('**/api/previfoc**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(previfoc)}));
   await page.route('**/api/fire-perimeters**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(perimeters)}));
   await page.route('**/api/road-incidents**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(roads)}));
   await page.route('**/api/air-quality**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(airQuality)}));
   await page.route('**/api/weather**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(weather)}));
-  await page.route('**/api/health**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({status:'ok',version:'4.11.0',brand:'FuegoCerca'})}));
+  await page.route('**/api/health**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({status:'ok',version:'4.12.0',brand:'FuegoCerca'})}));
 }
 
 async function showMapOnMobile(page,testInfo){
@@ -196,6 +216,24 @@ test('AEMET se muestra como prevención y no como incendio confirmado',async({pa
   await expect(page.locator('#preventionStatus')).toContainText('Extremo');
   await expect(page.locator('#preventionStatus')).toContainText('píxel de 1 km');
   await expect(page.locator('#aemetDangerLink')).toHaveAttribute('href',/aemet\.es/);
+});
+
+test('PREVIFOC aparece solo en una localidad valenciana y no se presenta como incendio',async({page})=>{
+  const input=page.locator('#placeQuery');
+  await input.fill('València');
+  await page.locator('#placeSearch').click();
+  await expect(page.locator('[data-pick]')).toContainText('València');
+  await page.locator('[data-pick]').click();
+  const panel=page.locator('#previfocStatus');
+  await expect(panel).toBeVisible();
+  await expect(panel).toContainText('112 COMUNITAT VALENCIANA · PREVIFOC');
+  await expect(panel).toContainText('Nivel 3 · Riesgo extremo');
+  await expect(panel).toContainText('No confirma un incendio activo');
+  await expect(panel).toContainText('separado del cálculo AEMET');
+  await expect(panel).toContainText('subconjunto de incidentes relevantes');
+  await expect(panel).toContainText('no lo usa como un feed completo');
+  await expect(panel.locator('a')).toHaveCount(2);
+  await expect(page.locator('#preventionStatus')).toContainText('AEMET');
 });
 
 test('MITECO muestra la calidad del aire sin atribuirla a un incendio',async({page})=>{

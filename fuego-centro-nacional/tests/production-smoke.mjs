@@ -29,6 +29,7 @@ assert.match(app, /placeSearchForm/);
 assert.match(app, /initialAutoFit|renderMap\(false\)/);
 
 const situation = await (await get('/api/situation', /application\/json/)).json();
+assert.equal(situation.version,'4.12.0');
 assert.ok(Array.isArray(situation.incidents), 'incidents must be an array');
 assert.ok(Array.isArray(situation.alerts), 'alerts must be an array');
 assert.ok(Array.isArray(situation.coverage), 'coverage must be an array');
@@ -38,6 +39,20 @@ const andalusia=situation.regionalCoverage.find(item=>item.region==='Andalucía'
 assert.equal(andalusia?.mode,'integrated','Andalusia must use the direct INFOCA integration');
 assert.equal(typeof andalusia?.ok,'boolean','Andalusia coverage must expose source health');
 assert.ok(situation.coverage.some(item=>item.id==='infoca'),'situation must expose INFOCA source coverage');
+const valenciana=situation.regionalCoverage.find(item=>item.region==='Comunitat Valenciana');
+assert.equal(valenciana?.mode,'viewer','Valencian active incidents must remain viewer-only');
+assert.match(valenciana?.description||'',/PREVIFOC/);
+assert.match(valenciana?.description||'',/no se usa para confirmar incendios activos/);
+
+const previfoc=await (await get('/api/previfoc?lat=39.4699&lon=-0.3763',/application\/json/)).json();
+assert.equal(previfoc.version,'4.12.0');
+assert.equal(previfoc.source,'112 Comunitat Valenciana · PREVIFOC');
+assert.equal(previfoc.official,true);
+assert.equal(typeof previfoc.current,'boolean');
+if(previfoc.current){
+  assert.ok([1,2,3].includes(previfoc.level?.value),'current PREVIFOC must expose an official level');
+}
+assert.match(previfoc.incidentCoverageNote||'',/subconjunto/);
 
 const geocode = await (await get('/api/geocode?q=Madrid', /application\/json/)).json();
 assert.ok(Array.isArray(geocode.results) && geocode.results.length > 0, 'Madrid geocode must return results');
@@ -57,6 +72,12 @@ assert.equal(health.infocaGeoreferenced, true);
 assert.equal(health.infocaDirectIntegration, true);
 assert.equal(health.infocamProvisionalNotOfficial, true);
 assert.equal(health.infoexGeoreferencedFeed, false);
+assert.equal(health.previfocEndpoint,true);
+assert.equal(health.previfocOfficialPdf,true);
+assert.equal(health.previfocLocalLevel,true);
+assert.equal(health.previfocPreventiveOnly,true);
+assert.equal(health.previfocIncidentFeedIntegrated,false);
+assert.equal(health.valencianIncidentViewerSubset,true);
 assert.equal(health.fireDangerOfficialRaster, true);
 assert.equal(health.airQualityEndpoint, true);
 assert.equal(health.airQualityOfficialDataset, true);

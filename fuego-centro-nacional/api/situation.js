@@ -14,7 +14,7 @@ const DIRECTORY=[
   ['Castilla-La Mancha',['Castilla-La Mancha','Castilla La Mancha'],'viewer','Portal INFOCAM','https://infocam.castillalamancha.es/mapa-de-incendios-forestales','El portal autonómico publica un avance provisional que califica expresamente como no oficial; no se utiliza para afirmar un incendio ni calcular afección local.'],
   ['Castilla y León',['Castilla y León','Castilla y Leon'],'integrated','Junta de Castilla y León','https://analisis.datosabiertos.jcyl.es/explore/dataset/incendios-forestales/','Datos oficiales directos integrados y evaluados automáticamente.'],
   ['Cataluña',['Cataluña','Catalunya'],'viewer','Bombers de la Generalitat · mapa de actuaciones','https://interior.gencat.cat/ca/incendis-forestals/inici/','Visor oficial en tiempo real identificado; sus actuaciones todavía no alimentan directamente el cálculo.'],
-  ['Comunitat Valenciana',['Comunitat Valenciana','Comunidad Valenciana','Valenciana'],'viewer','112 Comunitat Valenciana','https://www.112cv.gva.es/WebPublica-MapasOnLineV2/','Visor oficial de incidentes y emergencias identificado; pendiente de integración directa.'],
+  ['Comunitat Valenciana',['Comunitat Valenciana','Comunidad Valenciana','Valenciana'],'viewer','112 Comunitat Valenciana · PREVIFOC','https://www.112cv.gva.es/WebPublica-MapasOnLineV2/','Nivel preventivo diario PREVIFOC integrado por localidad. El visor oficial muestra un subconjunto de incidentes relevantes con localización aproximada y no ofrece un feed estructurado completo, por lo que no se usa para confirmar incendios activos.'],
   ['Extremadura',['Extremadura'],'updates','Junta de Extremadura · INFOCAEX/INFOEX','https://www.juntaex.es/w/infocaex','Comunicados oficiales identificados, pero sin un feed operativo georreferenciado que permita integrarlos con seguridad en el cálculo local.'],
   ['Galicia',['Galicia'],'updates','Xunta de Galicia · Medio Rural','https://mediorural.xunta.gal/es/recursos/noticias','Partes oficiales periódicos identificados; pendiente de extracción estructurada automática.'],
   ['Comunidad de Madrid',['Comunidad de Madrid','Madrid'],'integrated','ASEM 112 Madrid','https://www.comunidad.madrid/seguridad-emergencias-asem-112','Avisos oficiales directos integrados y aplicados a localidades expresamente afectadas.'],
@@ -143,7 +143,7 @@ export default async function handler(request){
     });
     if(!infoca.ok)data.degraded=true;
     const upstreamCoverage=new Map((data.regionalCoverage||[]).map(x=>[x.region,x]));
-    data.version='4.11.0';
+    data.version='4.12.0';
     data.dataEngineVersion='4.3.1';
     data.regionalCoverage=DIRECTORY.map(item=>{
       if(item.region==='Andalucía')return {...item,ok:infoca.ok,publishedAt:infoca.publishedAt,lastSuccessAt:infoca.ok?infoca.receivedAt:null};
@@ -159,6 +159,6 @@ export default async function handler(request){
     };
     return new Response(JSON.stringify(data),{status:200,headers});
   }catch(error){
-    return new Response(JSON.stringify({version:'4.11.0',dataEngineVersion:'4.3.1',degraded:true,error:String(error.message||error),regionalCoverage:DIRECTORY,incidents:[],archive:[],alerts:[],thermalSignals:[],news:[],coverage:[]}),{status:503,headers});
+    return new Response(JSON.stringify({version:'4.12.0',dataEngineVersion:'4.3.1',degraded:true,error:String(error.message||error),regionalCoverage:DIRECTORY,incidents:[],archive:[],alerts:[],thermalSignals:[],news:[],coverage:[]}),{status:503,headers});
   }
 }

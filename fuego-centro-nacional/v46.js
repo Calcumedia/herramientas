@@ -42,6 +42,8 @@
     const center=window.__FC_MAP__?.getCenter?.();
     return {
       name,
+      displayName:place?.displayName||name,
+      region:place?.region||'',
       badge:`Atención del panel: ${attention.label}`,
       lead:assessment?.lead||'Consulta informativa de FuegoCerca.',
       lat:finite(place?.lat)?place.lat:finite(center?.lat)?center.lat:null,
@@ -137,9 +139,9 @@
 
   function coordsForContext(){
     const report=currentReport();
-    if(finite(report?.lat)&&finite(report?.lon))return {lat:report.lat,lon:report.lon,name:report.name};
+    if(finite(report?.lat)&&finite(report?.lon))return {lat:report.lat,lon:report.lon,name:report.name,displayName:report.displayName,region:report.region};
     const center=window.__FC_MAP__?.getCenter?.();
-    return {lat:finite(center?.lat)?center.lat:40.4167,lon:finite(center?.lng)?center.lng:-3.7033,name:'España'};
+    return {lat:finite(center?.lat)?center.lat:40.4167,lon:finite(center?.lng)?center.lng:-3.7033,name:'España',displayName:'España',region:''};
   }
 
   function dateLabel(value){
@@ -243,11 +245,50 @@
     if(!data.degraded)await resolveDangerProducts(data,place);
   }
 
+  function isValencianPlace(place){
+    const value=`${place?.region||''} ${place?.displayName||''}`.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+    return value.includes('comunitat valenciana')||value.includes('comunidad valenciana');
+  }
+
+  function renderPrevifoc(data,place){
+    const host=$('#previfocStatus');
+    if(!host)return;
+    const level=data.current&&data.level
+      ?`<strong class="previfocLevel ${escapeHtml(data.level.tone||'unavailable')}">Nivel ${escapeHtml(data.level.value)} · ${escapeHtml(data.level.label)}</strong>`
+      :'<strong class="previfocLevel unavailable">Nivel actual no verificado</strong>';
+    const state=data.current&&data.level?'Nivel oficial diario disponible':'Consulta degradada';
+    host.innerHTML=`<section class="previfocPanel" aria-labelledby="previfocTitle"><div class="previfocHead"><div><small>112 COMUNITAT VALENCIANA · PREVIFOC</small><h4 id="previfocTitle">Nivel preventivo autonómico</h4></div><a href="${escapeHtml(data.pdfUrl||data.viewerUrl)}" target="_blank" rel="noopener">Abrir parte oficial ↗</a></div><div class="previfocSummary"><div><small>Localidad consultada</small><b>${escapeHtml(place.name)}</b></div><div><small>Válido para</small><b>${escapeHtml(dateLabel(data.validFor))}</b></div><div><small>Estado</small><b>${escapeHtml(state)}</b></div></div>${level}<p class="previfocMethod">${escapeHtml(data.method||'Lectura del mapa oficial PREVIFOC')}${data.approximateResolutionKm?` · resolución aproximada ${escapeHtml(data.approximateResolutionKm)} km`:''}.</p><div class="preventionDisclaimer"><b>No confirma un incendio activo.</b> PREVIFOC expresa el nivel preventivo oficial de incendios forestales para hoy y se muestra separado del cálculo AEMET y de la evaluación local de FuegoCerca.</div><p class="dangerValidity">${escapeHtml(data.validityNote||'Consulta preventiva oficial.')}</p><div class="previfocIncidentNote"><p>${escapeHtml(data.incidentCoverageNote||'Los incidentes activos deben comprobarse en el visor oficial de 112CV.')}</p><a href="${escapeHtml(data.incidentViewerUrl||'https://www.112cv.gva.es/WebPublica-MapasOnLineV2/incidentes.jsf')}" target="_blank" rel="noopener">Consultar incidentes 112CV ↗</a></div></section>`;
+  }
+
+  async function loadPrevifoc(place=coordsForContext()){
+    $('#previfocStatus')?.remove();
+    if(!isValencianPlace(place))return;
+    const prevention=$('#preventionStatus');
+    if(!prevention)return;
+    prevention.insertAdjacentHTML('beforeend','<div id="previfocStatus" aria-live="polite"><span class="historyEmpty">Consultando PREVIFOC de 112CV…</span></div>');
+    try{
+      const response=await fetch(`/api/previfoc?lat=${encodeURIComponent(place.lat)}&lon=${encodeURIComponent(place.lon)}`,{cache:'no-store'});
+      const data=await response.json();
+      renderPrevifoc(data,place);
+    }catch{
+      renderPrevifoc({
+        current:false,
+        level:null,
+        validFor:null,
+        viewerUrl:'https://www.112cv.gva.es/WebPublica-MapasOnLineV2/municipiosPrevifoc.jsf',
+        incidentViewerUrl:'https://www.112cv.gva.es/WebPublica-MapasOnLineV2/incidentes.jsf',
+        validityNote:'No se ha podido verificar PREVIFOC. Esta ausencia no equivale a riesgo bajo.',
+        incidentCoverageNote:'Comprueba la situación en los canales oficiales de 112 Comunitat Valenciana.'
+      },place);
+    }
+  }
+
   async function loadDanger(){
     const host=$('#preventionStatus');if(host)host.innerHTML='<span class="historyEmpty">Consultando AEMET…</span>';
     const place=coordsForContext();
     try{const response=await fetch(`/api/fire-danger?lat=${encodeURIComponent(place.lat)}&lon=${encodeURIComponent(place.lon)}`,{cache:'no-store'});if(!response.ok)throw Error(`HTTP ${response.status}`);await renderDanger(await response.json(),place)}
     catch{if(host)host.innerHTML='<div class="preventionDisclaimer">No se ha podido consultar AEMET. Usa el enlace al visor oficial y no interpretes esta ausencia como riesgo bajo.</div>'}
+    await loadPrevifoc(place);
   }
 
   function ensureLocalContext(){
@@ -560,6 +601,6 @@
     addEventListener('offline',setOfflineState);addEventListener('online',setOfflineState);openDeepLink();
   }
 
-  window.FC46={getHistory,loadDanger,loadWeather,loadAirQuality,loadPerimeters,loadRoadIncidents,prewarmPerimeters,currentReport,setOfflineState,shareCurrentReport,openPlace,combinedTimeline,ensureSmartLocalInsights,getPerimeterLayerCount:()=>perimeterLayer?.getLayers?.().length||0,isPerimeterLayerVisible:()=>Boolean(perimeterLayer&&window.__FC_MAP__?.hasLayer?.(perimeterLayer))};
+  window.FC46={getHistory,loadDanger,loadPrevifoc,loadWeather,loadAirQuality,loadPerimeters,loadRoadIncidents,prewarmPerimeters,currentReport,setOfflineState,shareCurrentReport,openPlace,combinedTimeline,ensureSmartLocalInsights,getPerimeterLayerCount:()=>perimeterLayer?.getLayers?.().length||0,isPerimeterLayerVisible:()=>Boolean(perimeterLayer&&window.__FC_MAP__?.hasLayer?.(perimeterLayer))};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();
 })();
