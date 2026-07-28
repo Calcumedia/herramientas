@@ -153,7 +153,7 @@ try{
   const response=await infoarHandler(new Request('https://fuegocerca.local/api/infoar'));
   assert.equal(response.status,200);
   const data=await response.json();
-  assert.equal(data.version,'4.17.0');
+  assert.equal(data.version,'4.17.1');
   assert.equal(data.official,true);
   assert.equal(data.incidents[0].name,'Plan');
 
@@ -170,7 +170,7 @@ try{
 }
 
 const upstream={
-  version:'4.17.0',
+  version:'4.17.1',
   dataEngineVersion:'4.3.1',
   degraded:false,
   incidents:[],
@@ -194,7 +194,7 @@ try{
   const response=await situationHandler(new Request('https://fuegocerca.local/api/situation'));
   assert.equal(response.status,200);
   const data=await response.json();
-  assert.equal(data.version,'4.17.0');
+  assert.equal(data.version,'4.17.1');
   assert.equal(data.incidents.filter(item=>item.region==='Aragón').length,2);
   assert.equal(data.archive.filter(item=>item.region==='Aragón').length,1);
   assert.equal(data.coverage.find(item=>item.id==='infoar-aragon')?.ok,true);

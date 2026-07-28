@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 const situation={
-  version:'4.17.0',dataEngineVersion:'4.3.1',generatedAt:'2026-07-26T13:05:00.000Z',degraded:false,
+  version:'4.17.1',dataEngineVersion:'4.3.1',generatedAt:'2026-07-26T13:05:00.000Z',degraded:false,
   coverage:[
     {id:'test',label:'Fuente de prueba',ok:true,fallback:false,summary:'Activa',receivedAt:new Date().toISOString(),lastSuccessAt:new Date().toISOString()},
     {id:'infoca',label:'INFOCA Andalucía',scope:'Andalucía',ok:true,fallback:false,summary:'1 vigente',receivedAt:new Date().toISOString(),lastSuccessAt:new Date().toISOString()},
@@ -102,7 +102,7 @@ const vigo={id:'3',name:'Vigo',displayName:'Vigo, Pontevedra, Galicia, España',
 const oviedo={id:'4',name:'Oviedo',displayName:'Oviedo, Asturias, Principado de Asturias, España',lat:43.3619,lon:-5.8494,region:'Principado de Asturias',placeType:'city',category:'place'};
 const moratalla={id:'5',name:'Moratalla',displayName:'Moratalla, Murcia, Región de Murcia, España',lat:38.1898,lon:-1.8916,region:'Región de Murcia',placeType:'town',category:'place'};
 const danger={
-  version:'4.17.0',source:'AEMET',attribution:'© AEMET',area:'PB',areaLabel:'Península y Baleares',configured:true,
+  version:'4.17.1',source:'AEMET',attribution:'© AEMET',area:'PB',areaLabel:'Península y Baleares',configured:true,
   viewerUrl:'https://www.aemet.es/es/eltiempo/prediccion/incendios',
   helpUrl:'https://www.aemet.es/es/eltiempo/prediccion/incendios/ayuda',
   levels:['Muy bajo','Bajo','Moderado','Alto','Muy alto','Extremo'],resolutionKm:1,
@@ -112,12 +112,12 @@ const danger={
   tomorrow:{validFor:'2026-07-28',officialImageUrl:'https://www.aemet.es/mapa-manana.png',localLevel:{value:5,label:'Muy alto',rgba:[239,133,4,255]}}
 };
 const weather={
-  version:'4.17.0',source:'Open-Meteo',sourceUrl:'https://open-meteo.com/en/docs',degraded:false,
+  version:'4.17.1',source:'Open-Meteo',sourceUrl:'https://open-meteo.com/en/docs',degraded:false,
   current:{temperatureC:31,relativeHumidity:24,windSpeedKmh:18,windDirectionDeg:225,windGustKmh:33},
   next24Hours:{maxWindSpeedKmh:27,maxWindGustKmh:49}
 };
 const airQuality={
-  version:'4.17.0',source:'MITECO · Índice Nacional de Calidad del Aire',officialDataset:true,
+  version:'4.17.1',source:'MITECO · Índice Nacional de Calidad del Aire',officialDataset:true,
   provisional:true,validated:false,radiusKm:100,retrievedAt:'2026-07-27T10:10:00Z',nearbyCount:3,
   nearest:{
     code:'11001001',name:'JEREZ-CHAPÍN',stationType:'FONDO',lat:36.69,lon:-6.12,
@@ -130,7 +130,7 @@ const airQuality={
   fireRelationshipNote:'El ICA mide contaminación atmosférica. FuegoCerca no atribuye su resultado al humo de un incendio sin una confirmación específica de la autoridad.'
 };
 const roads={
-  version:'4.17.0',source:'DGT',format:'DATEX II 3.7',official:true,radiusKm:50,
+  version:'4.17.1',source:'DGT',format:'DATEX II 3.7',official:true,radiusKm:50,
   publicationTime:'2026-07-27T10:05:00Z',retrievedAt:'2026-07-27T10:06:00Z',
   nearbyCount:8,closuresCount:1,
   incidents:[{
@@ -146,7 +146,7 @@ const roads={
   relationshipNote:'La DGT no siempre indica si una incidencia está relacionada con un incendio.'
 };
 const perimeters={
-  version:'4.17.0',source:'EFFIS · Copernicus EMS',official:false,radiusKm:100,
+  version:'4.17.1',source:'EFFIS · Copernicus EMS',official:false,radiusKm:100,
   retrievedAt:'2026-07-27T10:08:00Z',nearbyCount:2,cacheStatus:'runtime',usingStaleCache:false,
   refreshing:false,persistentCache:true,processingMs:14,
   perimeters:[
@@ -169,7 +169,7 @@ const perimeters={
   associationNote:'FuegoCerca no asocia automáticamente estos perímetros a incendios oficiales sin una coincidencia espacial y temporal verificable.'
 };
 const previfoc={
-  version:'4.17.0',ok:true,official:true,source:'112 Comunitat Valenciana · PREVIFOC',
+  version:'4.17.1',ok:true,official:true,source:'112 Comunitat Valenciana · PREVIFOC',
   sourceMode:'PDF oficial diario',validFor:'2026-07-28',current:true,applicable:true,degraded:false,
   level:{value:3,label:'Riesgo extremo',tone:'extreme'},
   pdfUrl:'https://wpr.112cv.gva.es/external/api/storage/descargar/pdf/previfoc/previfoc.pdf',
@@ -195,7 +195,7 @@ async function mockApis(page){
   await page.route('**/api/road-incidents**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(roads)}));
   await page.route('**/api/air-quality**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(airQuality)}));
   await page.route('**/api/weather**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(weather)}));
-  await page.route('**/api/health**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({status:'ok',version:'4.17.0',brand:'FuegoCerca'})}));
+  await page.route('**/api/health**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({status:'ok',version:'4.17.1',brand:'FuegoCerca'})}));
 }
 
 async function showMapOnMobile(page,testInfo){

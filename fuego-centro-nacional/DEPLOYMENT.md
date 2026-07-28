@@ -75,6 +75,7 @@ No publicar si falla alguno de estos puntos:
 36. La posición murciana procede del centro aproximado del municipio obtenido mediante IGN · CartoCiudad. Nunca debe presentarse como ignición, frente o perímetro del incendio.
 37. Los estados explícitos de INFOMUR se conservan literalmente; si la publicación describe medios trabajando pero no publica un estado, se muestra «en intervención», nunca «activo».
 38. Los incidentes murcianos vigentes caducan tras 36 horas y los controlados o extinguidos tras siete días. La ausencia de publicaciones no confirma seguridad y la copia válida solo puede reutilizarse durante 24 horas con estado degradado visible.
+39. `api/situation.js` debe ejecutarse en `fra1`. La fuente oficial de INFOMUR bloquea las solicitudes originadas en la región estadounidense predeterminada de Vercel; no se debe retirar la región europea sin validar nuevamente todas las fuentes.
 
 ## Recuperación
 

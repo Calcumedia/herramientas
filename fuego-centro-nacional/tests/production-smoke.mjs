@@ -29,7 +29,7 @@ assert.match(app, /placeSearchForm/);
 assert.match(app, /initialAutoFit|renderMap\(false\)/);
 
 const situation = await (await get('/api/situation', /application\/json/)).json();
-assert.equal(situation.version,'4.17.0');
+assert.equal(situation.version,'4.17.1');
 assert.ok(Array.isArray(situation.incidents), 'incidents must be an array');
 assert.ok(Array.isArray(situation.alerts), 'alerts must be an array');
 assert.ok(Array.isArray(situation.coverage), 'coverage must be an array');
@@ -62,17 +62,19 @@ assert.match(asturias?.description||'',/parte vigente no confirma/);
 assert.ok(situation.coverage.some(item=>item.id==='sepa-asturias'),'situation must expose Asturias source coverage');
 const murcia=situation.regionalCoverage.find(item=>item.region==='Región de Murcia');
 assert.equal(murcia?.mode,'integrated','Murcia must integrate the selective INFOMUR official posts');
-assert.equal(typeof murcia?.ok,'boolean','Murcia coverage must expose source health');
+assert.equal(murcia?.ok,true,'INFOMUR must respond successfully from the European situation function');
 assert.equal(murcia?.confidenceForAbsence,false,'INFOMUR posts must not prove the absence of fires');
 assert.match(murcia?.description||'',/publicación vigente no confirma/);
-assert.ok(situation.coverage.some(item=>item.id==='infomur-murcia'),'situation must expose Murcia source coverage');
+const murciaSource=situation.coverage.find(item=>item.id==='infomur-murcia');
+assert.ok(murciaSource,'situation must expose Murcia source coverage');
+assert.equal(murciaSource.ok,true,'INFOMUR source coverage must be healthy in production');
 const valenciana=situation.regionalCoverage.find(item=>item.region==='Comunitat Valenciana');
 assert.equal(valenciana?.mode,'viewer','Valencian active incidents must remain viewer-only');
 assert.match(valenciana?.description||'',/PREVIFOC/);
 assert.match(valenciana?.description||'',/no se usa para confirmar incendios activos/);
 
 const previfoc=await (await get('/api/previfoc?lat=39.4699&lon=-0.3763',/application\/json/)).json();
-assert.equal(previfoc.version,'4.17.0');
+assert.equal(previfoc.version,'4.17.1');
 assert.equal(previfoc.source,'112 Comunitat Valenciana · PREVIFOC');
 assert.equal(previfoc.official,true);
 assert.equal(typeof previfoc.current,'boolean');
@@ -82,7 +84,7 @@ if(previfoc.current){
 assert.match(previfoc.incidentCoverageNote||'',/subconjunto/);
 
 const bombers=await (await get('/api/bombers',/application\/json/)).json();
-assert.equal(bombers.version,'4.17.0');
+assert.equal(bombers.version,'4.17.1');
 assert.equal(bombers.official,true);
 assert.equal(bombers.source,'Bombers de la Generalitat de Catalunya');
 assert.ok(Array.isArray(bombers.incidents));
@@ -90,7 +92,7 @@ assert.ok(Array.isArray(bombers.archive));
 assert.ok(Array.isArray(bombers.otherVegetation));
 
 const infoar=await (await get('/api/infoar',/application\/json/)).json();
-assert.equal(infoar.version,'4.17.0');
+assert.equal(infoar.version,'4.17.1');
 assert.equal(infoar.official,true);
 assert.equal(infoar.source,'Gobierno de Aragón · INFOAR');
 assert.ok(Array.isArray(infoar.incidents));
@@ -109,6 +111,7 @@ assert.equal(health.staticLocalitySearch, true);
 assert.equal(health.initialAutoFit, false);
 assert.equal(health.nationalCoverageDirectory, 19);
 assert.equal(health.integratedRegionalTerritories, 8);
+assert.equal(health.situationFunctionRegion, 'fra1');
 assert.equal(health.infocaEndpoint, true);
 assert.equal(health.infocaOfficialSource, true);
 assert.equal(health.infocaGeoreferenced, true);
