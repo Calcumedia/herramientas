@@ -43,7 +43,7 @@ No publicar si falla alguno de estos puntos:
 4. El mapa inicia en `[40.4167, -3.7033]`, zoom `6`.
 5. La carga inicial nunca llama a `fitBounds`.
 6. El botón **Ver todo** sí puede llamar manualmente a `fitBounds`.
-7. `/api/situation`, `/api/geocode`, `/api/fire-danger`, `/api/fire-danger-map`, `/api/air-quality`, `/api/fire-perimeters`, `/api/road-incidents` y `/api/health` responden correctamente.
+7. `/api/situation`, `/api/infoca`, `/api/geocode`, `/api/fire-danger`, `/api/fire-danger-map`, `/api/air-quality`, `/api/fire-perimeters`, `/api/road-incidents` y `/api/health` responden correctamente.
 8. La cobertura regional contiene 19 territorios.
 9. No desaparecen incidentes, alertas, noticias, fuentes, localidades guardadas ni notificaciones.
 10. AEMET conserva la etiqueta preventiva, EFFIS se identifica como área quemada satelital y DGT conserva la advertencia de que sus incidencias no siempre están relacionadas con incendios.
@@ -53,6 +53,9 @@ No publicar si falla alguno de estos puntos:
 14. Si la copia supera una hora, la respuesta es inmediata, se marca como guardada y la renovación se ejecuta en segundo plano.
 15. La precarga automática de EFFIS no bloquea ni reconstruye el buscador, el informe local o el mapa.
 16. La tarjeta de calidad del aire identifica la estación MITECO utilizada, su distancia y la hora de medición; aclara siempre que los datos son provisionales y que el ICA no confirma humo procedente de un incendio.
+17. INFOCA solo incorpora registros de las ocho provincias andaluzas, excluye extinguidos y no transforma registros antiguos en incendios vigentes.
+18. Si INFOCA falla, Andalucía pierde temporalmente la cobertura directa y la ausencia de datos no se interpreta como ausencia de incendios.
+19. INFOCAM continúa identificado como avance provisional no oficial y Extremadura como fuente de actualizaciones sin feed georreferenciado; ninguna se promociona artificialmente a integración directa.
 
 ## Recuperación
 
