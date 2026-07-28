@@ -180,7 +180,7 @@ export function buildAsturiasFindUrl(municipality,province){
 }
 
 async function locateMunicipality(municipality,{fetchImpl,signal}){
-  const headers={accept:'application/json','user-agent':'FuegoCerca/4.16'};
+  const headers={accept:'application/json','user-agent':'FuegoCerca/4.17'};
   const candidatesResponse=await fetchImpl(buildAsturiasCandidatesUrl(municipality),{headers,cache:'no-store',signal});
   if(!candidatesResponse.ok)throw Error(`CartoCiudad candidatos HTTP ${candidatesResponse.status}`);
   const candidates=await candidatesResponse.json();
@@ -339,7 +339,7 @@ export async function fetchAsturias({
   const timer=setTimeout(()=>controller.abort(),timeoutMs);
   try{
     const response=await fetchImpl(ASTURIAS_SOURCE_URL,{
-      headers:{accept:'text/html','user-agent':'FuegoCerca/4.16'},
+      headers:{accept:'text/html','user-agent':'FuegoCerca/4.17'},
       cache:'no-store',
       signal:controller.signal
     });
