@@ -1,6 +1,6 @@
 export const config={runtime:'nodejs',maxDuration:30};
 
-import {fetchInfoar,INFOAR_HISTORY_URL,INFOAR_PDF_URL,INFOAR_SOURCE_URL} from './infoar-source.js';
+import {fetchGalicia,GALICIA_SOURCE_URL,CARTOCIUDAD_SOURCE_URL} from './galicia-source.js';
 
 const headers={
   'content-type':'application/json; charset=utf-8',
@@ -10,23 +10,33 @@ const headers={
 
 async function createResponse(){
   try{
-    const data=await fetchInfoar();
-    return new Response(JSON.stringify({version:'4.15.0',official:true,...data}),{status:200,headers});
+    const data=await fetchGalicia();
+    return new Response(JSON.stringify({
+      version:'4.15.0',
+      official:true,
+      locationSource:'IGN · CartoCiudad',
+      locationSourceUrl:CARTOCIUDAD_SOURCE_URL,
+      ...data
+    }),{status:200,headers});
   }catch(error){
     return new Response(JSON.stringify({
       version:'4.15.0',
       official:true,
       ok:false,
       degraded:true,
-      source:'Gobierno de Aragón · INFOAR',
-      sourceUrl:INFOAR_SOURCE_URL,
-      pdfUrl:INFOAR_PDF_URL,
-      historyUrl:INFOAR_HISTORY_URL,
+      source:'Xunta de Galicia · Medio Rural',
+      sourceUrl:GALICIA_SOURCE_URL,
+      locationSource:'IGN · CartoCiudad',
+      locationSourceUrl:CARTOCIUDAD_SOURCE_URL,
+      currentBulletin:false,
       incidents:[],
       archive:[],
       unlocated:[],
+      coverageComplete:false,
+      confidenceForAbsence:false,
+      reportingThresholdHectares:20,
       error:String(error?.message||error),
-      coverageNote:'No se ha podido validar el parte diario de INFOAR. La ausencia de registros no significa que no existan incendios en Aragón.'
+      coverageNote:'No se ha podido validar el portal de Medio Rural. La ausencia de registros no significa que no existan incendios en Galicia.'
     }),{status:503,headers});
   }
 }

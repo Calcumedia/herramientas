@@ -100,7 +100,7 @@ try{
   const response=await bombersHandler(new Request('https://fuegocerca.local/api/bombers'));
   assert.equal(response.status,200);
   const data=await response.json();
-  assert.equal(data.version,'4.14.0');
+  assert.equal(data.version,'4.15.0');
   assert.equal(data.official,true);
   assert.equal(data.incidents[0].evidence[0].source,'Bombers de la Generalitat de Catalunya');
 }finally{
@@ -113,7 +113,7 @@ await assert.rejects(
 );
 
 const upstream={
-  version:'4.14.0',
+  version:'4.15.0',
   dataEngineVersion:'4.3.1',
   generatedAt:'2026-07-28T12:00:00.000Z',
   degraded:false,
@@ -136,7 +136,7 @@ try{
   const response=await situationHandler(new Request('https://fuegocerca.local/api/situation'));
   assert.equal(response.status,200);
   const data=await response.json();
-  assert.equal(data.version,'4.14.0');
+  assert.equal(data.version,'4.15.0');
   assert.equal(data.incidents.filter(item=>item.region==='Cataluña').length,3);
   assert.equal(data.archive.filter(item=>item.region==='Cataluña').length,2);
   assert.equal(data.coverage.find(item=>item.id==='bombers-catalunya')?.ok,true);

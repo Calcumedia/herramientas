@@ -65,6 +65,9 @@ No publicar si falla alguno de estos puntos:
 26. Un parte INFOAR vigente con la sección oficial vacía produce cero registros válidos; la ausencia de esa sección o un parte con más de 36 horas degrada la fuente.
 27. La posición de INFOAR procede del centro aproximado del término municipal obtenido mediante IGEAR. Debe conservar la etiqueta de ubicación aproximada y nunca presentarse como origen exacto o perímetro.
 28. Si INFOAR deja de responder, la última copia válida puede reutilizarse durante 24 horas con su antigüedad y estado degradado visibles.
+29. Galicia solo incorpora bloques interpretables de un parte vigente de la Xunta de Galicia · Medio Rural. El parte es selectivo, habitualmente para incendios que alcanzan 20 hectáreas, y su ausencia no debe producir una conclusión verde o de ausencia de incendios.
+30. La posición de los registros gallegos procede del centro municipal de IGN · CartoCiudad. Debe conservar la etiqueta de ubicación aproximada y nunca presentarse como origen, frente o perímetro.
+31. Los partes gallegos dejan de alimentar incidentes actuales al superar 36 horas. Una copia válida puede reutilizarse durante 24 horas, siempre identificada como degradada y con su antigüedad visible.
 
 ## Recuperación
 

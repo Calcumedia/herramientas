@@ -65,7 +65,7 @@ try{
   const response=await infocaHandler(new Request('https://fuegocerca.local/api/infoca'));
   assert.equal(response.status,200);
   const data=await response.json();
-  assert.equal(data.version,'4.14.0');
+  assert.equal(data.version,'4.15.0');
   assert.equal(data.official,true);
   assert.equal(data.incidents[0].name,'Cazalla de la Sierra');
 }finally{
@@ -117,7 +117,7 @@ try{
   const response=await situationHandler(new Request('https://fuegocerca.local/api/situation'));
   assert.equal(response.status,200);
   const data=await response.json();
-  assert.equal(data.version,'4.14.0');
+  assert.equal(data.version,'4.15.0');
   assert.equal(data.incidents.length,1,'must consolidate the preliminary and official record');
   assert.equal(data.incidents[0].status,'ACTIVO');
   assert.equal(data.incidents[0].directSources,1);
