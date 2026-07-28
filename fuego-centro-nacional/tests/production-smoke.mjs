@@ -85,19 +85,6 @@ assert.ok(Array.isArray(infoar.incidents));
 assert.ok(Array.isArray(infoar.archive));
 assert.ok(Array.isArray(infoar.unlocated));
 
-const galiciaBulletins=await (await get('/api/galicia',/application\/json/)).json();
-assert.equal(galiciaBulletins.version,'4.15.0');
-assert.equal(galiciaBulletins.official,true);
-assert.equal(galiciaBulletins.source,'Xunta de Galicia · Medio Rural');
-assert.equal(galiciaBulletins.locationSource,'IGN · CartoCiudad');
-assert.equal(typeof galiciaBulletins.currentBulletin,'boolean');
-assert.equal(galiciaBulletins.coverageComplete,false);
-assert.equal(galiciaBulletins.confidenceForAbsence,false);
-assert.equal(galiciaBulletins.reportingThresholdHectares,20);
-assert.ok(Array.isArray(galiciaBulletins.incidents));
-assert.ok(Array.isArray(galiciaBulletins.archive));
-assert.ok(Array.isArray(galiciaBulletins.unlocated));
-
 const geocode = await (await get('/api/geocode?q=Madrid', /application\/json/)).json();
 assert.ok(Array.isArray(geocode.results) && geocode.results.length > 0, 'Madrid geocode must return results');
 assert.ok(geocode.results.some(x => Math.abs(x.lat - 40.4167) < 0.2), 'Madrid coordinates look incorrect');
@@ -131,7 +118,6 @@ assert.equal(health.infoarLocationApproximate, true);
 assert.equal(health.infoarRuntimeCache, true);
 assert.equal(health.infoarRuntimeCacheTtlHours, 24);
 assert.equal(health.infoarReportMaxAgeHours, 36);
-assert.equal(health.galiciaEndpoint, true);
 assert.equal(health.galiciaOfficialBulletins, true);
 assert.equal(health.galiciaDirectIntegration, true);
 assert.equal(health.galiciaCoverageComplete, false);

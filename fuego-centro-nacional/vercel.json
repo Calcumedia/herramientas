@@ -9,9 +9,6 @@
     "api/infoar.js": {
       "maxDuration": 30
     },
-    "api/galicia.js": {
-      "maxDuration": 30
-    },
     "api/situation.js": {
       "maxDuration": 45
     },

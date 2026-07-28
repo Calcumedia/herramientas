@@ -1,5 +1,4 @@
 import {strict as assert} from 'node:assert';
-import galiciaHandler from '../api/galicia.js';
 import situationHandler from '../api/situation.js';
 import {
   __resetGaliciaCacheForTests,
@@ -136,28 +135,6 @@ assert.equal(cachedFallback.fallback,true);
 assert.equal(cachedFallback.degraded,true);
 assert.match(cachedFallback.summary,/última copia válida/);
 __resetGaliciaCacheForTests();
-
-__setGaliciaSourceForTests(result);
-try{
-  const response=await galiciaHandler(new Request('https://fuegocerca.local/api/galicia'));
-  assert.equal(response.status,200);
-  const data=await response.json();
-  assert.equal(data.version,'4.15.0');
-  assert.equal(data.official,true);
-  assert.equal(data.locationSource,'IGN · CartoCiudad');
-  assert.equal(data.incidents[0].name,'A Capela');
-
-  const nodeResponse={
-    headers:{},
-    setHeader(key,value){this.headers[key]=value},
-    end(body){this.body=body}
-  };
-  await galiciaHandler({url:'/api/galicia'},nodeResponse);
-  assert.equal(nodeResponse.statusCode,200);
-  assert.equal(JSON.parse(nodeResponse.body).confidenceForAbsence,false);
-}finally{
-  __resetGaliciaCacheForTests();
-}
 
 const upstream={
   version:'4.15.0',

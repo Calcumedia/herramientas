@@ -16,7 +16,7 @@ Herramienta nacional para consultar la situación de incendios forestales cerca 
 - La carga inicial no ejecuta `fitBounds`; el encuadre completo solo se activa con **Ver todo**.
 - Las actualizaciones conservan pestaña, filtros, búsqueda y posición del mapa.
 - Se mantienen separados los incidentes oficiales, las señales preliminares y los grupos térmicos.
-- Las API `/api/situation`, `/api/infoca`, `/api/bombers`, `/api/infoar`, `/api/galicia`, `/api/previfoc`, `/api/geocode`, `/api/weather`, `/api/air-quality`, `/api/fire-danger`, `/api/fire-danger-map`, `/api/fire-perimeters`, `/api/road-incidents` y `/api/health` deben responder correctamente.
+- Las API `/api/situation`, `/api/infoca`, `/api/bombers`, `/api/infoar`, `/api/previfoc`, `/api/geocode`, `/api/weather`, `/api/air-quality`, `/api/fire-danger`, `/api/fire-danger-map`, `/api/fire-perimeters`, `/api/road-incidents` y `/api/health` deben responder correctamente.
 - Andalucía integra directamente los registros georreferenciados del visor oficial INFOCA. Solo se aceptan provincias andaluzas, se excluyen extinguidos y se limita la antigüedad para impedir que un registro residual se presente como vigente.
 - Catalunya integra las actuaciones georreferenciadas de Bombers tipificadas como incendios de vegetación forestal. Las actuaciones agrícolas y urbanas permanecen separadas; un registro reciente sin fase se identifica como «fase no publicada» y nunca se transforma en «activo».
 - La integración de Bombers reutiliza durante 60 segundos el resultado vigente y conserva durante seis horas la última copia válida. Si ArcGIS limita temporalmente las consultas, la copia se identifica como degradada y mantiene visible su antigüedad.

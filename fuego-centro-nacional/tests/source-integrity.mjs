@@ -7,12 +7,12 @@ const root = new URL('../', import.meta.url).pathname;
 const required = [
   'index.html','styles.css','v45.css','v46.css','app.js','v45.js','v46.js','analytics-config.js','sw.js',
   'manifest.webmanifest','favicon.svg',
-  'api/situation.js','api/infoca.js','api/infoca-source.js','api/bombers.js','api/bombers-source.js','api/infoar.js','api/infoar-source.js','api/galicia.js','api/galicia-source.js','api/globalsign-ca.js','api/previfoc.js','api/previfoc-source.js','api/geocode.js','api/reverse-geocode.js','api/health.js','api/fire-danger.js','api/fire-danger-map.js','api/air-quality.js','api/fnmt-ca.js','api/fire-perimeters.js','api/road-incidents.js','api/weather.js',
+  'api/situation.js','api/infoca.js','api/infoca-source.js','api/bombers.js','api/bombers-source.js','api/infoar.js','api/infoar-source.js','api/galicia-source.js','api/globalsign-ca.js','api/previfoc.js','api/previfoc-source.js','api/geocode.js','api/reverse-geocode.js','api/health.js','api/fire-danger.js','api/fire-danger-map.js','api/air-quality.js','api/fnmt-ca.js','api/fire-perimeters.js','api/road-incidents.js','api/weather.js',
   'playwright.config.mjs','tests/e2e.spec.mjs','tests/fire-danger-contract.mjs','tests/previfoc-contract.mjs','tests/air-quality-contract.mjs','tests/fire-perimeters-contract.mjs','tests/road-incidents-contract.mjs','tests/infoca-contract.mjs','tests/bombers-contract.mjs','tests/infoar-contract.mjs','tests/galicia-contract.mjs','vercel.json'
 ];
 for (const file of required) await access(join(root, file), constants.R_OK);
 
-const [html,app,v45,v46css,v46,health,danger,dangerMap,previfoc,previfocSource,airQuality,perimeters,roads,situation,infoca,infocaSource,bombers,bombersSource,infoar,infoarSource,galicia,galiciaSource,weather,pkg,lock,manifest,readme,deployment,vercelConfig] = await Promise.all([
+const [html,app,v45,v46css,v46,health,danger,dangerMap,previfoc,previfocSource,airQuality,perimeters,roads,situation,infoca,infocaSource,bombers,bombersSource,infoar,infoarSource,galiciaSource,weather,pkg,lock,manifest,readme,deployment,vercelConfig] = await Promise.all([
   readFile(join(root,'index.html'),'utf8'),
   readFile(join(root,'app.js'),'utf8'),
   readFile(join(root,'v45.js'),'utf8'),
@@ -33,7 +33,6 @@ const [html,app,v45,v46css,v46,health,danger,dangerMap,previfoc,previfocSource,a
   readFile(join(root,'api/bombers-source.js'),'utf8'),
   readFile(join(root,'api/infoar.js'),'utf8'),
   readFile(join(root,'api/infoar-source.js'),'utf8'),
-  readFile(join(root,'api/galicia.js'),'utf8'),
   readFile(join(root,'api/galicia-source.js'),'utf8'),
   readFile(join(root,'api/weather.js'),'utf8'),
   readFile(join(root,'package.json'),'utf8'),
@@ -132,7 +131,6 @@ assert.match(health,/infoarLocationApproximate:true/);
 assert.match(health,/infoarRuntimeCache:true/);
 assert.match(health,/infoarRuntimeCacheTtlHours:24/);
 assert.match(health,/infoarReportMaxAgeHours:36/);
-assert.match(health,/galiciaEndpoint:true/);
 assert.match(health,/galiciaOfficialBulletins:true/);
 assert.match(health,/galiciaDirectIntegration:true/);
 assert.match(health,/galiciaCoverageComplete:false/);
@@ -268,9 +266,6 @@ assert.match(infoarSource,/MAX_REPORT_AGE_MS/);
 assert.match(infoarSource,/getCache/);
 assert.match(infoarSource,/RUNTIME_CACHE_KEY/);
 assert.match(infoarSource,/última copia válida/);
-assert.match(galicia,/version:'4\.15\.0'/);
-assert.match(galicia,/official:true/);
-assert.match(galicia,/confidenceForAbsence:false/);
 assert.match(galiciaSource,/mediorural\.xunta\.gal/);
 assert.match(galiciaSource,/cartociudad\.es\/geocoder\/api\/geocoder/);
 assert.match(galiciaSource,/REPORTING_THRESHOLD_HECTARES=20/);
@@ -294,7 +289,6 @@ assert.equal(JSON.parse(pkg).dependencies['@napi-rs/canvas'],'^0.1.80');
 assert.equal(JSON.parse(pkg).dependencies['pdf-parse'],'^2.4.5');
 assert.equal(JSON.parse(pkg).engines.node,'24.x');
 assert.equal(JSON.parse(vercelConfig).functions['api/infoar.js'].maxDuration,30);
-assert.equal(JSON.parse(vercelConfig).functions['api/galicia.js'].maxDuration,30);
 assert.equal(JSON.parse(vercelConfig).functions['api/situation.js'].maxDuration,45);
 assert.equal(JSON.parse(lock).version,'4.15.0');
 assert.equal(JSON.parse(lock).name,'fuegocerca');
