@@ -65,7 +65,7 @@ try{
   const response=await infocaHandler(new Request('https://fuegocerca.local/api/infoca'));
   assert.equal(response.status,200);
   const data=await response.json();
-  assert.equal(data.version,'4.12.0');
+  assert.equal(data.version,'4.13.0');
   assert.equal(data.official,true);
   assert.equal(data.incidents[0].name,'Cazalla de la Sierra');
 }finally{
@@ -109,6 +109,7 @@ const upstreamSituation={
 };
 globalThis.fetch=async url=>{
   if(String(url).includes('FeatureServer/2/query'))return new Response(JSON.stringify({features}),{status:200});
+  if(String(url).includes('ACTUACIONS_URGENTS_online_PRO_AMB_FASE_VIEW'))return new Response(JSON.stringify({features:[]}),{status:200});
   if(String(url).includes('fuego-centro-panel.vercel.app/api/situation'))return new Response(JSON.stringify(upstreamSituation),{status:200});
   throw new Error(`Unexpected URL ${url}`);
 };
@@ -116,7 +117,7 @@ try{
   const response=await situationHandler(new Request('https://fuegocerca.local/api/situation'));
   assert.equal(response.status,200);
   const data=await response.json();
-  assert.equal(data.version,'4.12.0');
+  assert.equal(data.version,'4.13.0');
   assert.equal(data.incidents.length,1,'must consolidate the preliminary and official record');
   assert.equal(data.incidents[0].status,'ACTIVO');
   assert.equal(data.incidents[0].directSources,1);
@@ -124,8 +125,11 @@ try{
   assert.equal(data.incidents[0].thermalCount,2,'must preserve associated thermal context');
   assert.equal(data.archive.length,1);
   assert.equal(data.coverage.find(item=>item.id==='infoca')?.ok,true);
+  assert.equal(data.coverage.find(item=>item.id==='bombers-catalunya')?.ok,true);
   assert.equal(data.regionalCoverage.find(item=>item.region==='Andalucía')?.mode,'integrated');
   assert.equal(data.regionalCoverage.find(item=>item.region==='Andalucía')?.ok,true);
+  assert.equal(data.regionalCoverage.find(item=>item.region==='Cataluña')?.mode,'integrated');
+  assert.equal(data.regionalCoverage.find(item=>item.region==='Cataluña')?.ok,true);
   assert.match(data.regionalCoverage.find(item=>item.region==='Castilla-La Mancha')?.description,/no oficial/);
   assert.match(data.regionalCoverage.find(item=>item.region==='Extremadura')?.description,/feed operativo georreferenciado/);
 }finally{
@@ -134,6 +138,7 @@ try{
 
 globalThis.fetch=async url=>{
   if(String(url).includes('FeatureServer/2/query'))return new Response('fallo temporal',{status:503});
+  if(String(url).includes('ACTUACIONS_URGENTS_online_PRO_AMB_FASE_VIEW'))return new Response(JSON.stringify({features:[]}),{status:200});
   if(String(url).includes('fuego-centro-panel.vercel.app/api/situation'))return new Response(JSON.stringify({
     ...upstreamSituation,
     incidents:[],

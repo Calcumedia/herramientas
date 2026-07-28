@@ -1,6 +1,7 @@
 export const config={runtime:'edge'};
 
 import {fetchInfoca,INFOCA_SOURCE_URL} from './infoca-source.js';
+import {BOMBERS_SOURCE_URL,fetchBombers} from './bombers-source.js';
 
 const UPSTREAM='https://fuego-centro-panel.vercel.app';
 
@@ -13,7 +14,7 @@ const DIRECTORY=[
   ['Cantabria',['Cantabria'],'limited','Cobertura agregada',null,'Pendiente de incorporar una fuente oficial autonómica operativa verificable.'],
   ['Castilla-La Mancha',['Castilla-La Mancha','Castilla La Mancha'],'viewer','Portal INFOCAM','https://infocam.castillalamancha.es/mapa-de-incendios-forestales','El portal autonómico publica un avance provisional que califica expresamente como no oficial; no se utiliza para afirmar un incendio ni calcular afección local.'],
   ['Castilla y León',['Castilla y León','Castilla y Leon'],'integrated','Junta de Castilla y León','https://analisis.datosabiertos.jcyl.es/explore/dataset/incendios-forestales/','Datos oficiales directos integrados y evaluados automáticamente.'],
-  ['Cataluña',['Cataluña','Catalunya'],'viewer','Bombers de la Generalitat · mapa de actuaciones','https://interior.gencat.cat/ca/incendis-forestals/inici/','Visor oficial en tiempo real identificado; sus actuaciones todavía no alimentan directamente el cálculo.'],
+  ['Cataluña',['Cataluña','Catalunya'],'integrated','Bombers de la Generalitat de Catalunya',BOMBERS_SOURCE_URL,'Actuaciones oficiales georreferenciadas de incendios de vegetación forestal integradas directamente. Las actuaciones agrícolas y urbanas se mantienen separadas y una fase no publicada no se interpreta como incendio activo.'],
   ['Comunitat Valenciana',['Comunitat Valenciana','Comunidad Valenciana','Valenciana'],'viewer','112 Comunitat Valenciana · PREVIFOC','https://www.112cv.gva.es/WebPublica-MapasOnLineV2/','Nivel preventivo diario PREVIFOC integrado por localidad. El visor oficial muestra un subconjunto de incidentes relevantes con localización aproximada y no ofrece un feed estructurado completo, por lo que no se usa para confirmar incendios activos.'],
   ['Extremadura',['Extremadura'],'updates','Junta de Extremadura · INFOCAEX/INFOEX','https://www.juntaex.es/w/infocaex','Comunicados oficiales identificados, pero sin un feed operativo georreferenciado que permita integrarlos con seguridad en el cálculo local.'],
   ['Galicia',['Galicia'],'updates','Xunta de Galicia · Medio Rural','https://mediorural.xunta.gal/es/recursos/noticias','Partes oficiales periódicos identificados; pendiente de extracción estructurada automática.'],
@@ -59,7 +60,8 @@ function uniqueBy(items,key){
 
 function mergeIncident(existing,official){
   if(!existing)return official;
-  const alreadyHasInfoca=(existing.evidence||[]).some(x=>x.source==='Agencia de Emergencias de Andalucía · INFOCA');
+  const officialSources=new Set((official.evidence||[]).map(item=>item.source).filter(Boolean));
+  const alreadyHasOfficialSource=(existing.evidence||[]).some(item=>officialSources.has(item.source));
   const evidence=uniqueBy([...(official.evidence||[]),...(existing.evidence||[])],item=>`${item.source}|${item.status}|${item.publishedAt}`);
   const timeline=uniqueBy([...(official.timeline||[]),...(existing.timeline||[])],item=>`${item.source}|${item.status}|${item.at}`)
     .sort((a,b)=>new Date(b.at||0)-new Date(a.at||0));
@@ -75,7 +77,7 @@ function mergeIncident(existing,official){
     alerts,
     thermalCount:existing.thermalCount||0,
     thermalClusterCount:existing.thermalClusterCount||0,
-    directSources:Math.max(1,(existing.directSources||0)+(alreadyHasInfoca?0:1)),
+    directSources:Math.max(1,(existing.directSources||0)+(alreadyHasOfficialSource?0:1)),
     conflictingStatuses:existing.conflictingStatuses||[],
     risk:keepExistingRisk?existing.risk:official.risk,
     riskLabel:keepExistingRisk?existing.riskLabel:official.riskLabel,
@@ -84,10 +86,10 @@ function mergeIncident(existing,official){
   };
 }
 
-function mergeInfoca(data,infoca){
+function mergeRegionalIncidents(data,regional){
   const active=Array.isArray(data.incidents)?[...data.incidents]:[];
   const archive=Array.isArray(data.archive)?[...data.archive]:[];
-  for(const official of [...infoca.incidents,...infoca.archive]){
+  for(const official of [...regional.incidents,...regional.archive]){
     const activeIndex=active.findIndex(item=>sameIncident(item,official));
     const archiveIndex=archive.findIndex(item=>sameIncident(item,official));
     const existing=activeIndex>=0?active[activeIndex]:archiveIndex>=0?archive[archiveIndex]:null;
@@ -99,6 +101,14 @@ function mergeInfoca(data,infoca){
   }
   data.incidents=active.sort((a,b)=>(b.riskScore||0)-(a.riskScore||0));
   data.archive=archive.sort((a,b)=>new Date(b.publishedAt||0)-new Date(a.publishedAt||0));
+}
+
+function mergeInfoca(data,infoca){
+  mergeRegionalIncidents(data,infoca);
+}
+
+function mergeBombers(data,bombers){
+  mergeRegionalIncidents(data,bombers);
 }
 
 export default async function handler(request){
@@ -119,15 +129,29 @@ export default async function handler(request){
       summary:'Fuente oficial temporalmente no disponible',
       error:String(error?.message||error)
     }));
+    const bombersPromise=fetchBombers().catch(error=>({
+      ok:false,
+      source:'Bombers de la Generalitat de Catalunya',
+      sourceUrl:BOMBERS_SOURCE_URL,
+      receivedAt:new Date().toISOString(),
+      publishedAt:null,
+      incidents:[],
+      archive:[],
+      otherVegetation:[],
+      summary:'Fuente oficial temporalmente no disponible',
+      error:String(error?.message||error)
+    }));
     const url=new URL('/api/situation',UPSTREAM);
     url.search=new URL(request.url).search;
     const response=await fetch(url,{cache:'no-store',headers:{accept:'application/json'}});
     if(!response.ok)throw Error(`Upstream HTTP ${response.status}`);
     const data=await response.json();
     const infoca=await infocaPromise;
+    const bombers=await bombersPromise;
     if(infoca.ok)mergeInfoca(data,infoca);
+    if(bombers.ok)mergeBombers(data,bombers);
     data.coverage=Array.isArray(data.coverage)?data.coverage:[];
-    data.coverage=data.coverage.filter(item=>item.id!=='infoca');
+    data.coverage=data.coverage.filter(item=>!['infoca','bombers-catalunya'].includes(item.id));
     data.coverage.push({
       id:'infoca',
       label:'INFOCA Andalucía',
@@ -141,12 +165,26 @@ export default async function handler(request){
       lastSuccessAt:infoca.ok?infoca.receivedAt:null,
       url:INFOCA_SOURCE_URL
     });
-    if(!infoca.ok)data.degraded=true;
+    data.coverage.push({
+      id:'bombers-catalunya',
+      label:'Bombers Catalunya',
+      scope:'Cataluña',
+      ok:bombers.ok,
+      fallback:Boolean(bombers.fallback),
+      summary:bombers.summary,
+      error:bombers.error||null,
+      publishedAt:bombers.publishedAt,
+      receivedAt:bombers.receivedAt,
+      lastSuccessAt:bombers.ok?(bombers.lastSuccessAt||bombers.receivedAt):null,
+      url:BOMBERS_SOURCE_URL
+    });
+    if(!infoca.ok||!bombers.ok||bombers.fallback)data.degraded=true;
     const upstreamCoverage=new Map((data.regionalCoverage||[]).map(x=>[x.region,x]));
-    data.version='4.12.0';
+    data.version='4.13.0';
     data.dataEngineVersion='4.3.1';
     data.regionalCoverage=DIRECTORY.map(item=>{
       if(item.region==='Andalucía')return {...item,ok:infoca.ok,publishedAt:infoca.publishedAt,lastSuccessAt:infoca.ok?infoca.receivedAt:null};
+      if(item.region==='Cataluña')return {...item,ok:bombers.ok,publishedAt:bombers.publishedAt,lastSuccessAt:bombers.ok?(bombers.lastSuccessAt||bombers.receivedAt):null};
       const old=upstreamCoverage.get(item.region);
       return {...item,ok:item.mode==='integrated'&&Boolean(old?.ok),publishedAt:old?.publishedAt||null,lastSuccessAt:old?.lastSuccessAt||null};
     });
@@ -159,6 +197,6 @@ export default async function handler(request){
     };
     return new Response(JSON.stringify(data),{status:200,headers});
   }catch(error){
-    return new Response(JSON.stringify({version:'4.12.0',dataEngineVersion:'4.3.1',degraded:true,error:String(error.message||error),regionalCoverage:DIRECTORY,incidents:[],archive:[],alerts:[],thermalSignals:[],news:[],coverage:[]}),{status:503,headers});
+    return new Response(JSON.stringify({version:'4.13.0',dataEngineVersion:'4.3.1',degraded:true,error:String(error.message||error),regionalCoverage:DIRECTORY,incidents:[],archive:[],alerts:[],thermalSignals:[],news:[],coverage:[]}),{status:503,headers});
   }
 }
