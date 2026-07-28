@@ -10,7 +10,8 @@
       "maxDuration": 30
     },
     "api/situation.js": {
-      "maxDuration": 45
+      "maxDuration": 45,
+      "regions": ["fra1"]
     },
     "api/fire-perimeters.js": {
       "maxDuration": 60
