@@ -82,7 +82,7 @@ function downloadXuntaWithVerifiedChain(url,{signal}={}){
   return new Promise((resolve,reject)=>{
     const request=httpsRequest(url,{
       ca:[...rootCertificates,GLOBALSIGN_RSA_OV_SSL_CA_2018],
-      headers:{accept:'text/html','user-agent':'FuegoCerca/4.15'}
+      headers:{accept:'text/html','user-agent':'FuegoCerca/4.16'}
     },response=>{
       if(response.statusCode!==200){
         response.resume();
@@ -106,7 +106,7 @@ function downloadXuntaWithVerifiedChain(url,{signal}={}){
 async function downloadXuntaHtml(url,{fetchImpl,signal}){
   try{
     const response=await fetchImpl(url,{
-      headers:{accept:'text/html','user-agent':'FuegoCerca/4.15'},
+      headers:{accept:'text/html','user-agent':'FuegoCerca/4.16'},
       cache:'no-store',
       signal
     });
@@ -215,7 +215,7 @@ export function buildCartociudadFindUrl(municipality,province){
 }
 
 async function locateMunicipality(municipality,{fetchImpl,signal}){
-  const headers={accept:'application/json','user-agent':'FuegoCerca/4.15'};
+  const headers={accept:'application/json','user-agent':'FuegoCerca/4.16'};
   const candidatesResponse=await fetchImpl(buildCartociudadCandidatesUrl(municipality),{headers,cache:'no-store',signal});
   if(!candidatesResponse.ok)throw Error(`CartoCiudad candidatos HTTP ${candidatesResponse.status}`);
   const candidates=await candidatesResponse.json();

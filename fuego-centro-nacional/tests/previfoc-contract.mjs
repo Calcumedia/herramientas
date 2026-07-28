@@ -67,7 +67,7 @@ try{
   const valid=await handler(new Request(`https://fuegocerca.test/api/previfoc?lat=${valencia.lat}&lon=${valencia.lon}`));
   assert.equal(valid.status,200);
   const data=await valid.json();
-  assert.equal(data.version,'4.15.0');
+  assert.equal(data.version,'4.16.0');
   assert.equal(data.source,'112 Comunitat Valenciana · PREVIFOC');
   assert.equal(data.level.value,3);
   assert.equal(data.current,true);

@@ -42,7 +42,7 @@ export default async function handler(request){
     const current=data.current||{};
     const hourly=data.hourly||{};
     return new Response(JSON.stringify({
-      version:'4.15.0',
+      version:'4.16.0',
       source:SOURCE,
       sourceUrl:SOURCE_URL,
       attribution:'Weather data by Open-Meteo.com',
@@ -66,7 +66,7 @@ export default async function handler(request){
     }),{status:200,headers:HEADERS});
   }catch(error){
     return new Response(JSON.stringify({
-      version:'4.15.0',source:SOURCE,sourceUrl:SOURCE_URL,degraded:true,
+      version:'4.16.0',source:SOURCE,sourceUrl:SOURCE_URL,degraded:true,
       error:String(error.message||error),
       disclaimer:'No hay datos meteorológicos disponibles. Esta ausencia no implica condiciones favorables ni desfavorables.'
     }),{status:503,headers:HEADERS});
