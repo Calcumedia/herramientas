@@ -71,6 +71,10 @@ No publicar si falla alguno de estos puntos:
 32. Asturias solo incorpora entradas del último parte vigente de incendios forestales del SEPA. Un estado no publicado se conserva como «en seguimiento» y nunca se transforma automáticamente en «activo».
 33. La posición de los registros asturianos procede del centro aproximado del concejo obtenido mediante IGN · CartoCiudad. Los incendios fronterizos descritos solo como colaboración con otra comunidad no se incorporan al cálculo local.
 34. Los partes asturianos dejan de alimentar incidentes actuales al superar 36 horas. Su ausencia no confirma que no haya incendios y la última copia válida solo puede reutilizarse durante 24 horas con estado degradado visible.
+35. Murcia solo incorpora publicaciones operativas de 112 Región de Murcia/INFOMUR que identifiquen un incidente forestal y un municipio. Prevención, simulacros, balances e incendios no forestales quedan fuera del cálculo local.
+36. La posición murciana procede del centro aproximado del municipio obtenido mediante IGN · CartoCiudad. Nunca debe presentarse como ignición, frente o perímetro del incendio.
+37. Los estados explícitos de INFOMUR se conservan literalmente; si la publicación describe medios trabajando pero no publica un estado, se muestra «en intervención», nunca «activo».
+38. Los incidentes murcianos vigentes caducan tras 36 horas y los controlados o extinguidos tras siete días. La ausencia de publicaciones no confirma seguridad y la copia válida solo puede reutilizarse durante 24 horas con estado degradado visible.
 
 ## Recuperación
 

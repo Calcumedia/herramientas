@@ -11,10 +11,10 @@ const headers={
 export default async function handler(){
   try{
     const data=await fetchBombers();
-    return new Response(JSON.stringify({version:'4.16.0',official:true,...data}),{status:200,headers});
+    return new Response(JSON.stringify({version:'4.17.0',official:true,...data}),{status:200,headers});
   }catch(error){
     return new Response(JSON.stringify({
-      version:'4.16.0',
+      version:'4.17.0',
       official:true,
       ok:false,
       degraded:true,

@@ -159,7 +159,7 @@ async function createResponse(request){
   try{
     const stations=parseStations(await downloadCsv(controller.signal),{lat,lon},radius);
     return new Response(JSON.stringify({
-      version:'4.16.0',
+      version:'4.17.0',
       source:'MITECO · Índice Nacional de Calidad del Aire',
       officialPublisher:'Ministerio para la Transición Ecológica y el Reto Demográfico',
       sourceUrl:ICA_CSV,
@@ -179,7 +179,7 @@ async function createResponse(request){
     }),{status:200,headers:HEADERS});
   }catch(error){
     return new Response(JSON.stringify({
-      version:'4.16.0',
+      version:'4.17.0',
       source:'MITECO · Índice Nacional de Calidad del Aire',
       degraded:true,
       radiusKm:radius,
