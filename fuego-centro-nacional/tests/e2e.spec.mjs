@@ -1,19 +1,21 @@
 import { test, expect } from '@playwright/test';
 
 const situation={
-  version:'4.15.0',dataEngineVersion:'4.3.1',generatedAt:'2026-07-26T13:05:00.000Z',degraded:false,
+  version:'4.16.0',dataEngineVersion:'4.3.1',generatedAt:'2026-07-26T13:05:00.000Z',degraded:false,
   coverage:[
     {id:'test',label:'Fuente de prueba',ok:true,fallback:false,summary:'Activa',receivedAt:new Date().toISOString(),lastSuccessAt:new Date().toISOString()},
     {id:'infoca',label:'INFOCA Andalucía',scope:'Andalucía',ok:true,fallback:false,summary:'1 vigente',receivedAt:new Date().toISOString(),lastSuccessAt:new Date().toISOString()},
     {id:'bombers-catalunya',label:'Bombers Catalunya',scope:'Cataluña',ok:true,fallback:false,summary:'1 incendio forestal vigente',receivedAt:new Date().toISOString(),lastSuccessAt:new Date().toISOString()},
     {id:'infoar-aragon',label:'INFOAR Aragón',scope:'Aragón',ok:true,fallback:false,summary:'1 incendio vigente',receivedAt:new Date().toISOString(),lastSuccessAt:new Date().toISOString()},
-    {id:'xunta-galicia',label:'Medio Rural Galicia',scope:'Galicia',ok:true,fallback:false,summary:'Parte selectivo integrado; no constituye un inventario completo.',receivedAt:new Date().toISOString(),lastSuccessAt:new Date().toISOString(),confidenceForAbsence:false}
+    {id:'xunta-galicia',label:'Medio Rural Galicia',scope:'Galicia',ok:true,fallback:false,summary:'Parte selectivo integrado; no constituye un inventario completo.',receivedAt:new Date().toISOString(),lastSuccessAt:new Date().toISOString(),confidenceForAbsence:false},
+    {id:'sepa-asturias',label:'SEPA Asturias',scope:'Principado de Asturias',ok:true,fallback:false,summary:'Parte episódico integrado; no constituye un inventario completo.',receivedAt:new Date().toISOString(),lastSuccessAt:new Date().toISOString(),confidenceForAbsence:false}
   ],
   regionalCoverage:[
     {region:'Andalucía',aliases:['Andalucía','Andalucia'],mode:'integrated',sourceLabel:'Agencia de Emergencias de Andalucía · INFOCA',sourceUrl:'https://example.com',description:'Registros oficiales integrados directamente.',ok:true},
     {region:'Cataluña',aliases:['Cataluña','Catalunya'],mode:'integrated',sourceLabel:'Bombers de la Generalitat de Catalunya',sourceUrl:'https://interior.gencat.cat/',description:'Actuaciones oficiales georreferenciadas de incendios forestales integradas directamente.',ok:true},
     {region:'Aragón',aliases:['Aragón','Aragon'],mode:'integrated',sourceLabel:'Gobierno de Aragón · INFOAR',sourceUrl:'https://www.aragon.es/-/nivel-de-alerta-de-peligro-de-incendios-forestales',description:'Parte diario oficial integrado. La posición es el centro aproximado del término municipal, no el origen exacto.',ok:true},
     {region:'Galicia',aliases:['Galicia'],mode:'integrated',sourceLabel:'Xunta de Galicia · Medio Rural',sourceUrl:'https://mediorural.xunta.gal/es/recursos/noticias',description:'Partes oficiales selectivos integrados directamente, habitualmente para incendios que alcanzan 20 hectáreas. La ausencia de un parte no confirma que no existan incendios.',ok:true,confidenceForAbsence:false},
+    {region:'Principado de Asturias',aliases:['Asturias','Principado de Asturias'],mode:'integrated',sourceLabel:'112 Asturias · SEPA',sourceUrl:'https://www.112asturias.es/datos-incendios-forestales-asturias',description:'Partes oficiales episódicos integrados directamente. La posición representa el concejo y la ausencia de un parte vigente no confirma que no existan incendios.',ok:true,confidenceForAbsence:false},
     {region:'Comunitat Valenciana',aliases:['Comunitat Valenciana','Comunidad Valenciana','Valenciana'],mode:'viewer',sourceLabel:'112 Comunitat Valenciana · PREVIFOC',sourceUrl:'https://www.112cv.gva.es/WebPublica-MapasOnLineV2/',description:'Nivel preventivo diario PREVIFOC integrado; visor de incidentes sin feed estructurado completo.',ok:false}
   ],
   incidents:[
@@ -62,6 +64,16 @@ const situation={
       primaryUrl:'https://mediorural.xunta.gal/es/recursos/noticias/parte',
       evidence:[{source:'Xunta de Galicia · Medio Rural',sourceType:'direct',status:'ACTIVO',publishedAt:'2026-07-28T11:30:00.000Z',url:'https://mediorural.xunta.gal/es/recursos/noticias/parte'}],
       alerts:[],timeline:[{status:'ACTIVO',at:'2026-07-28T11:30:00.000Z',source:'Medio Rural · parte de situación'}]
+    },
+    {
+      id:'sepa-asturias-allande',name:'Allande · Pico Hospital',area:'Asturias, Principado de Asturias',region:'Principado de Asturias',status:'ESTABILIZADO',statusClass:'stabilized',
+      risk:'medium',riskLabel:'MEDIO',riskScore:340,confidence:'alta',sourceConfidence:'alta',lat:43.2704,lon:-6.6117,directSources:1,
+      locationApproximate:true,locationConfidence:'municipality',
+      summary:'ESTABILIZADO en Pico Hospital. Parte oficial del SEPA. La posición representa el concejo, no el origen, frente ni perímetro.',
+      publishedAt:'2026-07-28T11:40:00.000Z',receivedAt:'2026-07-28T11:45:00.000Z',
+      primaryUrl:'https://www.112asturias.es/datos-incendios-forestales-asturias',
+      evidence:[{source:'112 Asturias · SEPA',sourceType:'direct',status:'ESTABILIZADO',publishedAt:'2026-07-28T11:40:00.000Z',url:'https://www.112asturias.es/datos-incendios-forestales-asturias'}],
+      alerts:[],timeline:[{status:'ESTABILIZADO',at:'2026-07-28T11:40:00.000Z',source:'SEPA · parte de incendios forestales'}]
     }
   ],
   archive:[],alerts:[],thermalSignals:[{
@@ -75,8 +87,9 @@ const situation={
 const jerez={id:'1',name:'Jerez de la Frontera',displayName:'Jerez de la Frontera, Cádiz, Andalucía, España',lat:36.6817,lon:-6.1372,region:'Andalucía',placeType:'city',category:'place'};
 const valencia={id:'2',name:'València',displayName:'València, València, Comunitat Valenciana, España',lat:39.4699,lon:-0.3763,region:'Comunitat Valenciana',placeType:'city',category:'place'};
 const vigo={id:'3',name:'Vigo',displayName:'Vigo, Pontevedra, Galicia, España',lat:42.2406,lon:-8.7207,region:'Galicia',placeType:'city',category:'place'};
+const oviedo={id:'4',name:'Oviedo',displayName:'Oviedo, Asturias, Principado de Asturias, España',lat:43.3619,lon:-5.8494,region:'Principado de Asturias',placeType:'city',category:'place'};
 const danger={
-  version:'4.15.0',source:'AEMET',attribution:'© AEMET',area:'PB',areaLabel:'Península y Baleares',configured:true,
+  version:'4.16.0',source:'AEMET',attribution:'© AEMET',area:'PB',areaLabel:'Península y Baleares',configured:true,
   viewerUrl:'https://www.aemet.es/es/eltiempo/prediccion/incendios',
   helpUrl:'https://www.aemet.es/es/eltiempo/prediccion/incendios/ayuda',
   levels:['Muy bajo','Bajo','Moderado','Alto','Muy alto','Extremo'],resolutionKm:1,
@@ -86,12 +99,12 @@ const danger={
   tomorrow:{validFor:'2026-07-28',officialImageUrl:'https://www.aemet.es/mapa-manana.png',localLevel:{value:5,label:'Muy alto',rgba:[239,133,4,255]}}
 };
 const weather={
-  version:'4.15.0',source:'Open-Meteo',sourceUrl:'https://open-meteo.com/en/docs',degraded:false,
+  version:'4.16.0',source:'Open-Meteo',sourceUrl:'https://open-meteo.com/en/docs',degraded:false,
   current:{temperatureC:31,relativeHumidity:24,windSpeedKmh:18,windDirectionDeg:225,windGustKmh:33},
   next24Hours:{maxWindSpeedKmh:27,maxWindGustKmh:49}
 };
 const airQuality={
-  version:'4.15.0',source:'MITECO · Índice Nacional de Calidad del Aire',officialDataset:true,
+  version:'4.16.0',source:'MITECO · Índice Nacional de Calidad del Aire',officialDataset:true,
   provisional:true,validated:false,radiusKm:100,retrievedAt:'2026-07-27T10:10:00Z',nearbyCount:3,
   nearest:{
     code:'11001001',name:'JEREZ-CHAPÍN',stationType:'FONDO',lat:36.69,lon:-6.12,
@@ -104,7 +117,7 @@ const airQuality={
   fireRelationshipNote:'El ICA mide contaminación atmosférica. FuegoCerca no atribuye su resultado al humo de un incendio sin una confirmación específica de la autoridad.'
 };
 const roads={
-  version:'4.15.0',source:'DGT',format:'DATEX II 3.7',official:true,radiusKm:50,
+  version:'4.16.0',source:'DGT',format:'DATEX II 3.7',official:true,radiusKm:50,
   publicationTime:'2026-07-27T10:05:00Z',retrievedAt:'2026-07-27T10:06:00Z',
   nearbyCount:8,closuresCount:1,
   incidents:[{
@@ -120,7 +133,7 @@ const roads={
   relationshipNote:'La DGT no siempre indica si una incidencia está relacionada con un incendio.'
 };
 const perimeters={
-  version:'4.15.0',source:'EFFIS · Copernicus EMS',official:false,radiusKm:100,
+  version:'4.16.0',source:'EFFIS · Copernicus EMS',official:false,radiusKm:100,
   retrievedAt:'2026-07-27T10:08:00Z',nearbyCount:2,cacheStatus:'runtime',usingStaleCache:false,
   refreshing:false,persistentCache:true,processingMs:14,
   perimeters:[
@@ -143,7 +156,7 @@ const perimeters={
   associationNote:'FuegoCerca no asocia automáticamente estos perímetros a incendios oficiales sin una coincidencia espacial y temporal verificable.'
 };
 const previfoc={
-  version:'4.15.0',ok:true,official:true,source:'112 Comunitat Valenciana · PREVIFOC',
+  version:'4.16.0',ok:true,official:true,source:'112 Comunitat Valenciana · PREVIFOC',
   sourceMode:'PDF oficial diario',validFor:'2026-07-28',current:true,applicable:true,degraded:false,
   level:{value:3,label:'Riesgo extremo',tone:'extreme'},
   pdfUrl:'https://wpr.112cv.gva.es/external/api/storage/descargar/pdf/previfoc/previfoc.pdf',
@@ -159,7 +172,7 @@ async function mockApis(page){
   await page.route('**/api/geocode**',route=>{
     const query=new URL(route.request().url()).searchParams.get('q')||'';
     const normalized=query.toLocaleLowerCase('es');
-    const result=normalized.includes('val')?valencia:normalized.includes('vig')?vigo:jerez;
+    const result=normalized.includes('val')?valencia:normalized.includes('vig')?vigo:normalized.includes('ovi')?oviedo:jerez;
     return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({results:[result]})});
   });
   await page.route('**/api/reverse-geocode**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({result:jerez})}));
@@ -169,7 +182,7 @@ async function mockApis(page){
   await page.route('**/api/road-incidents**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(roads)}));
   await page.route('**/api/air-quality**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(airQuality)}));
   await page.route('**/api/weather**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(weather)}));
-  await page.route('**/api/health**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({status:'ok',version:'4.15.0',brand:'FuegoCerca'})}));
+  await page.route('**/api/health**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({status:'ok',version:'4.16.0',brand:'FuegoCerca'})}));
 }
 
 async function showMapOnMobile(page,testInfo){
@@ -434,6 +447,25 @@ test('Galicia integra partes selectivos sin convertir su ausencia en un resultad
   const sources=page.locator('#sources');
   await expect(sources).toContainText('Medio Rural Galicia');
   await expect(sources).toContainText('Xunta de Galicia · Medio Rural');
+  await expect(sources).toContainText('DATOS INTEGRADOS');
+});
+
+test('Asturias integra los partes del SEPA sin interpretar su ausencia como seguridad',async({page})=>{
+  await page.locator('#placeQuery').fill('Oviedo');
+  await page.locator('#placeSearch').click();
+  await expect(page.locator('[data-pick]')).toContainText('Oviedo');
+  await page.locator('[data-pick]').click();
+  const report=page.locator('#localReport');
+  await expect(report).toContainText('Oviedo');
+  await expect(report).toContainText('Cobertura oficial regional limitada');
+  await expect(report).not.toContainText('SIN RIESGO DETECTADO');
+  await expect(report).toContainText('la ausencia de un parte vigente no confirma que no existan incendios');
+  await page.locator('#tab-incidents').click();
+  await expect(page.locator('#incidents')).toContainText('Allande · Pico Hospital');
+  await page.locator('#tab-sources').click();
+  const sources=page.locator('#sources');
+  await expect(sources).toContainText('SEPA Asturias');
+  await expect(sources).toContainText('112 Asturias · SEPA');
   await expect(sources).toContainText('DATOS INTEGRADOS');
 });
 

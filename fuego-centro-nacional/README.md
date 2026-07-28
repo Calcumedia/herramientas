@@ -25,6 +25,8 @@ Herramienta nacional para consultar la situación de incendios forestales cerca 
 - La integración de INFOAR rechaza partes con más de 36 horas y conserva durante 24 horas la última copia válida. Si el PDF o IGEAR fallan, la cobertura se muestra degradada y nunca se interpreta la ausencia de datos como ausencia de incendios.
 - Galicia integra directamente los partes selectivos de la Xunta de Galicia · Medio Rural. Estos partes suelen informar de incendios que alcanzan 20 hectáreas y no forman un inventario operativo completo; por ello, no encontrar un parte vigente nunca produce por sí solo una conclusión de ausencia de incendios.
 - Los incidentes gallegos se ubican mediante el centro municipal de IGN · CartoCiudad. La interfaz lo identifica como referencia aproximada y nunca como origen, frente o perímetro del incendio. Los partes pierden vigencia para el cálculo tras 36 horas y la última copia válida puede conservarse hasta 24 horas con su antigüedad visible.
+- Asturias integra directamente los partes episódicos de incendios forestales del SEPA/112. Los concejos y estados explícitos se trasladan desde el último parte vigente; los incendios mencionados sin un estado literal se muestran como «en seguimiento», no como activos.
+- Los registros asturianos se sitúan mediante el centro aproximado del concejo obtenido de IGN · CartoCiudad. Los incendios fronterizos descritos únicamente como colaboración con otra comunidad quedan excluidos, los partes caducan tras 36 horas y su ausencia nunca confirma que no haya incendios.
 - En la Comunitat Valenciana, PREVIFOC aporta el nivel preventivo oficial diario para la localidad. No confirma incendios activos. El visor 112CV de incidentes continúa como consulta enlazada porque publica un subconjunto con localización aproximada y no expone un feed estructurado completo utilizable.
 - Castilla-La Mancha no se marca como integrada: su portal describe el mapa disponible como avance provisional no oficial. Extremadura mantiene la categoría de actualizaciones porque no ofrece un feed operativo georreferenciado verificable.
 - El nivel de atención local debe presentarse siempre como orientación calculada por FuegoCerca, nunca como nivel oficial ni como estimación de riesgo.
@@ -48,7 +50,7 @@ npm test
 Pruebas disponibles:
 
 - `npm run test:source`: integridad de archivos, sintaxis y contratos críticos.
-- `npm run test:contract`: contratos del raster oficial de AEMET, PREVIFOC de 112CV, el ICA nacional de MITECO, los perímetros EFFIS, el feed DATEX II 3.7 de la DGT y las fuentes oficiales de INFOCA, Bombers de Catalunya, INFOAR Aragón y Medio Rural Galicia.
+- `npm run test:contract`: contratos del raster oficial de AEMET, PREVIFOC de 112CV, el ICA nacional de MITECO, los perímetros EFFIS, el feed DATEX II 3.7 de la DGT y las fuentes oficiales de INFOCA, Bombers de Catalunya, INFOAR Aragón, Medio Rural Galicia y SEPA Asturias.
 - `npm run test:e2e`: navegador local con API simulada; comprueba escritura, búsqueda y centro del mapa.
 - `npm run test:production`: comprobación de recursos y API de producción.
 

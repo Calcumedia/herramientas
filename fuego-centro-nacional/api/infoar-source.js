@@ -179,7 +179,7 @@ export function approximateMunicipalityCenter(geometry){
 
 async function locateMunicipality(entry,{fetchImpl,signal}){
   const response=await fetchImpl(buildMunicipalityUrl(entry.name,entry.province),{
-    headers:{accept:'application/json','user-agent':'FuegoCerca/4.15'},
+    headers:{accept:'application/json','user-agent':'FuegoCerca/4.16'},
     cache:'no-store',
     signal
   });
@@ -266,7 +266,7 @@ export async function fetchInfoar({
   const timer=setTimeout(()=>controller.abort(),timeoutMs);
   try{
     const response=await fetchImpl(INFOAR_PDF_URL,{
-      headers:{accept:'application/pdf','user-agent':'FuegoCerca/4.15'},
+      headers:{accept:'application/pdf','user-agent':'FuegoCerca/4.16'},
       cache:'no-store',
       signal:controller.signal
     });

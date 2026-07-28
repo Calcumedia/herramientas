@@ -68,6 +68,9 @@ No publicar si falla alguno de estos puntos:
 29. Galicia solo incorpora bloques interpretables de un parte vigente de la Xunta de Galicia · Medio Rural. El parte es selectivo, habitualmente para incendios que alcanzan 20 hectáreas, y su ausencia no debe producir una conclusión verde o de ausencia de incendios.
 30. La posición de los registros gallegos procede del centro municipal de IGN · CartoCiudad. Debe conservar la etiqueta de ubicación aproximada y nunca presentarse como origen, frente o perímetro.
 31. Los partes gallegos dejan de alimentar incidentes actuales al superar 36 horas. Una copia válida puede reutilizarse durante 24 horas, siempre identificada como degradada y con su antigüedad visible.
+32. Asturias solo incorpora entradas del último parte vigente de incendios forestales del SEPA. Un estado no publicado se conserva como «en seguimiento» y nunca se transforma automáticamente en «activo».
+33. La posición de los registros asturianos procede del centro aproximado del concejo obtenido mediante IGN · CartoCiudad. Los incendios fronterizos descritos solo como colaboración con otra comunidad no se incorporan al cálculo local.
+34. Los partes asturianos dejan de alimentar incidentes actuales al superar 36 horas. Su ausencia no confirma que no haya incendios y la última copia válida solo puede reutilizarse durante 24 horas con estado degradado visible.
 
 ## Recuperación
 

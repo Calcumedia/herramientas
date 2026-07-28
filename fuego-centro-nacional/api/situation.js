@@ -4,13 +4,14 @@ import {fetchInfoca,INFOCA_SOURCE_URL} from './infoca-source.js';
 import {BOMBERS_SOURCE_URL,fetchBombers} from './bombers-source.js';
 import {fetchInfoar,INFOAR_SOURCE_URL} from './infoar-source.js';
 import {fetchGalicia,GALICIA_SOURCE_URL} from './galicia-source.js';
+import {ASTURIAS_SOURCE_URL,fetchAsturias} from '../sources/asturias-source.js';
 
 const UPSTREAM='https://fuego-centro-panel.vercel.app';
 
 const DIRECTORY=[
   ['Andalucía',['Andalucía','Andalucia'],'integrated','Agencia de Emergencias de Andalucía · INFOCA',INFOCA_SOURCE_URL,'Registros oficiales del visor INFOCA integrados directamente. El propio visor advierte de posibles retrasos respecto a sus canales de emergencia.'],
   ['Aragón',['Aragón','Aragon'],'integrated','Gobierno de Aragón · INFOAR',INFOAR_SOURCE_URL,'Incendios del parte diario oficial INFOAR integrados directamente. El estado es oficial y la posición representa aproximadamente el centro del término municipal, no el origen exacto.'],
-  ['Principado de Asturias',['Asturias','Principado de Asturias'],'updates','112 Asturias · SEPA','https://www.112asturias.es/','Actualizaciones oficiales identificadas; todavía no se convierten automáticamente en incidentes georreferenciados.'],
+  ['Principado de Asturias',['Asturias','Principado de Asturias'],'integrated','112 Asturias · SEPA',ASTURIAS_SOURCE_URL,'Partes oficiales episódicos del SEPA integrados directamente. La posición representa aproximadamente el concejo y la ausencia de un parte vigente no confirma que no existan incendios.',false],
   ['Illes Balears',['Illes Balears','Islas Baleares','Baleares'],'reference','112 Illes Balears · INFOBAL','https://www.caib.es/sites/112/es/portada-8673/','Portal oficial de emergencias y planificación; sin feed operativo integrado.'],
   ['Canarias',['Canarias','Islas Canarias'],'updates','112 Canarias · INFOCA','https://www.112canarias.com/112/','Alertas y actualizaciones oficiales identificadas; sin feed de incidentes integrado.'],
   ['Cantabria',['Cantabria'],'limited','Cobertura agregada',null,'Pendiente de incorporar una fuente oficial autonómica operativa verificable.'],
@@ -121,6 +122,10 @@ function mergeGalicia(data,galicia){
   mergeRegionalIncidents(data,galicia);
 }
 
+function mergeAsturias(data,asturias){
+  mergeRegionalIncidents(data,asturias);
+}
+
 async function createResponse(request){
   const headers={
     'content-type':'application/json; charset=utf-8',
@@ -177,6 +182,20 @@ async function createResponse(request){
       summary:'Fuente oficial temporalmente no disponible',
       error:String(error?.message||error)
     }));
+    const asturiasPromise=fetchAsturias().catch(error=>({
+      ok:false,
+      source:'112 Asturias · SEPA',
+      sourceUrl:ASTURIAS_SOURCE_URL,
+      receivedAt:new Date().toISOString(),
+      publishedAt:null,
+      currentBulletin:false,
+      incidents:[],
+      archive:[],
+      unlocated:[],
+      confidenceForAbsence:false,
+      summary:'Fuente oficial temporalmente no disponible',
+      error:String(error?.message||error)
+    }));
     const url=new URL('/api/situation',UPSTREAM);
     url.search=new URL(request.url,'https://fuegocerca.local').search;
     const response=await fetch(url,{cache:'no-store',headers:{accept:'application/json'}});
@@ -186,12 +205,14 @@ async function createResponse(request){
     const bombers=await bombersPromise;
     const infoar=await infoarPromise;
     const galicia=await galiciaPromise;
+    const asturias=await asturiasPromise;
     if(infoca.ok)mergeInfoca(data,infoca);
     if(bombers.ok)mergeBombers(data,bombers);
     if(infoar.ok)mergeInfoar(data,infoar);
     if(galicia.ok)mergeGalicia(data,galicia);
+    if(asturias.ok)mergeAsturias(data,asturias);
     data.coverage=Array.isArray(data.coverage)?data.coverage:[];
-    data.coverage=data.coverage.filter(item=>!['infoca','bombers-catalunya','infoar-aragon','xunta-galicia'].includes(item.id));
+    data.coverage=data.coverage.filter(item=>!['infoca','bombers-catalunya','infoar-aragon','xunta-galicia','sepa-asturias'].includes(item.id));
     data.coverage.push({
       id:'infoca',
       label:'INFOCA Andalucía',
@@ -246,15 +267,31 @@ async function createResponse(request){
       coverageComplete:false,
       confidenceForAbsence:false
     });
-    if(!infoca.ok||!bombers.ok||bombers.fallback||!infoar.ok||infoar.fallback||infoar.degraded||!galicia.ok||galicia.fallback||galicia.degraded)data.degraded=true;
+    data.coverage.push({
+      id:'sepa-asturias',
+      label:'SEPA Asturias',
+      scope:'Principado de Asturias',
+      ok:asturias.ok,
+      fallback:Boolean(asturias.fallback),
+      summary:asturias.summary,
+      error:asturias.error||null,
+      publishedAt:asturias.publishedAt,
+      receivedAt:asturias.receivedAt,
+      lastSuccessAt:asturias.ok?(asturias.lastSuccessAt||asturias.receivedAt):null,
+      url:ASTURIAS_SOURCE_URL,
+      coverageComplete:false,
+      confidenceForAbsence:false
+    });
+    if(!infoca.ok||!bombers.ok||bombers.fallback||!infoar.ok||infoar.fallback||infoar.degraded||!galicia.ok||galicia.fallback||galicia.degraded||!asturias.ok||asturias.fallback||asturias.degraded)data.degraded=true;
     const upstreamCoverage=new Map((data.regionalCoverage||[]).map(x=>[x.region,x]));
-    data.version='4.15.0';
+    data.version='4.16.0';
     data.dataEngineVersion='4.3.1';
     data.regionalCoverage=DIRECTORY.map(item=>{
       if(item.region==='Andalucía')return {...item,ok:infoca.ok,publishedAt:infoca.publishedAt,lastSuccessAt:infoca.ok?infoca.receivedAt:null};
       if(item.region==='Cataluña')return {...item,ok:bombers.ok,publishedAt:bombers.publishedAt,lastSuccessAt:bombers.ok?(bombers.lastSuccessAt||bombers.receivedAt):null};
       if(item.region==='Aragón')return {...item,ok:infoar.ok,publishedAt:infoar.publishedAt,lastSuccessAt:infoar.ok?(infoar.lastSuccessAt||infoar.receivedAt):null};
       if(item.region==='Galicia')return {...item,ok:galicia.ok,publishedAt:galicia.publishedAt,lastSuccessAt:galicia.ok?(galicia.lastSuccessAt||galicia.receivedAt):null};
+      if(item.region==='Principado de Asturias')return {...item,ok:asturias.ok,publishedAt:asturias.publishedAt,lastSuccessAt:asturias.ok?(asturias.lastSuccessAt||asturias.receivedAt):null};
       const old=upstreamCoverage.get(item.region);
       return {...item,ok:item.mode==='integrated'&&Boolean(old?.ok),publishedAt:old?.publishedAt||null,lastSuccessAt:old?.lastSuccessAt||null};
     });
@@ -267,7 +304,7 @@ async function createResponse(request){
     };
     return new Response(JSON.stringify(data),{status:200,headers});
   }catch(error){
-    return new Response(JSON.stringify({version:'4.15.0',dataEngineVersion:'4.3.1',degraded:true,error:String(error.message||error),regionalCoverage:DIRECTORY,incidents:[],archive:[],alerts:[],thermalSignals:[],news:[],coverage:[]}),{status:503,headers});
+    return new Response(JSON.stringify({version:'4.16.0',dataEngineVersion:'4.3.1',degraded:true,error:String(error.message||error),regionalCoverage:DIRECTORY,incidents:[],archive:[],alerts:[],thermalSignals:[],news:[],coverage:[]}),{status:503,headers});
   }
 }
 
