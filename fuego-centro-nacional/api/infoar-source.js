@@ -1,5 +1,9 @@
+import {DOMMatrix,ImageData,Path2D} from '@napi-rs/canvas';
 import {getCache} from '@vercel/functions';
-import {PDFParse} from 'pdf-parse';
+
+globalThis.DOMMatrix??=DOMMatrix;
+globalThis.ImageData??=ImageData;
+globalThis.Path2D??=Path2D;
 
 export const INFOAR_PDF_URL='https://infoar.aragon.es/flamabk/indicesMeteo/napif-pdf/download';
 export const INFOAR_SOURCE_URL='https://www.aragon.es/-/nivel-de-alerta-de-peligro-de-incendios-forestales';
@@ -232,6 +236,7 @@ function normalizeIncident(entry,location,{receivedAt,publishedAt,now}){
 }
 
 async function extractPdf(buffer){
+  const {PDFParse}=await import('pdf-parse');
   const parser=new PDFParse({data:buffer});
   try{
     const infoResult=await parser.getInfo();
