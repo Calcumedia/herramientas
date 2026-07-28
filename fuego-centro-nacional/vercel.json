@@ -6,6 +6,12 @@
     "api/previfoc.js": {
       "maxDuration": 20
     },
+    "api/infoar.js": {
+      "maxDuration": 30
+    },
+    "api/situation.js": {
+      "maxDuration": 45
+    },
     "api/fire-perimeters.js": {
       "maxDuration": 60
     }

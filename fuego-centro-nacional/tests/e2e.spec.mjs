@@ -1,15 +1,17 @@
 import { test, expect } from '@playwright/test';
 
 const situation={
-  version:'4.13.0',dataEngineVersion:'4.3.1',generatedAt:'2026-07-26T13:05:00.000Z',degraded:false,
+  version:'4.14.0',dataEngineVersion:'4.3.1',generatedAt:'2026-07-26T13:05:00.000Z',degraded:false,
   coverage:[
     {id:'test',label:'Fuente de prueba',ok:true,fallback:false,summary:'Activa',receivedAt:new Date().toISOString(),lastSuccessAt:new Date().toISOString()},
     {id:'infoca',label:'INFOCA Andalucía',scope:'Andalucía',ok:true,fallback:false,summary:'1 vigente',receivedAt:new Date().toISOString(),lastSuccessAt:new Date().toISOString()},
-    {id:'bombers-catalunya',label:'Bombers Catalunya',scope:'Cataluña',ok:true,fallback:false,summary:'1 incendio forestal vigente',receivedAt:new Date().toISOString(),lastSuccessAt:new Date().toISOString()}
+    {id:'bombers-catalunya',label:'Bombers Catalunya',scope:'Cataluña',ok:true,fallback:false,summary:'1 incendio forestal vigente',receivedAt:new Date().toISOString(),lastSuccessAt:new Date().toISOString()},
+    {id:'infoar-aragon',label:'INFOAR Aragón',scope:'Aragón',ok:true,fallback:false,summary:'1 incendio vigente',receivedAt:new Date().toISOString(),lastSuccessAt:new Date().toISOString()}
   ],
   regionalCoverage:[
     {region:'Andalucía',aliases:['Andalucía','Andalucia'],mode:'integrated',sourceLabel:'Agencia de Emergencias de Andalucía · INFOCA',sourceUrl:'https://example.com',description:'Registros oficiales integrados directamente.',ok:true},
     {region:'Cataluña',aliases:['Cataluña','Catalunya'],mode:'integrated',sourceLabel:'Bombers de la Generalitat de Catalunya',sourceUrl:'https://interior.gencat.cat/',description:'Actuaciones oficiales georreferenciadas de incendios forestales integradas directamente.',ok:true},
+    {region:'Aragón',aliases:['Aragón','Aragon'],mode:'integrated',sourceLabel:'Gobierno de Aragón · INFOAR',sourceUrl:'https://www.aragon.es/-/nivel-de-alerta-de-peligro-de-incendios-forestales',description:'Parte diario oficial integrado. La posición es el centro aproximado del término municipal, no el origen exacto.',ok:true},
     {region:'Comunitat Valenciana',aliases:['Comunitat Valenciana','Comunidad Valenciana','Valenciana'],mode:'viewer',sourceLabel:'112 Comunitat Valenciana · PREVIFOC',sourceUrl:'https://www.112cv.gva.es/WebPublica-MapasOnLineV2/',description:'Nivel preventivo diario PREVIFOC integrado; visor de incidentes sin feed estructurado completo.',ok:false}
   ],
   incidents:[
@@ -38,6 +40,16 @@ const situation={
       primaryUrl:'https://interior.gencat.cat/',vegetationType:'Incendi vegetació forestal',
       evidence:[{source:'Bombers de la Generalitat de Catalunya',sourceType:'direct',status:'ACTIVO',publishedAt:'2026-07-28T10:05:00.000Z',url:'https://interior.gencat.cat/'}],
       alerts:[],timeline:[{status:'ACTIVO',at:'2026-07-28T10:05:00.000Z',source:'Bombers · fase consultada'}]
+    },
+    {
+      id:'infoar-h-plan-2026-07-17',name:'Plan',area:'Huesca, Aragón',region:'Aragón',status:'ACTIVO',statusClass:'active',
+      risk:'high',riskLabel:'ALTO',riskScore:630,confidence:'media',sourceConfidence:'alta',lat:42.55,lon:.31,directSources:1,
+      locationApproximate:true,locationConfidence:'municipality',
+      summary:'ACTIVO. Parte diario oficial INFOAR. La posición representa aproximadamente el centro del término municipal, no el origen exacto del incendio.',
+      publishedAt:'2026-07-28T07:48:53.000Z',receivedAt:'2026-07-28T10:05:00.000Z',
+      primaryUrl:'https://infoar.aragon.es/flamabk/indicesMeteo/napif-pdf/download',
+      evidence:[{source:'Gobierno de Aragón · INFOAR',sourceType:'direct',status:'ACTIVO',publishedAt:'2026-07-28T07:48:53.000Z',url:'https://infoar.aragon.es/flamabk/indicesMeteo/napif-pdf/download'}],
+      alerts:[],timeline:[{status:'ACTIVO',at:'2026-07-28T07:48:53.000Z',source:'INFOAR · parte diario'}]
     }
   ],
   archive:[],alerts:[],thermalSignals:[{
@@ -51,7 +63,7 @@ const situation={
 const jerez={id:'1',name:'Jerez de la Frontera',displayName:'Jerez de la Frontera, Cádiz, Andalucía, España',lat:36.6817,lon:-6.1372,region:'Andalucía',placeType:'city',category:'place'};
 const valencia={id:'2',name:'València',displayName:'València, València, Comunitat Valenciana, España',lat:39.4699,lon:-0.3763,region:'Comunitat Valenciana',placeType:'city',category:'place'};
 const danger={
-  version:'4.13.0',source:'AEMET',attribution:'© AEMET',area:'PB',areaLabel:'Península y Baleares',configured:true,
+  version:'4.14.0',source:'AEMET',attribution:'© AEMET',area:'PB',areaLabel:'Península y Baleares',configured:true,
   viewerUrl:'https://www.aemet.es/es/eltiempo/prediccion/incendios',
   helpUrl:'https://www.aemet.es/es/eltiempo/prediccion/incendios/ayuda',
   levels:['Muy bajo','Bajo','Moderado','Alto','Muy alto','Extremo'],resolutionKm:1,
@@ -61,12 +73,12 @@ const danger={
   tomorrow:{validFor:'2026-07-28',officialImageUrl:'https://www.aemet.es/mapa-manana.png',localLevel:{value:5,label:'Muy alto',rgba:[239,133,4,255]}}
 };
 const weather={
-  version:'4.13.0',source:'Open-Meteo',sourceUrl:'https://open-meteo.com/en/docs',degraded:false,
+  version:'4.14.0',source:'Open-Meteo',sourceUrl:'https://open-meteo.com/en/docs',degraded:false,
   current:{temperatureC:31,relativeHumidity:24,windSpeedKmh:18,windDirectionDeg:225,windGustKmh:33},
   next24Hours:{maxWindSpeedKmh:27,maxWindGustKmh:49}
 };
 const airQuality={
-  version:'4.13.0',source:'MITECO · Índice Nacional de Calidad del Aire',officialDataset:true,
+  version:'4.14.0',source:'MITECO · Índice Nacional de Calidad del Aire',officialDataset:true,
   provisional:true,validated:false,radiusKm:100,retrievedAt:'2026-07-27T10:10:00Z',nearbyCount:3,
   nearest:{
     code:'11001001',name:'JEREZ-CHAPÍN',stationType:'FONDO',lat:36.69,lon:-6.12,
@@ -79,7 +91,7 @@ const airQuality={
   fireRelationshipNote:'El ICA mide contaminación atmosférica. FuegoCerca no atribuye su resultado al humo de un incendio sin una confirmación específica de la autoridad.'
 };
 const roads={
-  version:'4.13.0',source:'DGT',format:'DATEX II 3.7',official:true,radiusKm:50,
+  version:'4.14.0',source:'DGT',format:'DATEX II 3.7',official:true,radiusKm:50,
   publicationTime:'2026-07-27T10:05:00Z',retrievedAt:'2026-07-27T10:06:00Z',
   nearbyCount:8,closuresCount:1,
   incidents:[{
@@ -95,7 +107,7 @@ const roads={
   relationshipNote:'La DGT no siempre indica si una incidencia está relacionada con un incendio.'
 };
 const perimeters={
-  version:'4.13.0',source:'EFFIS · Copernicus EMS',official:false,radiusKm:100,
+  version:'4.14.0',source:'EFFIS · Copernicus EMS',official:false,radiusKm:100,
   retrievedAt:'2026-07-27T10:08:00Z',nearbyCount:2,cacheStatus:'runtime',usingStaleCache:false,
   refreshing:false,persistentCache:true,processingMs:14,
   perimeters:[
@@ -118,7 +130,7 @@ const perimeters={
   associationNote:'FuegoCerca no asocia automáticamente estos perímetros a incendios oficiales sin una coincidencia espacial y temporal verificable.'
 };
 const previfoc={
-  version:'4.13.0',ok:true,official:true,source:'112 Comunitat Valenciana · PREVIFOC',
+  version:'4.14.0',ok:true,official:true,source:'112 Comunitat Valenciana · PREVIFOC',
   sourceMode:'PDF oficial diario',validFor:'2026-07-28',current:true,applicable:true,degraded:false,
   level:{value:3,label:'Riesgo extremo',tone:'extreme'},
   pdfUrl:'https://wpr.112cv.gva.es/external/api/storage/descargar/pdf/previfoc/previfoc.pdf',
@@ -143,7 +155,7 @@ async function mockApis(page){
   await page.route('**/api/road-incidents**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(roads)}));
   await page.route('**/api/air-quality**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(airQuality)}));
   await page.route('**/api/weather**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(weather)}));
-  await page.route('**/api/health**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({status:'ok',version:'4.13.0',brand:'FuegoCerca'})}));
+  await page.route('**/api/health**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({status:'ok',version:'4.14.0',brand:'FuegoCerca'})}));
 }
 
 async function showMapOnMobile(page,testInfo){
@@ -376,6 +388,19 @@ test('Cataluña muestra las actuaciones forestales de Bombers como fuente oficia
   await expect(sources).toContainText('Bombers Catalunya');
   await expect(sources).toContainText('Bombers de la Generalitat de Catalunya');
   await expect(sources).toContainText('Actuaciones oficiales georreferenciadas');
+});
+
+test('Aragón muestra el parte INFOAR y distingue la ubicación municipal aproximada',async({page})=>{
+  await page.locator('#tab-incidents').click();
+  const incidents=page.locator('#incidents');
+  await expect(incidents).toContainText('Plan');
+  await expect(incidents).toContainText('ACTIVO');
+  await page.locator('#tab-sources').click();
+  const sources=page.locator('#sources');
+  await expect(sources).toContainText('INFOAR Aragón');
+  await expect(sources).toContainText('Gobierno de Aragón · INFOAR');
+  await expect(sources).toContainText('centro aproximado del término municipal');
+  await expect(sources).toContainText('DATOS INTEGRADOS');
 });
 
 test('guarda y recupera una localidad desde consultas recientes',async({page})=>{
