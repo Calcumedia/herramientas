@@ -236,7 +236,11 @@ function normalizeIncident(entry,location,{receivedAt,publishedAt,now}){
 }
 
 async function extractPdf(buffer){
-  const {PDFParse}=await import('pdf-parse');
+  const [{PDFParse},{getData}]=await Promise.all([
+    import('pdf-parse'),
+    import('pdf-parse/worker')
+  ]);
+  PDFParse.setWorker(getData());
   const parser=new PDFParse({data:buffer});
   try{
     const infoResult=await parser.getInfo();
