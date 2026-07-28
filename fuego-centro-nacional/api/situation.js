@@ -116,7 +116,7 @@ function mergeInfoar(data,infoar){
   mergeRegionalIncidents(data,infoar);
 }
 
-export default async function handler(request){
+async function createResponse(request){
   const headers={
     'content-type':'application/json; charset=utf-8',
     'cache-control':'public, s-maxage=60, stale-while-revalidate=180',
@@ -159,7 +159,7 @@ export default async function handler(request){
       error:String(error?.message||error)
     }));
     const url=new URL('/api/situation',UPSTREAM);
-    url.search=new URL(request.url).search;
+    url.search=new URL(request.url,'https://fuegocerca.local').search;
     const response=await fetch(url,{cache:'no-store',headers:{accept:'application/json'}});
     if(!response.ok)throw Error(`Upstream HTTP ${response.status}`);
     const data=await response.json();
@@ -232,4 +232,12 @@ export default async function handler(request){
   }catch(error){
     return new Response(JSON.stringify({version:'4.14.0',dataEngineVersion:'4.3.1',degraded:true,error:String(error.message||error),regionalCoverage:DIRECTORY,incidents:[],archive:[],alerts:[],thermalSignals:[],news:[],coverage:[]}),{status:503,headers});
   }
+}
+
+export default async function handler(request,response){
+  const webResponse=await createResponse(request);
+  if(!response)return webResponse;
+  response.statusCode=webResponse.status;
+  webResponse.headers.forEach((value,key)=>response.setHeader(key,value));
+  response.end(await webResponse.text());
 }

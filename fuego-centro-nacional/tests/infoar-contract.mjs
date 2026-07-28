@@ -156,6 +156,15 @@ try{
   assert.equal(data.version,'4.14.0');
   assert.equal(data.official,true);
   assert.equal(data.incidents[0].name,'Plan');
+
+  const nodeResponse={
+    headers:{},
+    setHeader(key,value){this.headers[key]=value},
+    end(body){this.body=body}
+  };
+  await infoarHandler({url:'/api/infoar'},nodeResponse);
+  assert.equal(nodeResponse.statusCode,200);
+  assert.equal(JSON.parse(nodeResponse.body).incidents[0].name,'Plan');
 }finally{
   __resetInfoarCacheForTests();
 }
@@ -192,6 +201,15 @@ try{
   assert.equal(data.regionalCoverage.find(item=>item.region==='Aragón')?.mode,'integrated');
   assert.equal(data.regionalCoverage.find(item=>item.region==='Aragón')?.ok,true);
   assert.match(data.regionalCoverage.find(item=>item.region==='Aragón')?.description,/centro del término municipal/);
+
+  const nodeResponse={
+    headers:{},
+    setHeader(key,value){this.headers[key]=value},
+    end(body){this.body=body}
+  };
+  await situationHandler({url:'/api/situation'},nodeResponse);
+  assert.equal(nodeResponse.statusCode,200);
+  assert.equal(JSON.parse(nodeResponse.body).coverage.find(item=>item.id==='infoar-aragon')?.ok,true);
 }finally{
   globalThis.fetch=originalFetch;
   __resetInfoarCacheForTests();
