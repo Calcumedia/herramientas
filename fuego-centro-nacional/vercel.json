@@ -3,6 +3,9 @@
     "api/air-quality.js": {
       "maxDuration": 20
     },
+    "api/previfoc.js": {
+      "maxDuration": 20
+    },
     "api/fire-perimeters.js": {
       "maxDuration": 60
     }
