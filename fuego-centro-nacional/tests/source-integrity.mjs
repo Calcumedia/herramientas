@@ -7,12 +7,12 @@ const root = new URL('../', import.meta.url).pathname;
 const required = [
   'index.html','styles.css','v45.css','v46.css','app.js','v45.js','v46.js','analytics-config.js','sw.js',
   'manifest.webmanifest','favicon.svg',
-  'api/situation.js','api/infoca.js','api/infoca-source.js','api/previfoc.js','api/previfoc-source.js','api/geocode.js','api/reverse-geocode.js','api/health.js','api/fire-danger.js','api/fire-danger-map.js','api/air-quality.js','api/fnmt-ca.js','api/fire-perimeters.js','api/road-incidents.js','api/weather.js',
-  'playwright.config.mjs','tests/e2e.spec.mjs','tests/fire-danger-contract.mjs','tests/previfoc-contract.mjs','tests/air-quality-contract.mjs','tests/fire-perimeters-contract.mjs','tests/road-incidents-contract.mjs','tests/infoca-contract.mjs','vercel.json'
+  'api/situation.js','api/infoca.js','api/infoca-source.js','api/bombers.js','api/bombers-source.js','api/previfoc.js','api/previfoc-source.js','api/geocode.js','api/reverse-geocode.js','api/health.js','api/fire-danger.js','api/fire-danger-map.js','api/air-quality.js','api/fnmt-ca.js','api/fire-perimeters.js','api/road-incidents.js','api/weather.js',
+  'playwright.config.mjs','tests/e2e.spec.mjs','tests/fire-danger-contract.mjs','tests/previfoc-contract.mjs','tests/air-quality-contract.mjs','tests/fire-perimeters-contract.mjs','tests/road-incidents-contract.mjs','tests/infoca-contract.mjs','tests/bombers-contract.mjs','vercel.json'
 ];
 for (const file of required) await access(join(root, file), constants.R_OK);
 
-const [html,app,v45,v46css,v46,health,danger,dangerMap,previfoc,previfocSource,airQuality,perimeters,roads,situation,infoca,infocaSource,weather,pkg,lock,manifest,readme,deployment,vercelConfig] = await Promise.all([
+const [html,app,v45,v46css,v46,health,danger,dangerMap,previfoc,previfocSource,airQuality,perimeters,roads,situation,infoca,infocaSource,bombers,bombersSource,weather,pkg,lock,manifest,readme,deployment,vercelConfig] = await Promise.all([
   readFile(join(root,'index.html'),'utf8'),
   readFile(join(root,'app.js'),'utf8'),
   readFile(join(root,'v45.js'),'utf8'),
@@ -29,6 +29,8 @@ const [html,app,v45,v46css,v46,health,danger,dangerMap,previfoc,previfocSource,a
   readFile(join(root,'api/situation.js'),'utf8'),
   readFile(join(root,'api/infoca.js'),'utf8'),
   readFile(join(root,'api/infoca-source.js'),'utf8'),
+  readFile(join(root,'api/bombers.js'),'utf8'),
+  readFile(join(root,'api/bombers-source.js'),'utf8'),
   readFile(join(root,'api/weather.js'),'utf8'),
   readFile(join(root,'package.json'),'utf8'),
   readFile(join(root,'package-lock.json'),'utf8'),
@@ -104,11 +106,20 @@ assert.match(health,/fireDangerEndpoint:true/);
 assert.match(health,/airQualityEndpoint:true/);
 assert.match(health,/airQualityOfficialDataset:true/);
 assert.match(health,/airQualityFireAttribution:false/);
-assert.match(health,/integratedRegionalTerritories:3/);
+assert.match(health,/integratedRegionalTerritories:4/);
 assert.match(health,/infocaEndpoint:true/);
 assert.match(health,/infocaOfficialSource:true/);
 assert.match(health,/infocaGeoreferenced:true/);
 assert.match(health,/infocaDirectIntegration:true/);
+assert.match(health,/bombersEndpoint:true/);
+assert.match(health,/bombersOfficialSource:true/);
+assert.match(health,/bombersGeoreferenced:true/);
+assert.match(health,/bombersDirectIntegration:true/);
+assert.match(health,/bombersForestOnlyInSituation:true/);
+assert.match(health,/bombersUnpublishedPhaseIsNotActive:true/);
+assert.match(health,/bombersRuntimeCache:true/);
+assert.match(health,/bombersRuntimeCacheTtlHours:6/);
+assert.match(health,/bombersFreshCacheSeconds:60/);
 assert.match(health,/infocamProvisionalNotOfficial:true/);
 assert.match(health,/infoexGeoreferencedFeed:false/);
 assert.match(health,/previfocEndpoint:true/);
@@ -136,13 +147,13 @@ assert.match(health,/effisAutomaticPrewarm:true/);
 assert.match(health,/effisServerTiming:true/);
 assert.match(health,/effisStaleFallbackHours:24/);
 assert.match(health,/effisAutoAssociation:false/);
-assert.match(health,/version:'4\.12\.0'/);
+assert.match(health,/version:'4\.13\.0'/);
 assert.match(danger,/AEMET/);
-assert.match(danger,/version:'4\.12\.0'/);
+assert.match(danger,/version:'4\.13\.0'/);
 assert.match(danger,/exactLocalLevel:true/);
 assert.match(danger,/timeline\/riesgo/);
 assert.match(dangerMap,/imagen\/RIESGO/);
-assert.match(previfoc,/version:'4\.12\.0'/);
+assert.match(previfoc,/version:'4\.13\.0'/);
 assert.match(previfoc,/runtime:'nodejs'/);
 assert.match(previfoc,/maxDuration:20/);
 assert.match(previfocSource,/previfoc\/previfoc\.pdf/);
@@ -153,7 +164,7 @@ assert.equal(JSON.parse(vercelConfig).functions['api/previfoc.js'].maxDuration,2
 assert.match(airQuality,/ica-ultima-hora\.csv/);
 assert.match(airQuality,/runtime:'nodejs'/);
 assert.match(airQuality,/maxDuration:20/);
-assert.match(airQuality,/version:'4\.12\.0'/);
+assert.match(airQuality,/version:'4\.13\.0'/);
 assert.match(airQuality,/new URL\(request\.url,'https:\/\/fuegocerca\.local'\)/);
 assert.match(airQuality,/if\(!response\)return webResponse/);
 assert.match(airQuality,/UNABLE_TO_VERIFY_LEAF_SIGNATURE/);
@@ -178,25 +189,39 @@ assert.match(perimeters,/server-timing/);
 assert.match(perimeters,/ageCategory/);
 assert.match(perimeters,/associationStatus:'not-linked'/);
 assert.match(perimeters,/No representa el frente de llama/);
-assert.match(situation,/data\.version='4\.12\.0'/);
+assert.match(situation,/data\.version='4\.13\.0'/);
 assert.match(situation,/fetchInfoca/);
+assert.match(situation,/fetchBombers/);
 assert.match(situation,/item\.region==='Andalucía'/);
+assert.match(situation,/item\.region==='Cataluña'/);
 assert.match(situation,/no oficial/);
 assert.match(situation,/sin un feed operativo georreferenciado/);
 assert.match(situation,/Nivel preventivo diario PREVIFOC integrado por localidad/);
 assert.match(situation,/no se usa para confirmar incendios activos/);
-assert.match(infoca,/version:'4\.12\.0'/);
+assert.match(infoca,/version:'4\.13\.0'/);
 assert.match(infoca,/official:true/);
 assert.match(infocaSource,/AN_INCIDENTES_PRO\/FeatureServer\/2\/query/);
 assert.match(infocaSource,/ANDALUSIAN_PROVINCES/);
 assert.match(infocaSource,/VALID_STATES/);
 assert.match(infocaSource,/MAX_ACTIVE_AGE_MS/);
 assert.match(infocaSource,/sourceType:'direct'/);
-assert.match(weather,/version:'4\.12\.0'/);
-assert.equal(JSON.parse(pkg).version,'4.12.0');
+assert.match(bombers,/version:'4\.13\.0'/);
+assert.match(bombers,/official:true/);
+assert.match(bombersSource,/ACTUACIONS_URGENTS_online_PRO_AMB_FASE_VIEW/);
+assert.match(bombersSource,/FOREST_TYPE='VF'/);
+assert.match(bombersSource,/MAX_UNPHASED_AGE_MS/);
+assert.match(bombersSource,/FASE NO PUBLICADA/);
+assert.match(bombersSource,/otherVegetation/);
+assert.match(bombersSource,/sourceType:'direct'/);
+assert.match(bombersSource,/getCache/);
+assert.match(bombersSource,/CACHE_STALE_MS/);
+assert.match(bombersSource,/RUNTIME_CACHE_KEY/);
+assert.match(bombersSource,/última copia válida/);
+assert.match(weather,/version:'4\.13\.0'/);
+assert.equal(JSON.parse(pkg).version,'4.13.0');
 assert.equal(JSON.parse(pkg).name,'fuegocerca');
 assert.equal(JSON.parse(pkg).dependencies['@vercel/functions'],'^3.7.6');
-assert.equal(JSON.parse(lock).version,'4.12.0');
+assert.equal(JSON.parse(lock).version,'4.13.0');
 assert.equal(JSON.parse(lock).name,'fuegocerca');
 assert.equal(JSON.parse(manifest).name,'FuegoCerca');
 
@@ -206,4 +231,4 @@ for(const [name,content] of Object.entries({html,v46,health,manifest,readme,depl
 }
 
 assert.match(health,/effisNodeRelativeUrlCompatible:true/);
-console.log('Source integrity checks passed for FuegoCerca 4.12.0.');
+console.log('Source integrity checks passed for FuegoCerca 4.13.0.');

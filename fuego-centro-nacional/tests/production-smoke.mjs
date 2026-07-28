@@ -29,7 +29,7 @@ assert.match(app, /placeSearchForm/);
 assert.match(app, /initialAutoFit|renderMap\(false\)/);
 
 const situation = await (await get('/api/situation', /application\/json/)).json();
-assert.equal(situation.version,'4.12.0');
+assert.equal(situation.version,'4.13.0');
 assert.ok(Array.isArray(situation.incidents), 'incidents must be an array');
 assert.ok(Array.isArray(situation.alerts), 'alerts must be an array');
 assert.ok(Array.isArray(situation.coverage), 'coverage must be an array');
@@ -39,13 +39,17 @@ const andalusia=situation.regionalCoverage.find(item=>item.region==='Andalucía'
 assert.equal(andalusia?.mode,'integrated','Andalusia must use the direct INFOCA integration');
 assert.equal(typeof andalusia?.ok,'boolean','Andalusia coverage must expose source health');
 assert.ok(situation.coverage.some(item=>item.id==='infoca'),'situation must expose INFOCA source coverage');
+const catalonia=situation.regionalCoverage.find(item=>item.region==='Cataluña');
+assert.equal(catalonia?.mode,'integrated','Catalonia must use the direct Bombers integration');
+assert.equal(typeof catalonia?.ok,'boolean','Catalonia coverage must expose source health');
+assert.ok(situation.coverage.some(item=>item.id==='bombers-catalunya'),'situation must expose Bombers source coverage');
 const valenciana=situation.regionalCoverage.find(item=>item.region==='Comunitat Valenciana');
 assert.equal(valenciana?.mode,'viewer','Valencian active incidents must remain viewer-only');
 assert.match(valenciana?.description||'',/PREVIFOC/);
 assert.match(valenciana?.description||'',/no se usa para confirmar incendios activos/);
 
 const previfoc=await (await get('/api/previfoc?lat=39.4699&lon=-0.3763',/application\/json/)).json();
-assert.equal(previfoc.version,'4.12.0');
+assert.equal(previfoc.version,'4.13.0');
 assert.equal(previfoc.source,'112 Comunitat Valenciana · PREVIFOC');
 assert.equal(previfoc.official,true);
 assert.equal(typeof previfoc.current,'boolean');
@@ -53,6 +57,14 @@ if(previfoc.current){
   assert.ok([1,2,3].includes(previfoc.level?.value),'current PREVIFOC must expose an official level');
 }
 assert.match(previfoc.incidentCoverageNote||'',/subconjunto/);
+
+const bombers=await (await get('/api/bombers',/application\/json/)).json();
+assert.equal(bombers.version,'4.13.0');
+assert.equal(bombers.official,true);
+assert.equal(bombers.source,'Bombers de la Generalitat de Catalunya');
+assert.ok(Array.isArray(bombers.incidents));
+assert.ok(Array.isArray(bombers.archive));
+assert.ok(Array.isArray(bombers.otherVegetation));
 
 const geocode = await (await get('/api/geocode?q=Madrid', /application\/json/)).json();
 assert.ok(Array.isArray(geocode.results) && geocode.results.length > 0, 'Madrid geocode must return results');
@@ -65,11 +77,20 @@ assert.equal(health.mapZoom, 6);
 assert.equal(health.staticLocalitySearch, true);
 assert.equal(health.initialAutoFit, false);
 assert.equal(health.nationalCoverageDirectory, 19);
-assert.equal(health.integratedRegionalTerritories, 3);
+assert.equal(health.integratedRegionalTerritories, 4);
 assert.equal(health.infocaEndpoint, true);
 assert.equal(health.infocaOfficialSource, true);
 assert.equal(health.infocaGeoreferenced, true);
 assert.equal(health.infocaDirectIntegration, true);
+assert.equal(health.bombersEndpoint, true);
+assert.equal(health.bombersOfficialSource, true);
+assert.equal(health.bombersGeoreferenced, true);
+assert.equal(health.bombersDirectIntegration, true);
+assert.equal(health.bombersForestOnlyInSituation, true);
+assert.equal(health.bombersUnpublishedPhaseIsNotActive, true);
+assert.equal(health.bombersRuntimeCache, true);
+assert.equal(health.bombersRuntimeCacheTtlHours, 6);
+assert.equal(health.bombersFreshCacheSeconds, 60);
 assert.equal(health.infocamProvisionalNotOfficial, true);
 assert.equal(health.infoexGeoreferencedFeed, false);
 assert.equal(health.previfocEndpoint,true);

@@ -43,7 +43,7 @@ No publicar si falla alguno de estos puntos:
 4. El mapa inicia en `[40.4167, -3.7033]`, zoom `6`.
 5. La carga inicial nunca llama a `fitBounds`.
 6. El botón **Ver todo** sí puede llamar manualmente a `fitBounds`.
-7. `/api/situation`, `/api/infoca`, `/api/previfoc`, `/api/geocode`, `/api/fire-danger`, `/api/fire-danger-map`, `/api/air-quality`, `/api/fire-perimeters`, `/api/road-incidents` y `/api/health` responden correctamente.
+7. `/api/situation`, `/api/infoca`, `/api/bombers`, `/api/previfoc`, `/api/geocode`, `/api/fire-danger`, `/api/fire-danger-map`, `/api/air-quality`, `/api/fire-perimeters`, `/api/road-incidents` y `/api/health` responden correctamente.
 8. La cobertura regional contiene 19 territorios.
 9. No desaparecen incidentes, alertas, noticias, fuentes, localidades guardadas ni notificaciones.
 10. AEMET conserva la etiqueta preventiva, EFFIS se identifica como área quemada satelital y DGT conserva la advertencia de que sus incidencias no siempre están relacionadas con incendios.
@@ -58,6 +58,9 @@ No publicar si falla alguno de estos puntos:
 19. INFOCAM continúa identificado como avance provisional no oficial y Extremadura como fuente de actualizaciones sin feed georreferenciado; ninguna se promociona artificialmente a integración directa.
 20. PREVIFOC solo asigna un nivel cuando el PDF oficial corresponde al día actual y la localidad cae dentro de su mapa. Nunca se presenta como incendio activo.
 21. La Comunitat Valenciana mantiene su cobertura de incidentes en modo visor: el subconjunto publicado por 112CV no se trata como inventario completo ni como feed operativo integrado.
+22. Bombers solo incorpora a la situación los registros tipificados como incendios de vegetación forestal; las actuaciones agrícolas y urbanas se conservan separadas en el contrato de la fuente.
+23. Una fase explícita de Bombers se traduce de forma literal. Un registro sin fase solo puede mostrarse durante 24 horas como «fase no publicada» y no equivale a incendio activo.
+24. Las coordenadas ajenas a Catalunya, los registros antiguos y los elementos sin municipio se descartan antes de calcular distancias locales.
 
 ## Recuperación
 
