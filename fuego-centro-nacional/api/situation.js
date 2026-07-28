@@ -1,13 +1,14 @@
-export const config={runtime:'edge'};
+export const config={runtime:'nodejs',maxDuration:45};
 
 import {fetchInfoca,INFOCA_SOURCE_URL} from './infoca-source.js';
 import {BOMBERS_SOURCE_URL,fetchBombers} from './bombers-source.js';
+import {fetchInfoar,INFOAR_SOURCE_URL} from './infoar-source.js';
 
 const UPSTREAM='https://fuego-centro-panel.vercel.app';
 
 const DIRECTORY=[
   ['Andalucía',['Andalucía','Andalucia'],'integrated','Agencia de Emergencias de Andalucía · INFOCA',INFOCA_SOURCE_URL,'Registros oficiales del visor INFOCA integrados directamente. El propio visor advierte de posibles retrasos respecto a sus canales de emergencia.'],
-  ['Aragón',['Aragón','Aragon'],'reference','Gobierno de Aragón · INFOAR','https://www.aragon.es/temas/medio-ambiente/gestion-forestal/incendios-forestales','Portal oficial de prevención, operativo y publicaciones; sin feed operativo integrado.'],
+  ['Aragón',['Aragón','Aragon'],'integrated','Gobierno de Aragón · INFOAR',INFOAR_SOURCE_URL,'Incendios del parte diario oficial INFOAR integrados directamente. El estado es oficial y la posición representa aproximadamente el centro del término municipal, no el origen exacto.'],
   ['Principado de Asturias',['Asturias','Principado de Asturias'],'updates','112 Asturias · SEPA','https://www.112asturias.es/','Actualizaciones oficiales identificadas; todavía no se convierten automáticamente en incidentes georreferenciados.'],
   ['Illes Balears',['Illes Balears','Islas Baleares','Baleares'],'reference','112 Illes Balears · INFOBAL','https://www.caib.es/sites/112/es/portada-8673/','Portal oficial de emergencias y planificación; sin feed operativo integrado.'],
   ['Canarias',['Canarias','Islas Canarias'],'updates','112 Canarias · INFOCA','https://www.112canarias.com/112/','Alertas y actualizaciones oficiales identificadas; sin feed de incidentes integrado.'],
@@ -111,6 +112,10 @@ function mergeBombers(data,bombers){
   mergeRegionalIncidents(data,bombers);
 }
 
+function mergeInfoar(data,infoar){
+  mergeRegionalIncidents(data,infoar);
+}
+
 export default async function handler(request){
   const headers={
     'content-type':'application/json; charset=utf-8',
@@ -141,6 +146,18 @@ export default async function handler(request){
       summary:'Fuente oficial temporalmente no disponible',
       error:String(error?.message||error)
     }));
+    const infoarPromise=fetchInfoar().catch(error=>({
+      ok:false,
+      source:'Gobierno de Aragón · INFOAR',
+      sourceUrl:INFOAR_SOURCE_URL,
+      receivedAt:new Date().toISOString(),
+      publishedAt:null,
+      incidents:[],
+      archive:[],
+      unlocated:[],
+      summary:'Fuente oficial temporalmente no disponible',
+      error:String(error?.message||error)
+    }));
     const url=new URL('/api/situation',UPSTREAM);
     url.search=new URL(request.url).search;
     const response=await fetch(url,{cache:'no-store',headers:{accept:'application/json'}});
@@ -148,10 +165,12 @@ export default async function handler(request){
     const data=await response.json();
     const infoca=await infocaPromise;
     const bombers=await bombersPromise;
+    const infoar=await infoarPromise;
     if(infoca.ok)mergeInfoca(data,infoca);
     if(bombers.ok)mergeBombers(data,bombers);
+    if(infoar.ok)mergeInfoar(data,infoar);
     data.coverage=Array.isArray(data.coverage)?data.coverage:[];
-    data.coverage=data.coverage.filter(item=>!['infoca','bombers-catalunya'].includes(item.id));
+    data.coverage=data.coverage.filter(item=>!['infoca','bombers-catalunya','infoar-aragon'].includes(item.id));
     data.coverage.push({
       id:'infoca',
       label:'INFOCA Andalucía',
@@ -178,13 +197,27 @@ export default async function handler(request){
       lastSuccessAt:bombers.ok?(bombers.lastSuccessAt||bombers.receivedAt):null,
       url:BOMBERS_SOURCE_URL
     });
-    if(!infoca.ok||!bombers.ok||bombers.fallback)data.degraded=true;
+    data.coverage.push({
+      id:'infoar-aragon',
+      label:'INFOAR Aragón',
+      scope:'Aragón',
+      ok:infoar.ok,
+      fallback:Boolean(infoar.fallback),
+      summary:infoar.summary,
+      error:infoar.error||null,
+      publishedAt:infoar.publishedAt,
+      receivedAt:infoar.receivedAt,
+      lastSuccessAt:infoar.ok?(infoar.lastSuccessAt||infoar.receivedAt):null,
+      url:INFOAR_SOURCE_URL
+    });
+    if(!infoca.ok||!bombers.ok||bombers.fallback||!infoar.ok||infoar.fallback||infoar.degraded)data.degraded=true;
     const upstreamCoverage=new Map((data.regionalCoverage||[]).map(x=>[x.region,x]));
-    data.version='4.13.0';
+    data.version='4.14.0';
     data.dataEngineVersion='4.3.1';
     data.regionalCoverage=DIRECTORY.map(item=>{
       if(item.region==='Andalucía')return {...item,ok:infoca.ok,publishedAt:infoca.publishedAt,lastSuccessAt:infoca.ok?infoca.receivedAt:null};
       if(item.region==='Cataluña')return {...item,ok:bombers.ok,publishedAt:bombers.publishedAt,lastSuccessAt:bombers.ok?(bombers.lastSuccessAt||bombers.receivedAt):null};
+      if(item.region==='Aragón')return {...item,ok:infoar.ok,publishedAt:infoar.publishedAt,lastSuccessAt:infoar.ok?(infoar.lastSuccessAt||infoar.receivedAt):null};
       const old=upstreamCoverage.get(item.region);
       return {...item,ok:item.mode==='integrated'&&Boolean(old?.ok),publishedAt:old?.publishedAt||null,lastSuccessAt:old?.lastSuccessAt||null};
     });
@@ -197,6 +230,6 @@ export default async function handler(request){
     };
     return new Response(JSON.stringify(data),{status:200,headers});
   }catch(error){
-    return new Response(JSON.stringify({version:'4.13.0',dataEngineVersion:'4.3.1',degraded:true,error:String(error.message||error),regionalCoverage:DIRECTORY,incidents:[],archive:[],alerts:[],thermalSignals:[],news:[],coverage:[]}),{status:503,headers});
+    return new Response(JSON.stringify({version:'4.14.0',dataEngineVersion:'4.3.1',degraded:true,error:String(error.message||error),regionalCoverage:DIRECTORY,incidents:[],archive:[],alerts:[],thermalSignals:[],news:[],coverage:[]}),{status:503,headers});
   }
 }

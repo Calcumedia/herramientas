@@ -1,22 +1,23 @@
 {
   "name": "fuegocerca",
-  "version": "4.13.0",
+  "version": "4.14.0",
   "private": true,
   "type": "module",
   "scripts": {
     "test": "npm run test:source && npm run test:contract && npm run test:e2e && npm run test:production",
     "test:source": "node tests/source-integrity.mjs",
-    "test:contract": "node tests/fire-danger-contract.mjs && node tests/previfoc-contract.mjs && node tests/air-quality-contract.mjs && node tests/fire-perimeters-contract.mjs && node tests/road-incidents-contract.mjs && node tests/infoca-contract.mjs && node tests/bombers-contract.mjs",
+    "test:contract": "node tests/fire-danger-contract.mjs && node tests/previfoc-contract.mjs && node tests/air-quality-contract.mjs && node tests/fire-perimeters-contract.mjs && node tests/road-incidents-contract.mjs && node tests/infoca-contract.mjs && node tests/bombers-contract.mjs && node tests/infoar-contract.mjs",
     "test:e2e": "playwright test",
     "test:production": "node tests/production-smoke.mjs"
   },
   "dependencies": {
-    "@vercel/functions": "^3.7.6"
+    "@vercel/functions": "^3.7.6",
+    "pdf-parse": "^2.4.5"
   },
   "devDependencies": {
     "@playwright/test": "^1.54.1"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22.3.0"
   }
 }

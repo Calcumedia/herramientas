@@ -43,7 +43,7 @@ No publicar si falla alguno de estos puntos:
 4. El mapa inicia en `[40.4167, -3.7033]`, zoom `6`.
 5. La carga inicial nunca llama a `fitBounds`.
 6. El botón **Ver todo** sí puede llamar manualmente a `fitBounds`.
-7. `/api/situation`, `/api/infoca`, `/api/bombers`, `/api/previfoc`, `/api/geocode`, `/api/fire-danger`, `/api/fire-danger-map`, `/api/air-quality`, `/api/fire-perimeters`, `/api/road-incidents` y `/api/health` responden correctamente.
+7. `/api/situation`, `/api/infoca`, `/api/bombers`, `/api/infoar`, `/api/previfoc`, `/api/geocode`, `/api/fire-danger`, `/api/fire-danger-map`, `/api/air-quality`, `/api/fire-perimeters`, `/api/road-incidents` y `/api/health` responden correctamente.
 8. La cobertura regional contiene 19 territorios.
 9. No desaparecen incidentes, alertas, noticias, fuentes, localidades guardadas ni notificaciones.
 10. AEMET conserva la etiqueta preventiva, EFFIS se identifica como área quemada satelital y DGT conserva la advertencia de que sus incidencias no siempre están relacionadas con incendios.
@@ -61,6 +61,10 @@ No publicar si falla alguno de estos puntos:
 22. Bombers solo incorpora a la situación los registros tipificados como incendios de vegetación forestal; las actuaciones agrícolas y urbanas se conservan separadas en el contrato de la fuente.
 23. Una fase explícita de Bombers se traduce de forma literal. Un registro sin fase solo puede mostrarse durante 24 horas como «fase no publicada» y no equivale a incendio activo.
 24. Las coordenadas ajenas a Catalunya, los registros antiguos y los elementos sin municipio se descartan antes de calcular distancias locales.
+25. INFOAR solo incorpora entradas de la sección oficial de incendios del parte diario vigente. Los estados activo, estabilizado, controlado y extinguido no se reinterpretan.
+26. Un parte INFOAR vigente con la sección oficial vacía produce cero registros válidos; la ausencia de esa sección o un parte con más de 36 horas degrada la fuente.
+27. La posición de INFOAR procede del centro aproximado del término municipal obtenido mediante IGEAR. Debe conservar la etiqueta de ubicación aproximada y nunca presentarse como origen exacto o perímetro.
+28. Si INFOAR deja de responder, la última copia válida puede reutilizarse durante 24 horas con su antigüedad y estado degradado visibles.
 
 ## Recuperación
 
