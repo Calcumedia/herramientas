@@ -107,7 +107,7 @@ export async function fetchPrevifoc({lat,lon,fetchImpl=fetch,now=new Date(),time
   const timeout=setTimeout(()=>controller.abort(),timeoutMs);
   try{
     const response=await fetchImpl(PREVIFOC_PDF_URL,{
-      headers:{accept:'application/pdf','user-agent':'FuegoCerca/4.14'},
+      headers:{accept:'application/pdf','user-agent':'FuegoCerca/4.15'},
       cache:'no-store',
       signal:controller.signal
     });

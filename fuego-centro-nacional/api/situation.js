@@ -3,6 +3,7 @@ export const config={runtime:'nodejs',maxDuration:45};
 import {fetchInfoca,INFOCA_SOURCE_URL} from './infoca-source.js';
 import {BOMBERS_SOURCE_URL,fetchBombers} from './bombers-source.js';
 import {fetchInfoar,INFOAR_SOURCE_URL} from './infoar-source.js';
+import {fetchGalicia,GALICIA_SOURCE_URL} from './galicia-source.js';
 
 const UPSTREAM='https://fuego-centro-panel.vercel.app';
 
@@ -18,7 +19,7 @@ const DIRECTORY=[
   ['Cataluña',['Cataluña','Catalunya'],'integrated','Bombers de la Generalitat de Catalunya',BOMBERS_SOURCE_URL,'Actuaciones oficiales georreferenciadas de incendios de vegetación forestal integradas directamente. Las actuaciones agrícolas y urbanas se mantienen separadas y una fase no publicada no se interpreta como incendio activo.'],
   ['Comunitat Valenciana',['Comunitat Valenciana','Comunidad Valenciana','Valenciana'],'viewer','112 Comunitat Valenciana · PREVIFOC','https://www.112cv.gva.es/WebPublica-MapasOnLineV2/','Nivel preventivo diario PREVIFOC integrado por localidad. El visor oficial muestra un subconjunto de incidentes relevantes con localización aproximada y no ofrece un feed estructurado completo, por lo que no se usa para confirmar incendios activos.'],
   ['Extremadura',['Extremadura'],'updates','Junta de Extremadura · INFOCAEX/INFOEX','https://www.juntaex.es/w/infocaex','Comunicados oficiales identificados, pero sin un feed operativo georreferenciado que permita integrarlos con seguridad en el cálculo local.'],
-  ['Galicia',['Galicia'],'updates','Xunta de Galicia · Medio Rural','https://mediorural.xunta.gal/es/recursos/noticias','Partes oficiales periódicos identificados; pendiente de extracción estructurada automática.'],
+  ['Galicia',['Galicia'],'integrated','Xunta de Galicia · Medio Rural',GALICIA_SOURCE_URL,'Partes oficiales selectivos integrados directamente, habitualmente para incendios que alcanzan 20 hectáreas. La posición es municipal y la ausencia de un parte vigente no confirma que no existan incendios.',false],
   ['Comunidad de Madrid',['Comunidad de Madrid','Madrid'],'integrated','ASEM 112 Madrid','https://www.comunidad.madrid/seguridad-emergencias-asem-112','Avisos oficiales directos integrados y aplicados a localidades expresamente afectadas.'],
   ['Región de Murcia',['Región de Murcia','Region de Murcia','Murcia'],'updates','112 Región de Murcia · INFOMUR','https://noticias.112rmurcia.es/','Actualizaciones oficiales identificadas; todavía no alimentan directamente el cálculo local.'],
   ['Comunidad Foral de Navarra',['Comunidad Foral de Navarra','Navarra'],'reference','SOS Navarra 112','https://www.navarra.es/es/seguridad-y-emergencias/emergencias-112','Portal oficial de emergencias y prevención; sin feed operativo integrado.'],
@@ -26,7 +27,7 @@ const DIRECTORY=[
   ['La Rioja',['La Rioja'],'updates','SOS Rioja 112','https://www.larioja.org/emergencias-112/es','Noticias oficiales de emergencias identificadas; sin feed operativo integrado.'],
   ['Ceuta',['Ceuta'],'reference','112 Ciudad Autónoma de Ceuta','https://www.ceuta.es/112/paginas/como.html','Servicio oficial de emergencias enlazado; sin feed de incendios integrado.'],
   ['Melilla',['Melilla'],'reference','112 Ciudad Autónoma de Melilla','https://www.melilla.es/','Servicio oficial de emergencias enlazado; sin feed de incendios integrado.']
-].map(([region,aliases,mode,sourceLabel,sourceUrl,description])=>({region,aliases,mode,sourceLabel,sourceUrl,description}));
+].map(([region,aliases,mode,sourceLabel,sourceUrl,description,confidenceForAbsence=true])=>({region,aliases,mode,sourceLabel,sourceUrl,description,confidenceForAbsence}));
 
 function norm(value=''){
   return String(value).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
@@ -116,6 +117,10 @@ function mergeInfoar(data,infoar){
   mergeRegionalIncidents(data,infoar);
 }
 
+function mergeGalicia(data,galicia){
+  mergeRegionalIncidents(data,galicia);
+}
+
 async function createResponse(request){
   const headers={
     'content-type':'application/json; charset=utf-8',
@@ -158,6 +163,20 @@ async function createResponse(request){
       summary:'Fuente oficial temporalmente no disponible',
       error:String(error?.message||error)
     }));
+    const galiciaPromise=fetchGalicia().catch(error=>({
+      ok:false,
+      source:'Xunta de Galicia · Medio Rural',
+      sourceUrl:GALICIA_SOURCE_URL,
+      receivedAt:new Date().toISOString(),
+      publishedAt:null,
+      currentBulletin:false,
+      incidents:[],
+      archive:[],
+      unlocated:[],
+      confidenceForAbsence:false,
+      summary:'Fuente oficial temporalmente no disponible',
+      error:String(error?.message||error)
+    }));
     const url=new URL('/api/situation',UPSTREAM);
     url.search=new URL(request.url,'https://fuegocerca.local').search;
     const response=await fetch(url,{cache:'no-store',headers:{accept:'application/json'}});
@@ -166,11 +185,13 @@ async function createResponse(request){
     const infoca=await infocaPromise;
     const bombers=await bombersPromise;
     const infoar=await infoarPromise;
+    const galicia=await galiciaPromise;
     if(infoca.ok)mergeInfoca(data,infoca);
     if(bombers.ok)mergeBombers(data,bombers);
     if(infoar.ok)mergeInfoar(data,infoar);
+    if(galicia.ok)mergeGalicia(data,galicia);
     data.coverage=Array.isArray(data.coverage)?data.coverage:[];
-    data.coverage=data.coverage.filter(item=>!['infoca','bombers-catalunya','infoar-aragon'].includes(item.id));
+    data.coverage=data.coverage.filter(item=>!['infoca','bombers-catalunya','infoar-aragon','xunta-galicia'].includes(item.id));
     data.coverage.push({
       id:'infoca',
       label:'INFOCA Andalucía',
@@ -210,14 +231,30 @@ async function createResponse(request){
       lastSuccessAt:infoar.ok?(infoar.lastSuccessAt||infoar.receivedAt):null,
       url:INFOAR_SOURCE_URL
     });
-    if(!infoca.ok||!bombers.ok||bombers.fallback||!infoar.ok||infoar.fallback||infoar.degraded)data.degraded=true;
+    data.coverage.push({
+      id:'xunta-galicia',
+      label:'Medio Rural Galicia',
+      scope:'Galicia',
+      ok:galicia.ok,
+      fallback:Boolean(galicia.fallback),
+      summary:galicia.summary,
+      error:galicia.error||null,
+      publishedAt:galicia.publishedAt,
+      receivedAt:galicia.receivedAt,
+      lastSuccessAt:galicia.ok?(galicia.lastSuccessAt||galicia.receivedAt):null,
+      url:GALICIA_SOURCE_URL,
+      coverageComplete:false,
+      confidenceForAbsence:false
+    });
+    if(!infoca.ok||!bombers.ok||bombers.fallback||!infoar.ok||infoar.fallback||infoar.degraded||!galicia.ok||galicia.fallback||galicia.degraded)data.degraded=true;
     const upstreamCoverage=new Map((data.regionalCoverage||[]).map(x=>[x.region,x]));
-    data.version='4.14.0';
+    data.version='4.15.0';
     data.dataEngineVersion='4.3.1';
     data.regionalCoverage=DIRECTORY.map(item=>{
       if(item.region==='Andalucía')return {...item,ok:infoca.ok,publishedAt:infoca.publishedAt,lastSuccessAt:infoca.ok?infoca.receivedAt:null};
       if(item.region==='Cataluña')return {...item,ok:bombers.ok,publishedAt:bombers.publishedAt,lastSuccessAt:bombers.ok?(bombers.lastSuccessAt||bombers.receivedAt):null};
       if(item.region==='Aragón')return {...item,ok:infoar.ok,publishedAt:infoar.publishedAt,lastSuccessAt:infoar.ok?(infoar.lastSuccessAt||infoar.receivedAt):null};
+      if(item.region==='Galicia')return {...item,ok:galicia.ok,publishedAt:galicia.publishedAt,lastSuccessAt:galicia.ok?(galicia.lastSuccessAt||galicia.receivedAt):null};
       const old=upstreamCoverage.get(item.region);
       return {...item,ok:item.mode==='integrated'&&Boolean(old?.ok),publishedAt:old?.publishedAt||null,lastSuccessAt:old?.lastSuccessAt||null};
     });
@@ -230,7 +267,7 @@ async function createResponse(request){
     };
     return new Response(JSON.stringify(data),{status:200,headers});
   }catch(error){
-    return new Response(JSON.stringify({version:'4.14.0',dataEngineVersion:'4.3.1',degraded:true,error:String(error.message||error),regionalCoverage:DIRECTORY,incidents:[],archive:[],alerts:[],thermalSignals:[],news:[],coverage:[]}),{status:503,headers});
+    return new Response(JSON.stringify({version:'4.15.0',dataEngineVersion:'4.3.1',degraded:true,error:String(error.message||error),regionalCoverage:DIRECTORY,incidents:[],archive:[],alerts:[],thermalSignals:[],news:[],coverage:[]}),{status:503,headers});
   }
 }
 
