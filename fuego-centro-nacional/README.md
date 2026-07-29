@@ -27,9 +27,9 @@ Herramienta nacional para consultar la situación de incendios forestales cerca 
 - Los incidentes gallegos se ubican mediante el centro municipal de IGN · CartoCiudad. La interfaz lo identifica como referencia aproximada y nunca como origen, frente o perímetro del incendio. Los partes pierden vigencia para el cálculo tras 36 horas y la última copia válida puede conservarse hasta 24 horas con su antigüedad visible.
 - Asturias integra directamente los partes episódicos de incendios forestales del SEPA/112. Los concejos y estados explícitos se trasladan desde el último parte vigente; los incendios mencionados sin un estado literal se muestran como «en seguimiento», no como activos.
 - Los registros asturianos se sitúan mediante el centro aproximado del concejo obtenido de IGN · CartoCiudad. Los incendios fronterizos descritos únicamente como colaboración con otra comunidad quedan excluidos, los partes caducan tras 36 horas y su ausencia nunca confirma que no haya incendios.
-- Murcia integra directamente las publicaciones operativas selectivas de 112 Región de Murcia/INFOMUR mediante su API pública. Se excluyen prevención, simulacros, resúmenes e incendios industriales o de residuos sin afección forestal; un estado no publicado se conserva como «en intervención» únicamente cuando el organismo describe medios trabajando.
-- Los registros murcianos se ubican en el centro aproximado del municipio mediante IGN · CartoCiudad. Los incidentes vigentes caducan tras 36 horas, los controlados o extinguidos permanecen como archivo reciente durante siete días y la última copia válida puede reutilizarse hasta 24 horas. La ausencia de una publicación nunca confirma que no haya incendios.
-- La función de situación se ejecuta en la región europea `fra1`, próxima a las fuentes institucionales españolas. Esta ubicación evita bloqueos geográficos observados desde la región estadounidense predeterminada de Vercel y reduce la latencia hacia los organismos consultados.
+- Murcia enlaza las actualizaciones oficiales de 112 Región de Murcia/INFOMUR, pero no las integra en el cálculo local: su API bloquea las consultas desde el alojamiento de producción incluso al ejecutarlas en Europa. El panel lo identifica como cobertura oficial limitada y nunca interpreta el silencio de esa fuente como seguridad.
+- El conector y sus pruebas de clasificación se conservan fuera del flujo de producción para poder reactivarlo si el organismo ofrece un acceso automatizado estable.
+- La función de situación se ejecuta en la región europea `fra1`, próxima a las fuentes institucionales españolas y con menor latencia hacia ellas.
 - En la Comunitat Valenciana, PREVIFOC aporta el nivel preventivo oficial diario para la localidad. No confirma incendios activos. El visor 112CV de incidentes continúa como consulta enlazada porque publica un subconjunto con localización aproximada y no expone un feed estructurado completo utilizable.
 - Castilla-La Mancha no se marca como integrada: su portal describe el mapa disponible como avance provisional no oficial. Extremadura mantiene la categoría de actualizaciones porque no ofrece un feed operativo georreferenciado verificable.
 - El nivel de atención local debe presentarse siempre como orientación calculada por FuegoCerca, nunca como nivel oficial ni como estimación de riesgo.
@@ -53,7 +53,7 @@ npm test
 Pruebas disponibles:
 
 - `npm run test:source`: integridad de archivos, sintaxis y contratos críticos.
-- `npm run test:contract`: contratos del raster oficial de AEMET, PREVIFOC de 112CV, el ICA nacional de MITECO, los perímetros EFFIS, el feed DATEX II 3.7 de la DGT y las fuentes oficiales de INFOCA, Bombers de Catalunya, INFOAR Aragón, Medio Rural Galicia, SEPA Asturias e INFOMUR Murcia.
+- `npm run test:contract`: contratos del raster oficial de AEMET, PREVIFOC de 112CV, el ICA nacional de MITECO, los perímetros EFFIS, el feed DATEX II 3.7 de la DGT y las fuentes oficiales de INFOCA, Bombers de Catalunya, INFOAR Aragón, Medio Rural Galicia y SEPA Asturias. El parser experimental de INFOMUR se prueba por separado, pero no alimenta producción mientras su acceso automatizado permanezca bloqueado.
 - `npm run test:e2e`: navegador local con API simulada; comprueba escritura, búsqueda y centro del mapa.
 - `npm run test:production`: comprobación de recursos y API de producción.
 

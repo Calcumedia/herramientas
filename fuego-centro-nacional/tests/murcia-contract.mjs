@@ -1,9 +1,7 @@
 import {strict as assert} from 'node:assert';
-import situationHandler from '../api/situation.js';
 import {
   __resetMurciaCacheForTests,
   __setMurciaRuntimeCacheForTests,
-  __setMurciaSourceForTests,
   buildMurciaCandidatesUrl,
   buildMurciaFindUrl,
   buildMurciaPostsUrl,
@@ -125,43 +123,4 @@ assert.equal(cachedFallback.degraded,true);
 assert.match(cachedFallback.summary,/última copia válida/);
 __resetMurciaCacheForTests();
 
-const upstream={
-  version:'4.17.1',
-  dataEngineVersion:'4.3.1',
-  degraded:false,
-  incidents:[],
-  archive:[],
-  alerts:[],
-  thermalSignals:[],
-  news:[],
-  coverage:[],
-  regionalCoverage:[]
-};
-__setMurciaSourceForTests(result);
-const originalFetch=globalThis.fetch;
-globalThis.fetch=async url=>{
-  const value=String(url);
-  if(value.includes('AN_INCIDENTES_PRO/FeatureServer/2/query'))return new Response(JSON.stringify({features:[]}),{status:200});
-  if(value.includes('ACTUACIONS_URGENTS_online_PRO_AMB_FASE_VIEW'))return new Response(JSON.stringify({features:[]}),{status:200});
-  if(value.includes('fuego-centro-panel.vercel.app/api/situation'))return new Response(JSON.stringify(upstream),{status:200});
-  throw new Error(`Unexpected URL ${url}`);
-};
-try{
-  const response=await situationHandler(new Request('https://fuegocerca.local/api/situation'));
-  assert.equal(response.status,200);
-  const data=await response.json();
-  assert.equal(data.version,'4.17.1');
-  assert.equal(data.incidents.filter(item=>item.region==='Región de Murcia').length,1);
-  assert.equal(data.archive.filter(item=>item.region==='Región de Murcia').length,2);
-  assert.equal(data.coverage.find(item=>item.id==='infomur-murcia')?.ok,true);
-  assert.equal(data.coverage.find(item=>item.id==='infomur-murcia')?.confidenceForAbsence,false);
-  assert.equal(data.regionalCoverage.find(item=>item.region==='Región de Murcia')?.mode,'integrated');
-  assert.equal(data.regionalCoverage.find(item=>item.region==='Región de Murcia')?.confidenceForAbsence,false);
-  assert.match(data.regionalCoverage.find(item=>item.region==='Región de Murcia')?.description,/publicación vigente no confirma/);
-  assert.equal(data.coverageSummary.integrated,8);
-}finally{
-  globalThis.fetch=originalFetch;
-  __resetMurciaCacheForTests();
-}
-
-console.log('INFOMUR Murcia contract checks passed.');
+console.log('INFOMUR Murcia parser contract checks passed; runtime integration remains disabled.');

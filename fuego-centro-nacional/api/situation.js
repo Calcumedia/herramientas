@@ -5,9 +5,9 @@ import {BOMBERS_SOURCE_URL,fetchBombers} from './bombers-source.js';
 import {fetchInfoar,INFOAR_SOURCE_URL} from './infoar-source.js';
 import {fetchGalicia,GALICIA_SOURCE_URL} from './galicia-source.js';
 import {ASTURIAS_SOURCE_URL,fetchAsturias} from '../sources/asturias-source.js';
-import {fetchMurcia,MURCIA_SOURCE_URL} from '../sources/murcia-source.js';
 
 const UPSTREAM='https://fuego-centro-panel.vercel.app';
+const MURCIA_SOURCE_URL='https://noticias.112rmurcia.es/';
 
 const DIRECTORY=[
   ['Andalucía',['Andalucía','Andalucia'],'integrated','Agencia de Emergencias de Andalucía · INFOCA',INFOCA_SOURCE_URL,'Registros oficiales del visor INFOCA integrados directamente. El propio visor advierte de posibles retrasos respecto a sus canales de emergencia.'],
@@ -23,7 +23,7 @@ const DIRECTORY=[
   ['Extremadura',['Extremadura'],'updates','Junta de Extremadura · INFOCAEX/INFOEX','https://www.juntaex.es/w/infocaex','Comunicados oficiales identificados, pero sin un feed operativo georreferenciado que permita integrarlos con seguridad en el cálculo local.'],
   ['Galicia',['Galicia'],'integrated','Xunta de Galicia · Medio Rural',GALICIA_SOURCE_URL,'Partes oficiales selectivos integrados directamente, habitualmente para incendios que alcanzan 20 hectáreas. La posición es municipal y la ausencia de un parte vigente no confirma que no existan incendios.',false],
   ['Comunidad de Madrid',['Comunidad de Madrid','Madrid'],'integrated','ASEM 112 Madrid','https://www.comunidad.madrid/seguridad-emergencias-asem-112','Avisos oficiales directos integrados y aplicados a localidades expresamente afectadas.'],
-  ['Región de Murcia',['Región de Murcia','Region de Murcia','Murcia'],'integrated','112 Región de Murcia · INFOMUR',MURCIA_SOURCE_URL,'Publicaciones operativas oficiales selectivas integradas directamente. La posición representa aproximadamente el municipio y la ausencia de una publicación vigente no confirma que no existan incendios.',false],
+  ['Región de Murcia',['Región de Murcia','Region de Murcia','Murcia'],'updates','112 Región de Murcia · INFOMUR',MURCIA_SOURCE_URL,'Actualizaciones oficiales enlazadas. El organismo bloquea las consultas automatizadas desde el alojamiento actual, por lo que sus publicaciones no se usan para confirmar incendios ni calcular la situación local.',false],
   ['Comunidad Foral de Navarra',['Comunidad Foral de Navarra','Navarra'],'reference','SOS Navarra 112','https://www.navarra.es/es/seguridad-y-emergencias/emergencias-112','Portal oficial de emergencias y prevención; sin feed operativo integrado.'],
   ['País Vasco',['País Vasco','Pais Vasco','Euskadi'],'updates','112 SOS Deiak','https://www.euskadi.eus/gobierno-vasco/emergencias-112/','Actualizaciones oficiales identificadas; sin feed autonómico directo integrado.'],
   ['La Rioja',['La Rioja'],'updates','SOS Rioja 112','https://www.larioja.org/emergencias-112/es','Noticias oficiales de emergencias identificadas; sin feed operativo integrado.'],
@@ -127,10 +127,6 @@ function mergeAsturias(data,asturias){
   mergeRegionalIncidents(data,asturias);
 }
 
-function mergeMurcia(data,murcia){
-  mergeRegionalIncidents(data,murcia);
-}
-
 async function createResponse(request){
   const headers={
     'content-type':'application/json; charset=utf-8',
@@ -201,20 +197,6 @@ async function createResponse(request){
       summary:'Fuente oficial temporalmente no disponible',
       error:String(error?.message||error)
     }));
-    const murciaPromise=fetchMurcia().catch(error=>({
-      ok:false,
-      source:'112 Región de Murcia · INFOMUR',
-      sourceUrl:MURCIA_SOURCE_URL,
-      receivedAt:new Date().toISOString(),
-      publishedAt:null,
-      currentBulletin:false,
-      incidents:[],
-      archive:[],
-      unlocated:[],
-      confidenceForAbsence:false,
-      summary:'Fuente oficial temporalmente no disponible',
-      error:String(error?.message||error)
-    }));
     const url=new URL('/api/situation',UPSTREAM);
     url.search=new URL(request.url,'https://fuegocerca.local').search;
     const response=await fetch(url,{cache:'no-store',headers:{accept:'application/json'}});
@@ -225,13 +207,11 @@ async function createResponse(request){
     const infoar=await infoarPromise;
     const galicia=await galiciaPromise;
     const asturias=await asturiasPromise;
-    const murcia=await murciaPromise;
     if(infoca.ok)mergeInfoca(data,infoca);
     if(bombers.ok)mergeBombers(data,bombers);
     if(infoar.ok)mergeInfoar(data,infoar);
     if(galicia.ok)mergeGalicia(data,galicia);
     if(asturias.ok)mergeAsturias(data,asturias);
-    if(murcia.ok)mergeMurcia(data,murcia);
     data.coverage=Array.isArray(data.coverage)?data.coverage:[];
     data.coverage=data.coverage.filter(item=>!['infoca','bombers-catalunya','infoar-aragon','xunta-galicia','sepa-asturias','infomur-murcia'].includes(item.id));
     data.coverage.push({
@@ -303,24 +283,9 @@ async function createResponse(request){
       coverageComplete:false,
       confidenceForAbsence:false
     });
-    data.coverage.push({
-      id:'infomur-murcia',
-      label:'INFOMUR Murcia',
-      scope:'Región de Murcia',
-      ok:murcia.ok,
-      fallback:Boolean(murcia.fallback),
-      summary:murcia.summary,
-      error:murcia.error||null,
-      publishedAt:murcia.publishedAt,
-      receivedAt:murcia.receivedAt,
-      lastSuccessAt:murcia.ok?(murcia.lastSuccessAt||murcia.receivedAt):null,
-      url:MURCIA_SOURCE_URL,
-      coverageComplete:false,
-      confidenceForAbsence:false
-    });
-    if(!infoca.ok||!bombers.ok||bombers.fallback||!infoar.ok||infoar.fallback||infoar.degraded||!galicia.ok||galicia.fallback||galicia.degraded||!asturias.ok||asturias.fallback||asturias.degraded||!murcia.ok||murcia.fallback||murcia.degraded)data.degraded=true;
+    if(!infoca.ok||!bombers.ok||bombers.fallback||!infoar.ok||infoar.fallback||infoar.degraded||!galicia.ok||galicia.fallback||galicia.degraded||!asturias.ok||asturias.fallback||asturias.degraded)data.degraded=true;
     const upstreamCoverage=new Map((data.regionalCoverage||[]).map(x=>[x.region,x]));
-    data.version='4.17.1';
+    data.version='4.17.2';
     data.dataEngineVersion='4.3.1';
     data.regionalCoverage=DIRECTORY.map(item=>{
       if(item.region==='Andalucía')return {...item,ok:infoca.ok,publishedAt:infoca.publishedAt,lastSuccessAt:infoca.ok?infoca.receivedAt:null};
@@ -328,7 +293,6 @@ async function createResponse(request){
       if(item.region==='Aragón')return {...item,ok:infoar.ok,publishedAt:infoar.publishedAt,lastSuccessAt:infoar.ok?(infoar.lastSuccessAt||infoar.receivedAt):null};
       if(item.region==='Galicia')return {...item,ok:galicia.ok,publishedAt:galicia.publishedAt,lastSuccessAt:galicia.ok?(galicia.lastSuccessAt||galicia.receivedAt):null};
       if(item.region==='Principado de Asturias')return {...item,ok:asturias.ok,publishedAt:asturias.publishedAt,lastSuccessAt:asturias.ok?(asturias.lastSuccessAt||asturias.receivedAt):null};
-      if(item.region==='Región de Murcia')return {...item,ok:murcia.ok,publishedAt:murcia.publishedAt,lastSuccessAt:murcia.ok?(murcia.lastSuccessAt||murcia.receivedAt):null};
       const old=upstreamCoverage.get(item.region);
       return {...item,ok:item.mode==='integrated'&&Boolean(old?.ok),publishedAt:old?.publishedAt||null,lastSuccessAt:old?.lastSuccessAt||null};
     });
@@ -341,7 +305,7 @@ async function createResponse(request){
     };
     return new Response(JSON.stringify(data),{status:200,headers});
   }catch(error){
-    return new Response(JSON.stringify({version:'4.17.1',dataEngineVersion:'4.3.1',degraded:true,error:String(error.message||error),regionalCoverage:DIRECTORY,incidents:[],archive:[],alerts:[],thermalSignals:[],news:[],coverage:[]}),{status:503,headers});
+    return new Response(JSON.stringify({version:'4.17.2',dataEngineVersion:'4.3.1',degraded:true,error:String(error.message||error),regionalCoverage:DIRECTORY,incidents:[],archive:[],alerts:[],thermalSignals:[],news:[],coverage:[]}),{status:503,headers});
   }
 }
 

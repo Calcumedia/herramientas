@@ -71,11 +71,11 @@ No publicar si falla alguno de estos puntos:
 32. Asturias solo incorpora entradas del último parte vigente de incendios forestales del SEPA. Un estado no publicado se conserva como «en seguimiento» y nunca se transforma automáticamente en «activo».
 33. La posición de los registros asturianos procede del centro aproximado del concejo obtenido mediante IGN · CartoCiudad. Los incendios fronterizos descritos solo como colaboración con otra comunidad no se incorporan al cálculo local.
 34. Los partes asturianos dejan de alimentar incidentes actuales al superar 36 horas. Su ausencia no confirma que no haya incendios y la última copia válida solo puede reutilizarse durante 24 horas con estado degradado visible.
-35. Murcia solo incorpora publicaciones operativas de 112 Región de Murcia/INFOMUR que identifiquen un incidente forestal y un municipio. Prevención, simulacros, balances e incendios no forestales quedan fuera del cálculo local.
-36. La posición murciana procede del centro aproximado del municipio obtenido mediante IGN · CartoCiudad. Nunca debe presentarse como ignición, frente o perímetro del incendio.
-37. Los estados explícitos de INFOMUR se conservan literalmente; si la publicación describe medios trabajando pero no publica un estado, se muestra «en intervención», nunca «activo».
-38. Los incidentes murcianos vigentes caducan tras 36 horas y los controlados o extinguidos tras siete días. La ausencia de publicaciones no confirma seguridad y la copia válida solo puede reutilizarse durante 24 horas con estado degradado visible.
-39. `api/situation.js` debe ejecutarse en `fra1`. La fuente oficial de INFOMUR bloquea las solicitudes originadas en la región estadounidense predeterminada de Vercel; no se debe retirar la región europea sin validar nuevamente todas las fuentes.
+35. Murcia debe figurar como `updates`, no como `integrated`, mientras el alojamiento de producción no pueda consultar de forma estable la fuente oficial de INFOMUR.
+36. Ninguna publicación de INFOMUR puede alimentar incidentes, distancias o niveles locales durante este bloqueo; se mantiene únicamente el enlace al organismo.
+37. La ausencia de datos murcianos nunca confirma que no existan incendios y debe producir cobertura oficial regional limitada.
+38. El parser experimental de INFOMUR puede conservarse y probarse con fixtures, pero reactivarlo exige una validación real desde producción y una fuente `ok: true`.
+39. `api/situation.js` se ejecuta en `fra1` para aproximarse a las fuentes institucionales españolas; esta región no debe presentarse como solución al bloqueo de INFOMUR.
 
 ## Recuperación
 
