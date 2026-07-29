@@ -11,10 +11,10 @@ const headers={
 export default async function handler(){
   try{
     const data=await fetchInfoca();
-    return new Response(JSON.stringify({version:'4.17.1',official:true,...data}),{status:200,headers});
+    return new Response(JSON.stringify({version:'4.17.2',official:true,...data}),{status:200,headers});
   }catch(error){
     return new Response(JSON.stringify({
-      version:'4.17.1',
+      version:'4.17.2',
       official:true,
       ok:false,
       degraded:true,

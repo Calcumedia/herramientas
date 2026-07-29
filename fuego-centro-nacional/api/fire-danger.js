@@ -84,7 +84,7 @@ export default async function handler(request){
 
   const area=areaFor(lat,lon);
   const base={
-    version:'4.17.1',
+    version:'4.17.2',
     source:'AEMET',
     attribution:'© AEMET',
     sourceMode:'visor oficial',

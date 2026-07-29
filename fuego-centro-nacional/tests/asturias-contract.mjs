@@ -126,7 +126,7 @@ assert.match(cachedFallback.summary,/última copia válida/);
 __resetAsturiasCacheForTests();
 
 const upstream={
-  version:'4.17.1',
+  version:'4.17.2',
   dataEngineVersion:'4.3.1',
   degraded:false,
   incidents:[],
@@ -150,7 +150,7 @@ try{
   const response=await situationHandler(new Request('https://fuegocerca.local/api/situation'));
   assert.equal(response.status,200);
   const data=await response.json();
-  assert.equal(data.version,'4.17.1');
+  assert.equal(data.version,'4.17.2');
   assert.equal(data.incidents.filter(item=>item.region==='Principado de Asturias').length,3);
   assert.equal(data.archive.filter(item=>item.region==='Principado de Asturias').length,1);
   assert.equal(data.coverage.find(item=>item.id==='sepa-asturias')?.ok,true);

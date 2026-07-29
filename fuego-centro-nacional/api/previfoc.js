@@ -21,12 +21,12 @@ async function createResponse(request){
   }
   try{
     return new Response(JSON.stringify({
-      version:'4.17.1',
+      version:'4.17.2',
       ...await fetchPrevifoc({lat,lon})
     }),{status:200,headers:HEADERS});
   }catch(error){
     return new Response(JSON.stringify({
-      version:'4.17.1',
+      version:'4.17.2',
       ok:false,
       official:true,
       degraded:true,
