@@ -1,13 +1,150 @@
 export const config={runtime:'edge'};
 const UPSTREAM='https://fuego-centro-panel.vercel.app';
-export default async function handler(){
+
+function requestOrigin(request){
+ const url=new URL(request.url,'https://fuegocerca.local');
+ if(url.hostname!=='fuegocerca.local')return url.origin;
+ return process.env.VERCEL_PROJECT_PRODUCTION_URL?`https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`:'https://fuego-centro-nacional.vercel.app';
+}
+
+export default async function handler(request){
  const headers={'content-type':'application/json; charset=utf-8','cache-control':'no-store','access-control-allow-origin':'*'};
  try{
-  const response=await fetch(`${UPSTREAM}/api/health`,{cache:'no-store'});
-  if(!response.ok)throw Error(`Motor de datos HTTP ${response.status}`);
-  const data=await response.json();
-  return new Response(JSON.stringify({...data,status:data.status==='ok'?'ok':'degraded',version:'4.17.2',dataEngineVersion:data.dataEngineVersion||data.version||'4.3.1',brand:'FuegoCerca',mapCenter:[40.4167,-3.7033],mapZoom:6,staticLocalitySearch:true,initialAutoFit:false,nationalCoverageDirectory:19,integratedRegionalTerritories:7,situationFunctionRegion:'fra1',infocaEndpoint:true,infocaOfficialSource:true,infocaGeoreferenced:true,infocaDirectIntegration:true,bombersEndpoint:true,bombersOfficialSource:true,bombersGeoreferenced:true,bombersDirectIntegration:true,bombersForestOnlyInSituation:true,bombersUnpublishedPhaseIsNotActive:true,bombersRuntimeCache:true,bombersRuntimeCacheTtlHours:6,bombersFreshCacheSeconds:60,infoarEndpoint:true,infoarOfficialPdf:true,infoarDirectIntegration:true,infoarStatusOfficial:true,infoarLocationApproximate:true,infoarRuntimeCache:true,infoarRuntimeCacheTtlHours:24,infoarReportMaxAgeHours:36,galiciaOfficialBulletins:true,galiciaDirectIntegration:true,galiciaCoverageComplete:false,galiciaAbsenceConfirmsSafety:false,galiciaReportingThresholdHectares:20,galiciaLocationApproximate:true,galiciaLocationSource:'IGN · CartoCiudad',galiciaRuntimeCache:true,galiciaRuntimeCacheTtlHours:24,galiciaReportMaxAgeHours:36,asturiasOfficialBulletins:true,asturiasDirectIntegration:true,asturiasCoverageComplete:false,asturiasAbsenceConfirmsSafety:false,asturiasLocationApproximate:true,asturiasLocationSource:'IGN · CartoCiudad',asturiasRuntimeCache:true,asturiasRuntimeCacheTtlHours:24,asturiasReportMaxAgeHours:36,infomurOfficialUpdates:true,infomurDirectIntegration:false,infomurRuntimeBlocked:true,infomurAbsenceConfirmsSafety:false,infomurSourceUrl:'https://noticias.112rmurcia.es/',infocamProvisionalNotOfficial:true,infoexGeoreferencedFeed:false,previfocEndpoint:true,previfocOfficialPdf:true,previfocLocalLevel:true,previfocPreventiveOnly:true,previfocIncidentFeedIntegrated:false,valencianIncidentViewerSubset:true,failedSources:Array.isArray(data.failedSources)?data.failedSources:[],weatherEndpoint:true,airQualityEndpoint:true,airQualitySource:'MITECO · Índice Nacional de Calidad del Aire',airQualityOfficialDataset:true,airQualityProvisional:true,airQualityFireAttribution:false,airQualityFunctionRuntime:'nodejs',airQualityMaxDurationSeconds:20,fireDangerEndpoint:true,fireDangerOfficialRaster:true,fireDangerResolutionKm:1,roadIncidentsEndpoint:true,roadIncidentsFormat:'DATEX II 3.7',roadIncidentsCompact:true,firePerimetersEndpoint:true,firePerimetersSource:'EFFIS · Copernicus EMS',effisFunctionRuntime:'nodejs',effisMaxDurationSeconds:60,effisNodeRelativeUrlCompatible:true,effisPerimeterDistance:true,effisMapLayer:true,effisMapLayerToggle:true,effisAgeClassification:true,effisSharedDatasetCacheMinutes:60,effisRuntimeCache:true,effisRuntimeCacheTtlHours:24,effisBackgroundRefresh:true,effisAutomaticPrewarm:true,effisServerTiming:true,effisStaleFallbackHours:24,effisAutoAssociation:false,recentPlaceHistory:true,shareableLocalReport:true,offlineLocalSnapshot:true,smartLocalReport:true,localAttentionIsUnofficial:true,combinedIncidentTimeline:true}),{status:200,headers});
+  const [engineResponse,situationResponse]=await Promise.all([
+   fetch(`${UPSTREAM}/api/health`,{cache:'no-store'}),
+   fetch(`${requestOrigin(request)}/api/situation`,{cache:'no-store',headers:{accept:'application/json'}})
+  ]);
+  if(!engineResponse.ok)throw Error(`Motor de datos HTTP ${engineResponse.status}`);
+  const data=await engineResponse.json();
+  const situation=situationResponse.ok?await situationResponse.json():null;
+  const sourceMonitor=situation?.sourceMonitor||{
+   version:'4.18.0',
+   status:'down',
+   entries:[],
+   issues:[{category:'availability',message:`Situación HTTP ${situationResponse.status}`}],
+   alerting:{externalNotifications:false},
+   persistence:{storage:'Vercel Runtime Cache',durableDatabase:false}
+  };
+  const status=data.status==='ok'&&situationResponse.ok&&sourceMonitor.status==='ok'?'ok':'degraded';
+  return new Response(JSON.stringify({
+   ...data,
+   status,
+   version:'4.18.0',
+   dataEngineVersion:data.dataEngineVersion||data.version||'4.3.1',
+   brand:'FuegoCerca',
+   mapCenter:[40.4167,-3.7033],
+   mapZoom:6,
+   staticLocalitySearch:true,
+   initialAutoFit:false,
+   nationalCoverageDirectory:19,
+   integratedRegionalTerritories:7,
+   situationFunctionRegion:'fra1',
+   sourceMonitorInHealth:true,
+   sourceMonitor,
+   situationVersion:situation?.version||null,
+   situationFallback:Boolean(situation?.fallback),
+   sourceAdmissionGate:true,
+   sourceFreshnessChecks:true,
+   sourceSchemaChecks:true,
+   sourceRuntimeLogging:true,
+   sourceExternalNotifications:false,
+   situationLastValidCache:true,
+   situationLastValidCacheStorage:'Vercel Runtime Cache',
+   situationLastValidCacheTtlHours:24,
+   situationCacheDurableDatabase:false,
+   infocaEndpoint:true,
+   infocaOfficialSource:true,
+   infocaGeoreferenced:true,
+   infocaDirectIntegration:true,
+   bombersEndpoint:true,
+   bombersOfficialSource:true,
+   bombersGeoreferenced:true,
+   bombersDirectIntegration:true,
+   bombersForestOnlyInSituation:true,
+   bombersUnpublishedPhaseIsNotActive:true,
+   bombersRuntimeCache:true,
+   bombersRuntimeCacheTtlHours:6,
+   bombersFreshCacheSeconds:60,
+   infoarEndpoint:true,
+   infoarOfficialPdf:true,
+   infoarDirectIntegration:true,
+   infoarStatusOfficial:true,
+   infoarLocationApproximate:true,
+   infoarRuntimeCache:true,
+   infoarRuntimeCacheTtlHours:24,
+   infoarReportMaxAgeHours:36,
+   galiciaOfficialBulletins:true,
+   galiciaDirectIntegration:true,
+   galiciaCoverageComplete:false,
+   galiciaAbsenceConfirmsSafety:false,
+   galiciaReportingThresholdHectares:20,
+   galiciaLocationApproximate:true,
+   galiciaLocationSource:'IGN · CartoCiudad',
+   galiciaRuntimeCache:true,
+   galiciaRuntimeCacheTtlHours:24,
+   galiciaReportMaxAgeHours:36,
+   asturiasOfficialBulletins:true,
+   asturiasDirectIntegration:true,
+   asturiasCoverageComplete:false,
+   asturiasAbsenceConfirmsSafety:false,
+   asturiasLocationApproximate:true,
+   asturiasLocationSource:'IGN · CartoCiudad',
+   asturiasRuntimeCache:true,
+   asturiasRuntimeCacheTtlHours:24,
+   asturiasReportMaxAgeHours:36,
+   infomurOfficialUpdates:true,
+   infomurDirectIntegration:false,
+   infomurRuntimeBlocked:true,
+   infomurAbsenceConfirmsSafety:false,
+   infomurSourceUrl:'https://noticias.112rmurcia.es/',
+   infocamProvisionalNotOfficial:true,
+   infoexGeoreferencedFeed:false,
+   previfocEndpoint:true,
+   previfocOfficialPdf:true,
+   previfocLocalLevel:true,
+   previfocPreventiveOnly:true,
+   previfocIncidentFeedIntegrated:false,
+   valencianIncidentViewerSubset:true,
+   failedSources:Array.isArray(data.failedSources)?data.failedSources:[],
+   weatherEndpoint:true,
+   airQualityEndpoint:true,
+   airQualitySource:'MITECO · Índice Nacional de Calidad del Aire',
+   airQualityOfficialDataset:true,
+   airQualityProvisional:true,
+   airQualityFireAttribution:false,
+   airQualityFunctionRuntime:'nodejs',
+   airQualityMaxDurationSeconds:20,
+   fireDangerEndpoint:true,
+   fireDangerOfficialRaster:true,
+   fireDangerResolutionKm:1,
+   roadIncidentsEndpoint:true,
+   roadIncidentsFormat:'DATEX II 3.7',
+   roadIncidentsCompact:true,
+   firePerimetersEndpoint:true,
+   firePerimetersSource:'EFFIS · Copernicus EMS',
+   effisFunctionRuntime:'nodejs',
+   effisMaxDurationSeconds:60,
+   effisNodeRelativeUrlCompatible:true,
+   effisPerimeterDistance:true,
+   effisMapLayer:true,
+   effisMapLayerToggle:true,
+   effisAgeClassification:true,
+   effisSharedDatasetCacheMinutes:60,
+   effisRuntimeCache:true,
+   effisRuntimeCacheTtlHours:24,
+   effisBackgroundRefresh:true,
+   effisAutomaticPrewarm:true,
+   effisServerTiming:true,
+   effisStaleFallbackHours:24,
+   effisAutoAssociation:false,
+   recentPlaceHistory:true,
+   shareableLocalReport:true,
+   offlineLocalSnapshot:true,
+   smartLocalReport:true,
+   localAttentionIsUnofficial:true,
+   combinedIncidentTimeline:true
+  }),{status:200,headers});
  }catch(error){
-  return new Response(JSON.stringify({status:'down',version:'4.17.2',brand:'FuegoCerca',error:String(error.message||error)}),{status:503,headers});
+  return new Response(JSON.stringify({status:'down',version:'4.18.0',brand:'FuegoCerca',error:String(error.message||error)}),{status:503,headers});
  }
 }

@@ -7,12 +7,12 @@ const root = new URL('../', import.meta.url).pathname;
 const required = [
   'index.html','styles.css','v45.css','v46.css','app.js','v45.js','v46.js','analytics-config.js','sw.js',
   'manifest.webmanifest','favicon.svg',
-  'api/situation.js','api/infoca.js','api/infoca-source.js','api/bombers.js','api/bombers-source.js','api/infoar.js','api/infoar-source.js','api/galicia-source.js','api/globalsign-ca.js','sources/asturias-source.js','sources/murcia-source.js','api/previfoc.js','api/previfoc-source.js','api/geocode.js','api/reverse-geocode.js','api/health.js','api/fire-danger.js','api/fire-danger-map.js','api/air-quality.js','api/fnmt-ca.js','api/fire-perimeters.js','api/road-incidents.js','api/weather.js',
-  'playwright.config.mjs','tests/e2e.spec.mjs','tests/fire-danger-contract.mjs','tests/previfoc-contract.mjs','tests/air-quality-contract.mjs','tests/fire-perimeters-contract.mjs','tests/road-incidents-contract.mjs','tests/infoca-contract.mjs','tests/bombers-contract.mjs','tests/infoar-contract.mjs','tests/galicia-contract.mjs','tests/asturias-contract.mjs','tests/murcia-contract.mjs','vercel.json'
+  'api/situation.js','sources/source-monitor.js','api/infoca.js','api/infoca-source.js','api/bombers.js','api/bombers-source.js','api/infoar.js','api/infoar-source.js','api/galicia-source.js','api/globalsign-ca.js','sources/asturias-source.js','sources/murcia-source.js','api/previfoc.js','api/previfoc-source.js','api/geocode.js','api/health.js','api/fire-danger.js','api/fire-danger-map.js','api/air-quality.js','api/fnmt-ca.js','api/fire-perimeters.js','api/road-incidents.js','api/weather.js',
+  'playwright.config.mjs','tests/e2e.spec.mjs','tests/source-monitor-contract.mjs','tests/fire-danger-contract.mjs','tests/previfoc-contract.mjs','tests/air-quality-contract.mjs','tests/fire-perimeters-contract.mjs','tests/road-incidents-contract.mjs','tests/infoca-contract.mjs','tests/bombers-contract.mjs','tests/infoar-contract.mjs','tests/galicia-contract.mjs','tests/asturias-contract.mjs','tests/murcia-contract.mjs','vercel.json'
 ];
 for (const file of required) await access(join(root, file), constants.R_OK);
 
-const [html,app,v45,v46css,v46,health,danger,dangerMap,previfoc,previfocSource,airQuality,perimeters,roads,situation,infoca,infocaSource,bombers,bombersSource,infoar,infoarSource,galiciaSource,asturiasSource,murciaSource,weather,pkg,lock,manifest,readme,deployment,vercelConfig] = await Promise.all([
+const [html,app,v45,v46css,v46,health,danger,dangerMap,previfoc,previfocSource,airQuality,perimeters,roads,situation,sourceMonitor,infoca,infocaSource,bombers,bombersSource,infoar,infoarSource,galiciaSource,asturiasSource,murciaSource,weather,pkg,lock,manifest,readme,deployment,vercelConfig] = await Promise.all([
   readFile(join(root,'index.html'),'utf8'),
   readFile(join(root,'app.js'),'utf8'),
   readFile(join(root,'v45.js'),'utf8'),
@@ -27,6 +27,7 @@ const [html,app,v45,v46css,v46,health,danger,dangerMap,previfoc,previfocSource,a
   readFile(join(root,'api/fire-perimeters.js'),'utf8'),
   readFile(join(root,'api/road-incidents.js'),'utf8'),
   readFile(join(root,'api/situation.js'),'utf8'),
+  readFile(join(root,'sources/source-monitor.js'),'utf8'),
   readFile(join(root,'api/infoca.js'),'utf8'),
   readFile(join(root,'api/infoca-source.js'),'utf8'),
   readFile(join(root,'api/bombers.js'),'utf8'),
@@ -54,6 +55,9 @@ assert.match(html,/FuegoCerca/);
 assert.match(app,/id="smartLocalInsights"/);
 assert.match(app,/window\.FC_APP=/);
 assert.match(app,/getLocalAssessment/);
+assert.match(app,/Control de fuentes directas/);
+assert.match(app,/productionAdmitted/);
+assert.match(app,/Abrir monitor y estado técnico/);
 assert.match(v45,/report\.querySelector\('#smartLocalInsights'\)\)return/);
 assert.match(v46css,/\.preventionStatus/);
 assert.match(v46css,/\.v46Tools\{display:grid;grid-template-columns:minmax\(0,1fr\)/);
@@ -182,13 +186,13 @@ assert.match(health,/effisAutomaticPrewarm:true/);
 assert.match(health,/effisServerTiming:true/);
 assert.match(health,/effisStaleFallbackHours:24/);
 assert.match(health,/effisAutoAssociation:false/);
-assert.match(health,/version:'4\.17\.2'/);
+assert.match(health,/version:'4\.18\.0'/);
 assert.match(danger,/AEMET/);
-assert.match(danger,/version:'4\.17\.2'/);
+assert.match(danger,/version:'4\.18\.0'/);
 assert.match(danger,/exactLocalLevel:true/);
 assert.match(danger,/timeline\/riesgo/);
 assert.match(dangerMap,/imagen\/RIESGO/);
-assert.match(previfoc,/version:'4\.17\.2'/);
+assert.match(previfoc,/version:'4\.18\.0'/);
 assert.match(previfoc,/runtime:'nodejs'/);
 assert.match(previfoc,/maxDuration:20/);
 assert.match(previfocSource,/previfoc\/previfoc\.pdf/);
@@ -199,7 +203,7 @@ assert.equal(JSON.parse(vercelConfig).functions['api/previfoc.js'].maxDuration,2
 assert.match(airQuality,/ica-ultima-hora\.csv/);
 assert.match(airQuality,/runtime:'nodejs'/);
 assert.match(airQuality,/maxDuration:20/);
-assert.match(airQuality,/version:'4\.17\.2'/);
+assert.match(airQuality,/version:'4\.18\.0'/);
 assert.match(airQuality,/new URL\(request\.url,'https:\/\/fuegocerca\.local'\)/);
 assert.match(airQuality,/if\(!response\)return webResponse/);
 assert.match(airQuality,/UNABLE_TO_VERIFY_LEAF_SIGNATURE/);
@@ -224,7 +228,7 @@ assert.match(perimeters,/server-timing/);
 assert.match(perimeters,/ageCategory/);
 assert.match(perimeters,/associationStatus:'not-linked'/);
 assert.match(perimeters,/No representa el frente de llama/);
-assert.match(situation,/data\.version='4\.17\.2'/);
+assert.match(situation,/data\.version='4\.18\.0'/);
 assert.match(situation,/new URL\(request\.url,'https:\/\/fuegocerca\.local'\)/);
 assert.match(situation,/if\(!response\)return webResponse/);
 assert.match(situation,/fetchInfoca/);
@@ -232,6 +236,14 @@ assert.match(situation,/fetchBombers/);
 assert.match(situation,/fetchInfoar/);
 assert.match(situation,/fetchGalicia/);
 assert.match(situation,/fetchAsturias/);
+assert.match(situation,/applySourceAdmission/);
+assert.match(situation,/SITUATION_CACHE_KEY/);
+assert.match(situation,/getCache/);
+assert.match(situation,/x-fuegocerca-fallback/);
+assert.match(sourceMonitor,/productionAdmitted/);
+assert.match(sourceMonitor,/confidenceForAbsence/);
+assert.match(sourceMonitor,/externalNotifications:false/);
+assert.match(sourceMonitor,/durableDatabase:false/);
 assert.doesNotMatch(situation,/fetchMurcia/);
 assert.match(situation,/item\.region==='Andalucía'/);
 assert.match(situation,/item\.region==='Cataluña'/);
@@ -246,14 +258,14 @@ assert.match(situation,/no oficial/);
 assert.match(situation,/sin un feed operativo georreferenciado/);
 assert.match(situation,/Nivel preventivo diario PREVIFOC integrado por localidad/);
 assert.match(situation,/no se usa para confirmar incendios activos/);
-assert.match(infoca,/version:'4\.17\.2'/);
+assert.match(infoca,/version:'4\.18\.0'/);
 assert.match(infoca,/official:true/);
 assert.match(infocaSource,/AN_INCIDENTES_PRO\/FeatureServer\/2\/query/);
 assert.match(infocaSource,/ANDALUSIAN_PROVINCES/);
 assert.match(infocaSource,/VALID_STATES/);
 assert.match(infocaSource,/MAX_ACTIVE_AGE_MS/);
 assert.match(infocaSource,/sourceType:'direct'/);
-assert.match(bombers,/version:'4\.17\.2'/);
+assert.match(bombers,/version:'4\.18\.0'/);
 assert.match(bombers,/official:true/);
 assert.match(bombersSource,/ACTUACIONS_URGENTS_online_PRO_AMB_FASE_VIEW/);
 assert.match(bombersSource,/FOREST_TYPE='VF'/);
@@ -265,7 +277,7 @@ assert.match(bombersSource,/getCache/);
 assert.match(bombersSource,/CACHE_STALE_MS/);
 assert.match(bombersSource,/RUNTIME_CACHE_KEY/);
 assert.match(bombersSource,/última copia válida/);
-assert.match(infoar,/version:'4\.17\.2'/);
+assert.match(infoar,/version:'4\.18\.0'/);
 assert.match(infoar,/official:true/);
 assert.match(infoar,/runtime:'nodejs'/);
 assert.match(infoar,/if\(!response\)return webResponse/);
@@ -327,26 +339,33 @@ assert.match(murciaSource,/non-forest/);
 assert.match(murciaSource,/non-operational/);
 assert.doesNotMatch(murciaSource,/rejectUnauthorized\s*:\s*false/);
 assert.doesNotMatch(murciaSource,/NODE_TLS_REJECT_UNAUTHORIZED/);
-assert.match(weather,/version:'4\.17\.2'/);
-assert.equal(JSON.parse(pkg).version,'4.17.2');
+assert.match(weather,/version:'4\.18\.0'/);
+assert.equal(JSON.parse(pkg).version,'4.18.0');
 assert.equal(JSON.parse(pkg).name,'fuegocerca');
 assert.equal(JSON.parse(pkg).dependencies['@vercel/functions'],'^3.7.6');
 assert.equal(JSON.parse(pkg).dependencies['@napi-rs/canvas'],'^0.1.80');
 assert.equal(JSON.parse(pkg).dependencies['pdf-parse'],'^2.4.5');
 assert.equal(JSON.parse(pkg).engines.node,'24.x');
 const parsedVercelConfig=JSON.parse(vercelConfig);
+assert.deepEqual(parsedVercelConfig.rewrites,[{source:'/api/reverse-geocode',destination:'/api/geocode'}]);
 assert.equal(parsedVercelConfig.functions['api/infoar.js'].maxDuration,30);
 assert.equal(parsedVercelConfig.functions['api/situation.js'].maxDuration,45);
 assert.deepEqual(parsedVercelConfig.functions['api/situation.js'].regions,['fra1']);
-assert.equal(JSON.parse(lock).version,'4.17.2');
+assert.equal(JSON.parse(lock).version,'4.18.0');
 assert.equal(JSON.parse(lock).name,'fuegocerca');
 assert.equal(JSON.parse(manifest).name,'FuegoCerca');
 
 const oldBrand=/Fuego Centro|Incendios España/;
-for(const [name,content] of Object.entries({html,v46,health,manifest,readme,deployment})){
+for(const [name,content] of Object.entries({html,app,v46,health,sourceMonitor,manifest,readme,deployment})){
   assert.doesNotMatch(content,oldBrand,`${name} no debe reintroducir una marca anterior`);
 }
 
 assert.match(health,/effisNodeRelativeUrlCompatible:true/);
 assert.match(health,/situationFunctionRegion:'fra1'/);
-console.log('Source integrity checks passed for FuegoCerca 4.17.2.');
+assert.match(health,/sourceMonitorInHealth:true/);
+assert.match(health,/sourceMonitor/);
+assert.match(health,/sourceAdmissionGate:true/);
+assert.match(health,/sourceExternalNotifications:false/);
+assert.match(health,/situationLastValidCache:true/);
+assert.match(health,/situationCacheDurableDatabase:false/);
+console.log('Source integrity checks passed for FuegoCerca 4.18.0.');

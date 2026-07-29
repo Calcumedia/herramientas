@@ -43,7 +43,7 @@ No publicar si falla alguno de estos puntos:
 4. El mapa inicia en `[40.4167, -3.7033]`, zoom `6`.
 5. La carga inicial nunca llama a `fitBounds`.
 6. El botón **Ver todo** sí puede llamar manualmente a `fitBounds`.
-7. `/api/situation`, `/api/infoca`, `/api/bombers`, `/api/infoar`, `/api/previfoc`, `/api/geocode`, `/api/fire-danger`, `/api/fire-danger-map`, `/api/air-quality`, `/api/fire-perimeters`, `/api/road-incidents` y `/api/health` responden correctamente.
+7. `/api/situation`, `/api/infoca`, `/api/bombers`, `/api/infoar`, `/api/previfoc`, `/api/geocode`, `/api/fire-danger`, `/api/fire-danger-map`, `/api/air-quality`, `/api/fire-perimeters`, `/api/road-incidents` y `/api/health` responden correctamente; `/api/health` incluye el monitor de fuentes.
 8. La cobertura regional contiene 19 territorios.
 9. No desaparecen incidentes, alertas, noticias, fuentes, localidades guardadas ni notificaciones.
 10. AEMET conserva la etiqueta preventiva, EFFIS se identifica como área quemada satelital y DGT conserva la advertencia de que sus incidencias no siempre están relacionadas con incendios.
@@ -76,6 +76,10 @@ No publicar si falla alguno de estos puntos:
 37. La ausencia de datos murcianos nunca confirma que no existan incendios y debe producir cobertura oficial regional limitada.
 38. El parser experimental de INFOMUR puede conservarse y probarse con fixtures, pero reactivarlo exige una validación real desde producción y una fuente `ok: true`.
 39. `api/situation.js` se ejecuta en `fra1` para aproximarse a las fuentes institucionales españolas; esta región no debe presentarse como solución al bloqueo de INFOMUR.
+40. Cada integración directa conserva su modo declarado, pero solo mantiene el modo efectivo `integrated` si el monitor incluido en `/api/situation` y `/api/health` confirma disponibilidad, contrato válido, antigüedad aceptable y ausencia de fallback.
+41. Una fuente no admitida debe cambiar temporalmente a `limited`, establecer `confidenceForAbsence: false` y no puede producir una conclusión verde por silencio.
+42. La última situación válida puede recuperarse desde Vercel Runtime Cache durante 24 horas, siempre con `fallback: true`, antigüedad visible y respuesta sin caché pública. No se considera una base de datos permanente.
+43. Los fallos de disponibilidad, contrato y antigüedad deben aparecer en el monitor y en los logs estructurados. No se debe afirmar que existen alertas por correo, SMS o mensajería mientras no haya un canal externo configurado.
 
 ## Recuperación
 
