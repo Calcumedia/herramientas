@@ -7,7 +7,7 @@ const root = new URL('../', import.meta.url).pathname;
 const required = [
   'index.html','styles.css','v45.css','v46.css','app.js','v45.js','v46.js','analytics-config.js','sw.js',
   'manifest.webmanifest','favicon.svg',
-  'api/situation.js','sources/source-monitor.js','api/infoca.js','api/infoca-source.js','api/bombers.js','api/bombers-source.js','api/infoar.js','api/infoar-source.js','api/galicia-source.js','api/globalsign-ca.js','sources/asturias-source.js','sources/murcia-source.js','api/previfoc.js','api/previfoc-source.js','api/geocode.js','api/reverse-geocode.js','api/health.js','api/fire-danger.js','api/fire-danger-map.js','api/air-quality.js','api/fnmt-ca.js','api/fire-perimeters.js','api/road-incidents.js','api/weather.js',
+  'api/situation.js','sources/source-monitor.js','api/infoca.js','api/infoca-source.js','api/bombers.js','api/bombers-source.js','api/infoar.js','api/infoar-source.js','api/galicia-source.js','api/globalsign-ca.js','sources/asturias-source.js','sources/murcia-source.js','api/previfoc.js','api/previfoc-source.js','api/geocode.js','api/health.js','api/fire-danger.js','api/fire-danger-map.js','api/air-quality.js','api/fnmt-ca.js','api/fire-perimeters.js','api/road-incidents.js','api/weather.js',
   'playwright.config.mjs','tests/e2e.spec.mjs','tests/source-monitor-contract.mjs','tests/fire-danger-contract.mjs','tests/previfoc-contract.mjs','tests/air-quality-contract.mjs','tests/fire-perimeters-contract.mjs','tests/road-incidents-contract.mjs','tests/infoca-contract.mjs','tests/bombers-contract.mjs','tests/infoar-contract.mjs','tests/galicia-contract.mjs','tests/asturias-contract.mjs','tests/murcia-contract.mjs','vercel.json'
 ];
 for (const file of required) await access(join(root, file), constants.R_OK);
@@ -347,6 +347,7 @@ assert.equal(JSON.parse(pkg).dependencies['@napi-rs/canvas'],'^0.1.80');
 assert.equal(JSON.parse(pkg).dependencies['pdf-parse'],'^2.4.5');
 assert.equal(JSON.parse(pkg).engines.node,'24.x');
 const parsedVercelConfig=JSON.parse(vercelConfig);
+assert.deepEqual(parsedVercelConfig.rewrites,[{source:'/api/reverse-geocode',destination:'/api/geocode'}]);
 assert.equal(parsedVercelConfig.functions['api/infoar.js'].maxDuration,30);
 assert.equal(parsedVercelConfig.functions['api/situation.js'].maxDuration,45);
 assert.deepEqual(parsedVercelConfig.functions['api/situation.js'].regions,['fra1']);
