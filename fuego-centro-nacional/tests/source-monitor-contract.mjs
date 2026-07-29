@@ -1,5 +1,5 @@
 import {strict as assert} from 'node:assert';
-import {applySourceAdmission,buildSourceMonitor} from '../api/source-monitor.js';
+import {applySourceAdmission,buildSourceMonitor} from '../sources/source-monitor.js';
 
 const now=new Date('2026-07-29T12:00:00.000Z');
 const regions=[

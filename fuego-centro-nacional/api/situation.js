@@ -6,7 +6,7 @@ import {fetchInfoar,INFOAR_SOURCE_URL} from './infoar-source.js';
 import {fetchGalicia,GALICIA_SOURCE_URL} from './galicia-source.js';
 import {ASTURIAS_SOURCE_URL,fetchAsturias} from '../sources/asturias-source.js';
 import {getCache} from '@vercel/functions';
-import {applySourceAdmission} from './source-monitor.js';
+import {applySourceAdmission} from '../sources/source-monitor.js';
 
 const UPSTREAM='https://fuego-centro-panel.vercel.app';
 const MURCIA_SOURCE_URL='https://noticias.112rmurcia.es/';
