@@ -100,12 +100,13 @@ try{
   const response=await bombersHandler(new Request('https://fuegocerca.local/api/bombers'));
   assert.equal(response.status,200);
   const data=await response.json();
-  assert.equal(data.version,'4.17.2');
+  assert.equal(data.version,'4.18.0');
   assert.equal(data.official,true);
   assert.equal(data.incidents[0].evidence[0].source,'Bombers de la Generalitat de Catalunya');
 }finally{
   globalThis.fetch=originalFetch;
 }
+__resetBombersCacheForTests();
 
 await assert.rejects(
   fetchBombers({fetchImpl:async()=>new Response('error',{status:503}),now}),
@@ -113,7 +114,7 @@ await assert.rejects(
 );
 
 const upstream={
-  version:'4.17.2',
+  version:'4.18.0',
   dataEngineVersion:'4.3.1',
   generatedAt:'2026-07-28T12:00:00.000Z',
   degraded:false,
@@ -125,9 +126,24 @@ const upstream={
   coverage:[],
   regionalCoverage:[]
 };
+const liveOffset=Date.now()-now;
+const liveFeatures=features.map(item=>({
+  ...item,
+  attributes:{
+    ...item.attributes,
+    ACT_DAT_ACTUACIO:item.attributes.ACT_DAT_ACTUACIO+liveOffset,
+    ACT_DAT_INICI:item.attributes.ACT_DAT_INICI+liveOffset,
+    ACT_DAT_ACTUAL:item.attributes.ACT_DAT_ACTUAL+liveOffset
+  }
+}));
+const situationCacheStore=new Map();
+__setBombersRuntimeCacheForTests({
+  get:async key=>situationCacheStore.get(key),
+  set:async(key,value)=>{situationCacheStore.set(key,value)}
+});
 globalThis.fetch=async url=>{
   const value=String(url);
-  if(value.includes('ACTUACIONS_URGENTS_online_PRO_AMB_FASE_VIEW'))return new Response(JSON.stringify({features}),{status:200});
+  if(value.includes('ACTUACIONS_URGENTS_online_PRO_AMB_FASE_VIEW'))return new Response(JSON.stringify({features:liveFeatures}),{status:200});
   if(value.includes('AN_INCIDENTES_PRO/FeatureServer/2/query'))return new Response(JSON.stringify({features:[]}),{status:200});
   if(value.includes('fuego-centro-panel.vercel.app/api/situation'))return new Response(JSON.stringify(upstream),{status:200});
   throw new Error(`Unexpected URL ${url}`);
@@ -136,7 +152,7 @@ try{
   const response=await situationHandler(new Request('https://fuegocerca.local/api/situation'));
   assert.equal(response.status,200);
   const data=await response.json();
-  assert.equal(data.version,'4.17.2');
+  assert.equal(data.version,'4.18.0');
   assert.equal(data.incidents.filter(item=>item.region==='Cataluña').length,3);
   assert.equal(data.archive.filter(item=>item.region==='Cataluña').length,2);
   assert.equal(data.coverage.find(item=>item.id==='bombers-catalunya')?.ok,true);
@@ -145,6 +161,7 @@ try{
   assert.match(data.regionalCoverage.find(item=>item.region==='Cataluña')?.description,/agrícolas y urbanas se mantienen separadas/);
 }finally{
   globalThis.fetch=originalFetch;
+  __resetBombersCacheForTests();
 }
 
 console.log('Bombers Catalunya contract checks passed.');

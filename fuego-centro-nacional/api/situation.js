@@ -5,9 +5,13 @@ import {BOMBERS_SOURCE_URL,fetchBombers} from './bombers-source.js';
 import {fetchInfoar,INFOAR_SOURCE_URL} from './infoar-source.js';
 import {fetchGalicia,GALICIA_SOURCE_URL} from './galicia-source.js';
 import {ASTURIAS_SOURCE_URL,fetchAsturias} from '../sources/asturias-source.js';
+import {getCache} from '@vercel/functions';
+import {applySourceAdmission} from './source-monitor.js';
 
 const UPSTREAM='https://fuego-centro-panel.vercel.app';
 const MURCIA_SOURCE_URL='https://noticias.112rmurcia.es/';
+const SITUATION_CACHE_KEY='fuegocerca:situation:last-valid:v4.18';
+const SITUATION_CACHE_TTL_SECONDS=86400;
 
 const DIRECTORY=[
   ['Andalucía',['Andalucía','Andalucia'],'integrated','Agencia de Emergencias de Andalucía · INFOCA',INFOCA_SOURCE_URL,'Registros oficiales del visor INFOCA integrados directamente. El propio visor advierte de posibles retrasos respecto a sus canales de emergencia.'],
@@ -127,12 +131,36 @@ function mergeAsturias(data,asturias){
   mergeRegionalIncidents(data,asturias);
 }
 
+async function storeLastValidSituation(data){
+  try{
+    await getCache().set(SITUATION_CACHE_KEY,{cachedAt:new Date().toISOString(),data},{
+      ttl:SITUATION_CACHE_TTL_SECONDS,
+      tags:['fuegocerca-situation'],
+      name:'fuegocerca-last-valid-situation'
+    });
+  }catch(error){
+    console.warn(JSON.stringify({level:'warning',msg:'situation-cache-write-failed',route:'/api/situation',error:String(error?.message||error)}));
+  }
+}
+
+async function readLastValidSituation(){
+  try{
+    return await getCache().get(SITUATION_CACHE_KEY);
+  }catch(error){
+    console.warn(JSON.stringify({level:'warning',msg:'situation-cache-read-failed',route:'/api/situation',error:String(error?.message||error)}));
+    return null;
+  }
+}
+
 async function createResponse(request){
+  const startedAt=Date.now();
+  const requestId=request.headers?.get?.('x-vercel-id')||null;
   const headers={
     'content-type':'application/json; charset=utf-8',
     'cache-control':'public, s-maxage=60, stale-while-revalidate=180',
     'access-control-allow-origin':'*'
   };
+  console.log(JSON.stringify({level:'info',msg:'situation-start',route:'/api/situation',requestId}));
   try{
     const infocaPromise=fetchInfoca().catch(error=>({
       ok:false,
@@ -285,7 +313,7 @@ async function createResponse(request){
     });
     if(!infoca.ok||!bombers.ok||bombers.fallback||!infoar.ok||infoar.fallback||infoar.degraded||!galicia.ok||galicia.fallback||galicia.degraded||!asturias.ok||asturias.fallback||asturias.degraded)data.degraded=true;
     const upstreamCoverage=new Map((data.regionalCoverage||[]).map(x=>[x.region,x]));
-    data.version='4.17.2';
+    data.version='4.18.0';
     data.dataEngineVersion='4.3.1';
     data.regionalCoverage=DIRECTORY.map(item=>{
       if(item.region==='Andalucía')return {...item,ok:infoca.ok,publishedAt:infoca.publishedAt,lastSuccessAt:infoca.ok?infoca.receivedAt:null};
@@ -296,6 +324,10 @@ async function createResponse(request){
       const old=upstreamCoverage.get(item.region);
       return {...item,ok:item.mode==='integrated'&&Boolean(old?.ok),publishedAt:old?.publishedAt||null,lastSuccessAt:old?.lastSuccessAt||null};
     });
+    const admission=applySourceAdmission(data.regionalCoverage,data.coverage,new Date());
+    data.regionalCoverage=admission.regions;
+    data.sourceMonitor=admission.monitor;
+    data.degraded=Boolean(data.degraded||admission.monitor.status!=='ok');
     data.coverageSummary={
       integrated:data.regionalCoverage.filter(x=>x.mode==='integrated').length,
       officialViewer:data.regionalCoverage.filter(x=>x.mode==='viewer').length,
@@ -303,9 +335,40 @@ async function createResponse(request){
       officialReference:data.regionalCoverage.filter(x=>x.mode==='reference').length,
       limited:data.regionalCoverage.filter(x=>x.mode==='limited').length
     };
+    if(admission.monitor.issues.length){
+      console.warn(JSON.stringify({level:'warning',msg:'source-admission-issues',route:'/api/situation',requestId,issues:admission.monitor.issues}));
+    }
+    await storeLastValidSituation(data);
+    console.log(JSON.stringify({level:'info',msg:'situation-done',route:'/api/situation',requestId,version:data.version,incidents:data.incidents.length,admittedSources:admission.monitor.admittedDirectSources,configuredSources:admission.monitor.configuredDirectSources,degraded:data.degraded,ms:Date.now()-startedAt}));
     return new Response(JSON.stringify(data),{status:200,headers});
   }catch(error){
-    return new Response(JSON.stringify({version:'4.17.2',dataEngineVersion:'4.3.1',degraded:true,error:String(error.message||error),regionalCoverage:DIRECTORY,incidents:[],archive:[],alerts:[],thermalSignals:[],news:[],coverage:[]}),{status:503,headers});
+    const message=String(error?.message||error);
+    const cached=await readLastValidSituation();
+    if(cached?.data){
+      const checkedAt=new Date().toISOString();
+      const fallbackData={
+        ...cached.data,
+        version:'4.18.0',
+        degraded:true,
+        fallback:true,
+        fallbackReason:message,
+        fallbackCachedAt:cached.cachedAt||null,
+        sourceMonitor:{
+          ...(cached.data.sourceMonitor||{}),
+          version:'4.18.0',
+          checkedAt,
+          status:'degraded',
+          issues:[
+            ...((cached.data.sourceMonitor?.issues)||[]),
+            {severity:'critical',category:'upstream',region:'Nacional',source:'Motor de situación',message:'No se ha podido reconstruir la situación; se muestra la última copia válida.'}
+          ]
+        }
+      };
+      console.error(JSON.stringify({level:'error',msg:'situation-fallback',route:'/api/situation',requestId,error:message,cachedAt:cached.cachedAt||null,ms:Date.now()-startedAt}));
+      return new Response(JSON.stringify(fallbackData),{status:200,headers:{...headers,'cache-control':'no-store','x-fuegocerca-fallback':'last-valid'}});
+    }
+    console.error(JSON.stringify({level:'error',msg:'situation-failed',route:'/api/situation',requestId,error:message,ms:Date.now()-startedAt}));
+    return new Response(JSON.stringify({version:'4.18.0',dataEngineVersion:'4.3.1',degraded:true,error:message,regionalCoverage:DIRECTORY,sourceMonitor:{version:'4.18.0',status:'down',entries:[],issues:[]},incidents:[],archive:[],alerts:[],thermalSignals:[],news:[],coverage:[]}),{status:503,headers});
   }
 }
 
