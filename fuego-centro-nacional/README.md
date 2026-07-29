@@ -16,7 +16,7 @@ Herramienta nacional para consultar la situación de incendios forestales cerca 
 - La carga inicial no ejecuta `fitBounds`; el encuadre completo solo se activa con **Ver todo**.
 - Las actualizaciones conservan pestaña, filtros, búsqueda y posición del mapa.
 - Se mantienen separados los incidentes oficiales, las señales preliminares y los grupos térmicos.
-- Las API `/api/situation`, `/api/source-health`, `/api/infoca`, `/api/bombers`, `/api/infoar`, `/api/previfoc`, `/api/geocode`, `/api/weather`, `/api/air-quality`, `/api/fire-danger`, `/api/fire-danger-map`, `/api/fire-perimeters`, `/api/road-incidents` y `/api/health` deben responder correctamente.
+- Las API `/api/situation`, `/api/infoca`, `/api/bombers`, `/api/infoar`, `/api/previfoc`, `/api/geocode`, `/api/weather`, `/api/air-quality`, `/api/fire-danger`, `/api/fire-danger-map`, `/api/fire-perimeters`, `/api/road-incidents` y `/api/health` deben responder correctamente. El monitor de fuentes forma parte de `/api/health` para respetar el límite de funciones del plan de despliegue.
 - Una fuente directa solo figura como integrada cuando la ejecución de producción supera los controles de disponibilidad, contrato mínimo, antigüedad y ausencia de fallback. En caso contrario pasa temporalmente a cobertura limitada y nunca confirma la ausencia de incendios.
 - La situación completa conserva durante un máximo de 24 horas una última copia válida en Vercel Runtime Cache. Esta caché es regional, puede ser expulsada y no se presenta como almacenamiento permanente.
 - Las incidencias de fuentes se emiten como logs estructurados de Vercel y aparecen en el panel técnico. No existe todavía un canal externo de correo, SMS o mensajería, por lo que la interfaz no promete esos avisos.

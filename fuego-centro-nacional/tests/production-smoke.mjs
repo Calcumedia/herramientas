@@ -76,15 +76,16 @@ assert.equal(valenciana?.mode,'viewer','Valencian active incidents must remain v
 assert.match(valenciana?.description||'',/PREVIFOC/);
 assert.match(valenciana?.description||'',/no se usa para confirmar incendios activos/);
 
-const sourceHealth=await (await get('/api/source-health',/application\/json/)).json();
-assert.equal(sourceHealth.version,'4.18.0');
-assert.equal(sourceHealth.situationVersion,'4.18.0');
-assert.ok(['ok','warning','degraded'].includes(sourceHealth.status));
-assert.equal(sourceHealth.configuredDirectSources,7);
-assert.equal(sourceHealth.admittedDirectSources+sourceHealth.limitedDirectSources,sourceHealth.configuredDirectSources);
-assert.equal(sourceHealth.alerting?.externalNotifications,false);
-assert.equal(sourceHealth.persistence?.storage,'Vercel Runtime Cache');
-assert.equal(sourceHealth.persistence?.durableDatabase,false);
+const monitorHealth=await (await get('/api/health',/application\/json/)).json();
+assert.equal(monitorHealth.version,'4.18.0');
+assert.equal(monitorHealth.situationVersion,'4.18.0');
+assert.ok(['ok','degraded'].includes(monitorHealth.status));
+assert.equal(monitorHealth.sourceMonitorInHealth,true);
+assert.equal(monitorHealth.sourceMonitor?.configuredDirectSources,7);
+assert.equal(monitorHealth.sourceMonitor?.admittedDirectSources+monitorHealth.sourceMonitor?.limitedDirectSources,monitorHealth.sourceMonitor?.configuredDirectSources);
+assert.equal(monitorHealth.sourceMonitor?.alerting?.externalNotifications,false);
+assert.equal(monitorHealth.sourceMonitor?.persistence?.storage,'Vercel Runtime Cache');
+assert.equal(monitorHealth.sourceMonitor?.persistence?.durableDatabase,false);
 
 const previfoc=await (await get('/api/previfoc?lat=39.4699&lon=-0.3763',/application\/json/)).json();
 assert.equal(previfoc.version,'4.18.0');
@@ -117,7 +118,7 @@ assert.ok(Array.isArray(geocode.results) && geocode.results.length > 0, 'Madrid 
 assert.ok(geocode.results.some(x => Math.abs(x.lat - 40.4167) < 0.2), 'Madrid coordinates look incorrect');
 
 const health = await (await get('/api/health', /application\/json/)).json();
-assert.equal(health.status, 'ok');
+assert.ok(['ok','degraded'].includes(health.status));
 assert.deepEqual(health.mapCenter, [40.4167, -3.7033]);
 assert.equal(health.mapZoom, 6);
 assert.equal(health.staticLocalitySearch, true);
@@ -125,7 +126,7 @@ assert.equal(health.initialAutoFit, false);
 assert.equal(health.nationalCoverageDirectory, 19);
 assert.equal(health.integratedRegionalTerritories, 7);
 assert.equal(health.situationFunctionRegion, 'fra1');
-assert.equal(health.sourceHealthEndpoint,true);
+assert.equal(health.sourceMonitorInHealth,true);
 assert.equal(health.sourceAdmissionGate,true);
 assert.equal(health.sourceFreshnessChecks,true);
 assert.equal(health.sourceSchemaChecks,true);

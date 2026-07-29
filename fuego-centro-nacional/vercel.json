@@ -13,10 +13,6 @@
       "maxDuration": 45,
       "regions": ["fra1"]
     },
-    "api/source-health.js": {
-      "maxDuration": 45,
-      "regions": ["fra1"]
-    },
     "api/fire-perimeters.js": {
       "maxDuration": 60
     }

@@ -422,7 +422,7 @@ test('el panel de fuentes explica admisión, incidencias y persistencia sin prom
   await expect(sources).toContainText('integraciones configuradas');
   await expect(sources).toContainText('No hay avisos externos por correo o SMS');
   await expect(sources).toContainText('caché regional, no una base de datos permanente');
-  await expect(sources.locator('a[href="/api/source-health"]')).toContainText('Abrir monitor de fuentes');
+  await expect(sources.locator('a[href="/api/health"]')).toContainText('Abrir monitor y estado técnico');
 });
 
 test('Cataluña muestra las actuaciones forestales de Bombers como fuente oficial directa',async({page})=>{

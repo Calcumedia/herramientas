@@ -7,12 +7,12 @@ const root = new URL('../', import.meta.url).pathname;
 const required = [
   'index.html','styles.css','v45.css','v46.css','app.js','v45.js','v46.js','analytics-config.js','sw.js',
   'manifest.webmanifest','favicon.svg',
-  'api/situation.js','api/source-monitor.js','api/source-health.js','api/infoca.js','api/infoca-source.js','api/bombers.js','api/bombers-source.js','api/infoar.js','api/infoar-source.js','api/galicia-source.js','api/globalsign-ca.js','sources/asturias-source.js','sources/murcia-source.js','api/previfoc.js','api/previfoc-source.js','api/geocode.js','api/reverse-geocode.js','api/health.js','api/fire-danger.js','api/fire-danger-map.js','api/air-quality.js','api/fnmt-ca.js','api/fire-perimeters.js','api/road-incidents.js','api/weather.js',
+  'api/situation.js','api/source-monitor.js','api/infoca.js','api/infoca-source.js','api/bombers.js','api/bombers-source.js','api/infoar.js','api/infoar-source.js','api/galicia-source.js','api/globalsign-ca.js','sources/asturias-source.js','sources/murcia-source.js','api/previfoc.js','api/previfoc-source.js','api/geocode.js','api/reverse-geocode.js','api/health.js','api/fire-danger.js','api/fire-danger-map.js','api/air-quality.js','api/fnmt-ca.js','api/fire-perimeters.js','api/road-incidents.js','api/weather.js',
   'playwright.config.mjs','tests/e2e.spec.mjs','tests/source-monitor-contract.mjs','tests/fire-danger-contract.mjs','tests/previfoc-contract.mjs','tests/air-quality-contract.mjs','tests/fire-perimeters-contract.mjs','tests/road-incidents-contract.mjs','tests/infoca-contract.mjs','tests/bombers-contract.mjs','tests/infoar-contract.mjs','tests/galicia-contract.mjs','tests/asturias-contract.mjs','tests/murcia-contract.mjs','vercel.json'
 ];
 for (const file of required) await access(join(root, file), constants.R_OK);
 
-const [html,app,v45,v46css,v46,health,danger,dangerMap,previfoc,previfocSource,airQuality,perimeters,roads,situation,sourceMonitor,sourceHealth,infoca,infocaSource,bombers,bombersSource,infoar,infoarSource,galiciaSource,asturiasSource,murciaSource,weather,pkg,lock,manifest,readme,deployment,vercelConfig] = await Promise.all([
+const [html,app,v45,v46css,v46,health,danger,dangerMap,previfoc,previfocSource,airQuality,perimeters,roads,situation,sourceMonitor,infoca,infocaSource,bombers,bombersSource,infoar,infoarSource,galiciaSource,asturiasSource,murciaSource,weather,pkg,lock,manifest,readme,deployment,vercelConfig] = await Promise.all([
   readFile(join(root,'index.html'),'utf8'),
   readFile(join(root,'app.js'),'utf8'),
   readFile(join(root,'v45.js'),'utf8'),
@@ -28,7 +28,6 @@ const [html,app,v45,v46css,v46,health,danger,dangerMap,previfoc,previfocSource,a
   readFile(join(root,'api/road-incidents.js'),'utf8'),
   readFile(join(root,'api/situation.js'),'utf8'),
   readFile(join(root,'api/source-monitor.js'),'utf8'),
-  readFile(join(root,'api/source-health.js'),'utf8'),
   readFile(join(root,'api/infoca.js'),'utf8'),
   readFile(join(root,'api/infoca-source.js'),'utf8'),
   readFile(join(root,'api/bombers.js'),'utf8'),
@@ -58,7 +57,7 @@ assert.match(app,/window\.FC_APP=/);
 assert.match(app,/getLocalAssessment/);
 assert.match(app,/Control de fuentes directas/);
 assert.match(app,/productionAdmitted/);
-assert.match(app,/api\/source-health/);
+assert.match(app,/Abrir monitor y estado técnico/);
 assert.match(v45,/report\.querySelector\('#smartLocalInsights'\)\)return/);
 assert.match(v46css,/\.preventionStatus/);
 assert.match(v46css,/\.v46Tools\{display:grid;grid-template-columns:minmax\(0,1fr\)/);
@@ -245,8 +244,6 @@ assert.match(sourceMonitor,/productionAdmitted/);
 assert.match(sourceMonitor,/confidenceForAbsence/);
 assert.match(sourceMonitor,/externalNotifications:false/);
 assert.match(sourceMonitor,/durableDatabase:false/);
-assert.match(sourceHealth,/source-monitor-start/);
-assert.match(sourceHealth,/source-monitor-done/);
 assert.doesNotMatch(situation,/fetchMurcia/);
 assert.match(situation,/item\.region==='Andalucía'/);
 assert.match(situation,/item\.region==='Cataluña'/);
@@ -353,20 +350,19 @@ const parsedVercelConfig=JSON.parse(vercelConfig);
 assert.equal(parsedVercelConfig.functions['api/infoar.js'].maxDuration,30);
 assert.equal(parsedVercelConfig.functions['api/situation.js'].maxDuration,45);
 assert.deepEqual(parsedVercelConfig.functions['api/situation.js'].regions,['fra1']);
-assert.equal(parsedVercelConfig.functions['api/source-health.js'].maxDuration,45);
-assert.deepEqual(parsedVercelConfig.functions['api/source-health.js'].regions,['fra1']);
 assert.equal(JSON.parse(lock).version,'4.18.0');
 assert.equal(JSON.parse(lock).name,'fuegocerca');
 assert.equal(JSON.parse(manifest).name,'FuegoCerca');
 
 const oldBrand=/Fuego Centro|Incendios España/;
-for(const [name,content] of Object.entries({html,app,v46,health,sourceMonitor,sourceHealth,manifest,readme,deployment})){
+for(const [name,content] of Object.entries({html,app,v46,health,sourceMonitor,manifest,readme,deployment})){
   assert.doesNotMatch(content,oldBrand,`${name} no debe reintroducir una marca anterior`);
 }
 
 assert.match(health,/effisNodeRelativeUrlCompatible:true/);
 assert.match(health,/situationFunctionRegion:'fra1'/);
-assert.match(health,/sourceHealthEndpoint:true/);
+assert.match(health,/sourceMonitorInHealth:true/);
+assert.match(health,/sourceMonitor/);
 assert.match(health,/sourceAdmissionGate:true/);
 assert.match(health,/sourceExternalNotifications:false/);
 assert.match(health,/situationLastValidCache:true/);
